@@ -24,9 +24,8 @@ workflows:
           include: true
 
     scripts:
-      - name: Inject Firebase files
+      - name: Inject Firebase platform files
         script: |
-          echo "$FIREBASE_OPTIONS" > lib/firebase_options.dart
           echo "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
           echo "$GOOGLE_SERVICE_INFO_PLIST" > ios/Runner/GoogleService-Info.plist
 
@@ -34,7 +33,7 @@ workflows:
         script: |
           keychain initialize
           app-store-connect fetch-signing-files \
-            com.bookmypt.bookmypt \
+            com.bookmypt \
             --type IOS_APP_STORE \
             --create
           keychain add-certificates
