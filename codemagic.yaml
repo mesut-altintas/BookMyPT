@@ -9,9 +9,9 @@ workflows:
         distribution_type: app_store
         bundle_identifier: com.bookmypt.bookmypt
       vars:
-        APP_STORE_CONNECT_ISSUER_ID: Encrypted(...)   # App Store Connect Issuer ID
-        APP_STORE_CONNECT_KEY_IDENTIFIER: Encrypted(...)  # Key ID
-        APP_STORE_CONNECT_PRIVATE_KEY: Encrypted(...)     # .p8 içeriği
+        APP_STORE_CONNECT_ISSUER_ID: $APP_STORE_CONNECT_ISSUER_ID
+        APP_STORE_CONNECT_KEY_IDENTIFIER: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        APP_STORE_CONNECT_PRIVATE_KEY: $APP_STORE_CONNECT_PRIVATE_KEY
       flutter: stable
       xcode: latest
       cocoapods: default
@@ -24,6 +24,12 @@ workflows:
           include: true
 
     scripts:
+      - name: Inject Firebase files
+        script: |
+          echo "$FIREBASE_OPTIONS" > lib/firebase_options.dart
+          echo "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+          echo "$GOOGLE_SERVICE_INFO_PLIST" > ios/Runner/GoogleService-Info.plist
+
       - name: Set up code signing
         script: |
           keychain initialize
@@ -41,14 +47,10 @@ workflows:
           find . -name "Podfile" -execdir pod install \;
 
       - name: Flutter build ipa
-        script: |
-          flutter build ipa \
-            --release \
-            --export-options-plist=/Users/builder/export_options.plist
+        script: flutter build ipa --release
 
     artifacts:
       - build/ios/ipa/*.ipa
-      - flutter_drive.log
 
     publishing:
       app_store_connect:
