@@ -1,0 +1,40 @@
+default_platform(:ios)
+
+platform :ios do
+  lane :beta do
+    api_key = app_store_connect_api_key(
+      key_id: ENV["APP_STORE_CONNECT_KEY_IDENTIFIER"],
+      issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
+      key_content: ENV["APP_STORE_CONNECT_PRIVATE_KEY"],
+      in_house: false
+    )
+
+    get_certificates(
+      api_key: api_key,
+      platform: "ios"
+    )
+
+    get_provisioning_profile(
+      api_key: api_key,
+      app_identifier: "com.bookmypt",
+      provisioning_name: "BookMyPT AppStore",
+      ignore_profiles_with_different_name: true
+    )
+
+    build_app(
+      workspace: "Runner.xcworkspace",
+      scheme: "Runner",
+      export_method: "app-store",
+      export_options: {
+        provisioningProfiles: {
+          "com.bookmypt" => "BookMyPT AppStore"
+        }
+      }
+    )
+
+    upload_to_testflight(
+      api_key: api_key,
+      skip_waiting_for_build_processing: true
+    )
+  end
+end
