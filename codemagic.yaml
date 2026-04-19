@@ -24,11 +24,6 @@ workflows:
           include: true
 
     scripts:
-      - name: Inject Firebase platform files
-        script: |
-          echo "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
-          echo "$GOOGLE_SERVICE_INFO_PLIST" > ios/Runner/GoogleService-Info.plist
-
       - name: Set up code signing
         script: |
           keychain initialize

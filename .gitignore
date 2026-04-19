@@ -44,9 +44,9 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-# Firebase platform config files (google-services / plist)
-android/app/google-services.json
-ios/Runner/GoogleService-Info.plist
+# Firebase platform config files — committed to repo for CI/CD
+# android/app/google-services.json
+# ios/Runner/GoogleService-Info.plist
 
 # Functions
 functions/lib/

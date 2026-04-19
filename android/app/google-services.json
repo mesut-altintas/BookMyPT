@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "288626980549",
+    "project_id": "bookmypt",
+    "storage_bucket": "bookmypt.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:288626980549:android:496d6fee77073d9f65a2ac",
+        "android_client_info": {
+          "package_name": "com.bookmypt"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDYP-ky2G1jF6zYBAsgSffgBsKl4z4ikEY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
