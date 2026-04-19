@@ -35,10 +35,18 @@ jobs:
           bundler-cache: true
           working-directory: ios
 
+      - name: Write App Store Connect API Key
+        env:
+          APP_STORE_CONNECT_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          APP_STORE_CONNECT_KEY_IDENTIFIER: ${{ secrets.APP_STORE_CONNECT_KEY_IDENTIFIER }}
+        run: |
+          mkdir -p /tmp/fastlane_keys
+          echo "$APP_STORE_CONNECT_PRIVATE_KEY" > /tmp/fastlane_keys/AuthKey_${APP_STORE_CONNECT_KEY_IDENTIFIER}.p8
+
       - name: Build & Upload to TestFlight
         working-directory: ios
         env:
           APP_STORE_CONNECT_KEY_IDENTIFIER: ${{ secrets.APP_STORE_CONNECT_KEY_IDENTIFIER }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
-          APP_STORE_CONNECT_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          APP_STORE_CONNECT_PRIVATE_KEY_PATH: /tmp/fastlane_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_KEY_IDENTIFIER }}.p8
         run: bundle exec fastlane beta
