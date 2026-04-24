@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: macos-13
+    runs-on: macos-latest
 
     steps:
       - name: Checkout
@@ -41,7 +41,11 @@ jobs:
           APP_STORE_CONNECT_KEY_IDENTIFIER: ${{ secrets.APP_STORE_CONNECT_KEY_IDENTIFIER }}
         run: |
           mkdir -p /tmp/fastlane_keys
-          echo "$APP_STORE_CONNECT_PRIVATE_KEY" > /tmp/fastlane_keys/AuthKey_${APP_STORE_CONNECT_KEY_IDENTIFIER}.p8
+          printf '%s' "$APP_STORE_CONNECT_PRIVATE_KEY" > /tmp/fastlane_keys/raw.p8
+          # Convert PKCS8 → traditional EC format so Ruby OpenSSL 3 can parse it
+          openssl ec \
+            -in /tmp/fastlane_keys/raw.p8 \
+            -out /tmp/fastlane_keys/AuthKey_${APP_STORE_CONNECT_KEY_IDENTIFIER}.p8
 
       - name: Build & Upload to TestFlight
         working-directory: ios
