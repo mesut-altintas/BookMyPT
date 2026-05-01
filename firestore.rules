@@ -1,0 +1,134 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return request.auth.uid == uid;
+    }
+
+    function isPt() {
+      return isAuthenticated() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'pt';
+    }
+
+    // Returns true if the current user is ptId or memberId of the given chat.
+    // Uses a single get() call and guards against non-existent documents.
+    function isChatParticipant(chatId) {
+      let chat = get(/databases/$(database)/documents/chats/$(chatId));
+      return chat != null &&
+        (chat.data.ptId == request.auth.uid ||
+         chat.data.memberId == request.auth.uid);
+    }
+
+    // Users collection
+    match /users/{uid} {
+      allow read: if isAuthenticated();
+      allow create: if isOwner(uid);
+      allow update: if isOwner(uid) ||
+        (isPt() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ptId']));
+      allow delete: if false;
+    }
+
+    // PT Members subcollection
+    match /pts/{ptId}/members/{memberId} {
+      allow read: if isAuthenticated() &&
+        (isOwner(ptId) || isOwner(memberId));
+      allow create: if isAuthenticated() && isOwner(ptId);
+      allow update: if isAuthenticated() && isOwner(ptId);
+      allow delete: if isAuthenticated() && isOwner(ptId);
+    }
+
+    // PT Packages subcollection
+    match /pts/{ptId}/packages/{packageId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isOwner(ptId);
+      allow update: if isAuthenticated() && isOwner(ptId);
+      allow delete: if isAuthenticated() && isOwner(ptId);
+    }
+
+    // Programs collection
+    match /programs/{programId} {
+      allow read: if isAuthenticated() &&
+        (resource == null ||
+         resource.data.ptId == request.auth.uid ||
+         resource.data.memberId == request.auth.uid);
+      allow create: if isAuthenticated() && isPt() &&
+        request.resource.data.ptId == request.auth.uid;
+      allow update: if isAuthenticated() &&
+        resource.data.ptId == request.auth.uid;
+      allow delete: if isAuthenticated() &&
+        resource.data.ptId == request.auth.uid;
+    }
+
+    // Sessions collection
+    match /sessions/{sessionId} {
+      allow read: if isAuthenticated() &&
+        (resource == null ||
+         resource.data.ptId == request.auth.uid ||
+         resource.data.memberId == request.auth.uid ||
+         exists(/databases/$(database)/documents/pts/$(resource.data.ptId)/members/$(request.auth.uid)));
+      allow create: if isAuthenticated() &&
+        (request.resource.data.ptId == request.auth.uid ||
+         request.resource.data.memberId == request.auth.uid);
+      allow update: if isAuthenticated() &&
+        (resource.data.ptId == request.auth.uid ||
+         resource.data.memberId == request.auth.uid);
+      allow delete: if isAuthenticated() &&
+        resource.data.ptId == request.auth.uid;
+    }
+
+    // Payments collection
+    match /payments/{paymentId} {
+      allow read: if isAuthenticated() &&
+        (resource.data.memberId == request.auth.uid ||
+         resource.data.ptId == request.auth.uid);
+      allow create: if isAuthenticated() &&
+        request.resource.data.memberId == request.auth.uid;
+      allow update: if isAuthenticated() &&
+        resource.data.ptId == request.auth.uid;
+      allow delete: if false;
+    }
+
+    // Progress collection
+    match /progress/{progressId} {
+      allow read: if isAuthenticated() &&
+        (resource.data.memberId == request.auth.uid ||
+         exists(/databases/$(database)/documents/pts/$(request.auth.uid)/members/$(resource.data.memberId)));
+      allow create: if isAuthenticated() &&
+        request.resource.data.memberId == request.auth.uid;
+      allow update: if isAuthenticated() &&
+        resource.data.memberId == request.auth.uid;
+      allow delete: if isAuthenticated() &&
+        resource.data.memberId == request.auth.uid;
+    }
+
+    // Chats collection
+    match /chats/{chatId} {
+      allow read: if isAuthenticated() &&
+        (resource == null ||
+         resource.data.ptId == request.auth.uid ||
+         resource.data.memberId == request.auth.uid);
+      allow create: if isAuthenticated() &&
+        (request.resource.data.ptId == request.auth.uid ||
+         request.resource.data.memberId == request.auth.uid);
+      allow update: if isAuthenticated() &&
+        (resource.data.ptId == request.auth.uid ||
+         resource.data.memberId == request.auth.uid);
+      allow delete: if false;
+
+      // Messages subcollection — single get() via helper to avoid null errors
+      match /messages/{messageId} {
+        allow read: if isAuthenticated() && isChatParticipant(chatId);
+        allow create: if isAuthenticated() &&
+          isChatParticipant(chatId) &&
+          request.resource.data.senderId == request.auth.uid;
+        allow update: if isAuthenticated() && isChatParticipant(chatId);
+        allow delete: if false;
+      }
+    }
+  }
+}

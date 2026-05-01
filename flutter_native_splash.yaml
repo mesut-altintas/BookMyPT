@@ -1,0 +1,10 @@
+flutter_native_splash:
+  color: "#ffffff"
+  image: assets/images/lfhs_logo.png
+  color_dark: "#ffffff"
+  image_dark: assets/images/lfhs_logo.png
+  android_12:
+    color: "#ffffff"
+    image: assets/images/lfhs_logo_square.png
+    color_dark: "#ffffff"
+    image_dark: assets/images/lfhs_logo_square.png
