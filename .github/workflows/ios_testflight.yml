@@ -20,6 +20,13 @@ jobs:
       - name: Flutter pub get
         run: flutter pub get
 
+      - name: Set Build Number
+        run: |
+          BUILD_NUMBER=${{ github.run_number }}
+          echo "Setting build number to: $BUILD_NUMBER"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" ios/Runner/Info.plist
+          cd ios && agvtool new-version -all $BUILD_NUMBER
+
       - name: Import Certificate & Provisioning Profile
         env:
           BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
@@ -60,6 +67,8 @@ jobs:
             -scheme Runner \
             -configuration Release \
             -archivePath $RUNNER_TEMP/Runner.xcarchive \
+            CURRENT_PROJECT_VERSION=${{ github.run_number }} \
+            FLUTTER_BUILD_NUMBER=${{ github.run_number }} \
             archive \
             OTHER_CODE_SIGN_FLAGS="--keychain $RUNNER_TEMP/signing.keychain-db"
 
@@ -81,4 +90,9 @@ jobs:
             --type ios \
             --username "$APPLE_ID" \
             --password "$APPLE_APP_SPECIFIC_PASSWORD" \
-            --verbose
+            --verbose 2>&1 | tee /tmp/altool_output.txt
+
+          if grep -q "ERROR:" /tmp/altool_output.txt; then
+            echo "::error::Upload to TestFlight failed"
+            exit 1
+          fi
