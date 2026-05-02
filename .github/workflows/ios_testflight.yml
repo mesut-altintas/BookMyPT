@@ -82,21 +82,60 @@ jobs:
           echo "$DECODED_PEM" >> $GITHUB_ENV
           echo "PEMEOF" >> $GITHUB_ENV
 
-      - name: Upload to TestFlight
+      - name: Diagnose Ruby JWT
         env:
           APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_IDENTIFIER }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
         run: |
           printf '%s' "$DECODED_PEM" > /tmp/AuthKey_pkcs8.p8
-          openssl ec -in /tmp/AuthKey_pkcs8.p8 -out /tmp/AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8
+          openssl ec -in /tmp/AuthKey_pkcs8.p8 -out /tmp/AuthKey_ec.p8
+          ruby - <<'RUBYEOF'
+          require 'openssl'
+          require 'jwt'
+          require 'net/http'
+          require 'uri'
+
+          key_id     = ENV['APP_STORE_CONNECT_KEY_ID']
+          issuer_id  = ENV['APP_STORE_CONNECT_ISSUER_ID']
+          key_pkcs8  = File.read('/tmp/AuthKey_pkcs8.p8')
+          key_ec     = File.read('/tmp/AuthKey_ec.p8')
+
+          puts "Ruby version: #{RUBY_VERSION}"
+          puts "OpenSSL version: #{OpenSSL::OPENSSL_VERSION}"
+          puts "jwt gem version: #{Gem.loaded_specs['jwt']&.version}"
+
+          [['PKCS8', key_pkcs8], ['EC/SEC1', key_ec]].each do |label, pem|
+            begin
+              pk = OpenSSL::PKey.read(pem)
+              now = Time.now.to_i
+              token = JWT.encode(
+                { iss: issuer_id, iat: now, exp: now + 600, aud: 'appstoreconnect-v1' },
+                pk, 'ES256', { kid: key_id, typ: 'JWT' }
+              )
+              uri = URI('https://api.appstoreconnect.apple.com/v1/apps?limit=1')
+              req = Net::HTTP::Get.new(uri)
+              req['Authorization'] = "Bearer #{token}"
+              resp = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) { |h| h.request(req) }
+              puts "#{label}: HTTP #{resp.code} #{resp.message}"
+            rescue => e
+              puts "#{label} ERROR: #{e.class}: #{e.message}"
+            end
+          end
+          RUBYEOF
+
+      - name: Upload to TestFlight
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_IDENTIFIER }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
           python3 - <<'PYEOF'
           import json, os
           key_id = os.environ['APP_STORE_CONNECT_KEY_ID']
           issuer_id = os.environ['APP_STORE_CONNECT_ISSUER_ID']
-          key = open(f'/tmp/AuthKey_{key_id}.p8').read()
+          key = open('/tmp/AuthKey_ec.p8').read()
           data = {'key_id': key_id, 'issuer_id': issuer_id, 'key': key, 'duration': 1200, 'in_house': False}
           json.dump(data, open('/tmp/api_key.json', 'w'))
-          print('API key JSON created, key header:', key[:27])
+          print('JSON created, key header:', key[:27])
           PYEOF
           fastlane pilot upload \
             --ipa "$RUNNER_TEMP/export/fitcoach.ipa" \
