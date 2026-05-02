@@ -90,7 +90,7 @@ jobs:
           # Write PKCS#8 key to temp file
           printf '%s' "$DECODED_PEM" > /tmp/AuthKey_pkcs8.p8
 
-          # Convert PKCS#8 → SEC1 EC format (Ruby/OpenSSL 3 requires this format)
+          # Convert PKCS#8 to SEC1 EC format (Ruby/OpenSSL 3 requires this format)
           openssl ec -in /tmp/AuthKey_pkcs8.p8 -out /tmp/AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8
 
           # Build API key JSON for Fastlane
