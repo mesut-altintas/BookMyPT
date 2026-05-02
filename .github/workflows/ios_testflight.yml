@@ -73,50 +73,14 @@ jobs:
             -exportPath $RUNNER_TEMP/export \
             -exportOptionsPlist ios/ExportOptions.plist
 
-      - name: Prepare API Key
-        env:
-          APP_STORE_CONNECT_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
-        run: |
-          DECODED_PEM=$(echo -n "$APP_STORE_CONNECT_PRIVATE_KEY" | base64 --decode)
-          echo "DECODED_PEM<<PEMEOF" >> $GITHUB_ENV
-          echo "$DECODED_PEM" >> $GITHUB_ENV
-          echo "PEMEOF" >> $GITHUB_ENV
-
-      - name: Verify API Key with Python JWT
-        env:
-          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_IDENTIFIER }}
-          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
-        run: |
-          pip3 install PyJWT cryptography -q --break-system-packages
-          printf '%s' "$DECODED_PEM" > /tmp/AuthKey.p8
-          python3 - <<'PYEOF'
-          import jwt, time, urllib.request, os, sys
-          key_id = os.environ['APP_STORE_CONNECT_KEY_ID']
-          issuer_id = os.environ['APP_STORE_CONNECT_ISSUER_ID']
-          with open('/tmp/AuthKey.p8', 'r') as f:
-              private_key = f.read()
-          token = jwt.encode(
-              {'iss': issuer_id, 'iat': int(time.time()), 'exp': int(time.time())+600, 'aud': 'appstoreconnect-v1'},
-              private_key, algorithm='ES256', headers={'kid': key_id}
-          )
-          req = urllib.request.Request('https://api.appstoreconnect.apple.com/v1/apps?limit=1',
-              headers={'Authorization': f'Bearer {token}'})
-          try:
-              resp = urllib.request.urlopen(req)
-              print('AUTH OK - Status:', resp.status)
-          except urllib.error.HTTPError as e:
-              print('AUTH FAILED - Status:', e.code)
-              print(e.read().decode()[:300])
-              sys.exit(1)
-          PYEOF
-
       - name: Upload to TestFlight
         env:
-          APP_STORE_CONNECT_KEY_IDENTIFIER: ${{ secrets.APP_STORE_CONNECT_KEY_IDENTIFIER }}
-          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
         run: |
-          pip3 install codemagic-cli-tools -q --break-system-packages
-          export APP_STORE_CONNECT_API_PRIVATE_KEY="$(cat /tmp/AuthKey.p8)"
-          app-store-connect publish \
-            --path "$RUNNER_TEMP/export/fitcoach.ipa" \
-            --max-find-interval 1
+          xcrun altool --upload-app \
+            --file "$RUNNER_TEMP/export/fitcoach.ipa" \
+            --type ios \
+            --username "$APPLE_ID" \
+            --password "$APPLE_APP_SPECIFIC_PASSWORD" \
+            --verbose
