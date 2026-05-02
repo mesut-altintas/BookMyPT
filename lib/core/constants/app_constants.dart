@@ -15,6 +15,8 @@ class AppConstants {
   static const String chatsCollection = 'chats';
   static const String messagesSubCollection = 'messages';
   static const String packagesSubCollection = 'packages';
+  static const String invitationsCollection = 'invitations';
+  static const String personalEventsCollection = 'personal_events';
 
   // Storage Paths
   static const String profilePhotosPath = 'profile_photos';

@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/utils/validators.dart';
 import '../../../../features/auth/providers/auth_provider.dart';
-import '../../../../shared/models/member_model.dart';
+import '../../../../features/m_calendar/providers/invitation_provider.dart';
 import '../../../../shared/widgets/app_loading.dart';
 import '../../../pt_members/providers/pt_members_provider.dart';
 
@@ -30,7 +30,7 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
     super.dispose();
   }
 
-  Future<void> _addMember() async {
+  Future<void> _sendInvitation() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
@@ -41,17 +41,20 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
       return;
     }
 
-    final repo = ref.read(memberRepositoryProvider);
+    final memberRepo = ref.read(memberRepositoryProvider);
+    final invRepo = ref.read(invitationRepositoryProvider);
 
     try {
-      final memberUser = await repo.getUserByEmail(_emailCtrl.text.trim());
+      // Look up member by email to get their uid (if already registered)
+      final memberUser =
+          await memberRepo.getUserByEmail(_emailCtrl.text.trim());
 
       if (memberUser == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text(
-                  'Bu e-posta ile kayıtlı üye bulunamadı. Önce üye kayıt olmalıdır.'),
+                  'Bu e-posta ile kayitli uye bulunamadi. Once uye kayit olmalidir.'),
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -60,23 +63,20 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
         return;
       }
 
-      final member = MemberProfile(
+      await invRepo.createInvitation(
+        ptId: user.uid,
+        ptName: user.name,
+        memberEmail: _emailCtrl.text.trim(),
         memberId: memberUser.uid,
-        name: memberUser.name,
-        email: memberUser.email,
-        photoUrl: memberUser.photoUrl,
         goal: _goalCtrl.text.trim().isNotEmpty ? _goalCtrl.text.trim() : null,
         notes:
             _notesCtrl.text.trim().isNotEmpty ? _notesCtrl.text.trim() : null,
-        joinedAt: DateTime.now(),
       );
-
-      await repo.addMember(ptId: user.uid, member: member);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${memberUser.name} başarıyla eklendi'),
+            content: Text('${memberUser.name} adresine davet gonderildi'),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -100,9 +100,9 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Üye Ekle')),
+      appBar: AppBar(title: const Text('Uye Davet Et')),
       body: _isLoading
-          ? const AppLoading(message: 'Ekleniyor...')
+          ? const AppLoading(message: 'Davet gonderiliyor...')
           : SingleChildScrollView(
               padding: const EdgeInsets.all(24),
               child: Form(
@@ -111,7 +111,7 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Üye Bilgileri',
+                      'Uye Bilgileri',
                       style:
                           Theme.of(context).textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.w700,
@@ -119,7 +119,7 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Üyenin e-posta adresiyle arama yapın. Üye önce uygulamaya kayıt olmuş olmalıdır.',
+                      'Uyenin e-posta adresiyle arama yapin. Uye once uygulamaya kayit olmali.',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color:
                                 Theme.of(context).colorScheme.onSurfaceVariant,
@@ -131,7 +131,7 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
                       keyboardType: TextInputType.emailAddress,
                       validator: Validators.email,
                       decoration: const InputDecoration(
-                        labelText: 'Üye E-postası',
+                        labelText: 'Uye E-postasi',
                         hintText: 'uye@email.com',
                         prefixIcon: Icon(Icons.search),
                       ),
@@ -140,7 +140,7 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
                     TextFormField(
                       controller: _goalCtrl,
                       decoration: const InputDecoration(
-                        labelText: 'Hedef (İsteğe bağlı)',
+                        labelText: 'Hedef (Istege bagli)',
                         hintText: 'Kilo verme, kas kazanma...',
                         prefixIcon: Icon(Icons.flag_outlined),
                       ),
@@ -150,16 +150,16 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
                       controller: _notesCtrl,
                       maxLines: 3,
                       decoration: const InputDecoration(
-                        labelText: 'Notlar (İsteğe bağlı)',
-                        hintText: 'Özel durumlar, sağlık notları...',
+                        labelText: 'Notlar (Istege bagli)',
+                        hintText: 'Ozel durumlar, saglik notlari...',
                         prefixIcon: Icon(Icons.notes_outlined),
                         alignLabelWithHint: true,
                       ),
                     ),
                     const SizedBox(height: 32),
                     ElevatedButton(
-                      onPressed: _addMember,
-                      child: const Text('Üye Ekle'),
+                      onPressed: _sendInvitation,
+                      child: const Text('Davet Gonder'),
                     ),
                   ],
                 ),

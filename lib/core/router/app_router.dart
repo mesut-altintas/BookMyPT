@@ -36,6 +36,9 @@ import '../../features/m_payment/presentation/screens/payment_screen.dart';
 import '../../features/m_payment/presentation/screens/payment_history_screen.dart';
 import '../../features/m_chat/presentation/screens/chat_list_screen.dart';
 import '../../features/m_chat/presentation/screens/chat_screen.dart';
+import '../../features/m_calendar/presentation/screens/member_calendar_screen.dart';
+import '../../features/m_calendar/presentation/screens/invitation_list_screen.dart';
+import '../../features/pt_search/presentation/screens/find_pt_screen.dart';
 
 // Shared
 import '../../shared/widgets/pt_shell.dart';
@@ -77,10 +80,9 @@ class AppRoutes {
   static const ptChatList = '/pt/chat';
   static const ptChat = '/pt/chat/:chatId';
 
-  // Member
+  // Member shell routes
   static const memberDashboard = '/member/dashboard';
-  static const booking = '/member/booking';
-  static const bookingConfirm = '/member/booking/confirm';
+  static const memberCalendar = '/member/calendar';
   static const memberPrograms = '/member/programs';
   static const workoutDetail = '/member/programs/:programId';
   static const progress = '/member/progress';
@@ -89,6 +91,12 @@ class AppRoutes {
   static const paymentHistory = '/member/payment/history';
   static const chatList = '/member/chat';
   static const chat = '/member/chat/:chatId';
+
+  // Member full-screen (outside shell)
+  static const booking = '/member/booking';
+  static const bookingConfirm = '/member/booking/confirm';
+  static const invitations = '/member/invitations';
+  static const findPt = '/member/find-pt';
 
   // Shared
   static const profile = '/profile';
@@ -148,6 +156,29 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.profile,
         builder: (_, __) => const ProfileScreen(),
+      ),
+
+      // Member full-screen routes (outside shell — no bottom nav)
+      GoRoute(
+        path: AppRoutes.booking,
+        builder: (_, __) => const BookingScreen(),
+        routes: [
+          GoRoute(
+            path: 'confirm',
+            builder: (_, state) {
+              final extra = state.extra as Map<String, dynamic>?;
+              return BookingConfirmScreen(sessionData: extra ?? {});
+            },
+          ),
+        ],
+      ),
+      GoRoute(
+        path: AppRoutes.invitations,
+        builder: (_, __) => const InvitationListScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.findPt,
+        builder: (_, __) => const FindPtScreen(),
       ),
 
       // PT Shell with Bottom Navigation
@@ -222,7 +253,8 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: AppRoutes.ptChatList,
-            builder: (_, __) => const ChatListScreen(chatDetailBasePath: '/pt/chat'),
+            builder: (_, __) =>
+                const ChatListScreen(chatDetailBasePath: '/pt/chat'),
             routes: [
               GoRoute(
                 path: ':chatId',
@@ -244,17 +276,8 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (_, __) => const MemberDashboardScreen(),
           ),
           GoRoute(
-            path: AppRoutes.booking,
-            builder: (_, __) => const BookingScreen(),
-            routes: [
-              GoRoute(
-                path: 'confirm',
-                builder: (_, state) {
-                  final extra = state.extra as Map<String, dynamic>?;
-                  return BookingConfirmScreen(sessionData: extra ?? {});
-                },
-              ),
-            ],
+            path: AppRoutes.memberCalendar,
+            builder: (_, __) => const MemberCalendarScreen(),
           ),
           GoRoute(
             path: AppRoutes.memberPrograms,
@@ -311,7 +334,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             const Icon(Icons.error_outline, size: 64, color: Colors.red),
             const SizedBox(height: 16),
             Text(
-              'Sayfa bulunamadı',
+              'Sayfa bulunamadi',
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 8),

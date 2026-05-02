@@ -167,7 +167,7 @@ class _PackageCard extends ConsumerWidget {
   Future<void> _purchase(BuildContext context, WidgetRef ref) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Paket Satın Al'),
         content: Text(
           '${package.name} paketini ${package.price.formattedCurrency} karşılığında satın almak istiyor musunuz?\n\n'
@@ -175,11 +175,11 @@ class _PackageCard extends ConsumerWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
+            onPressed: () => Navigator.of(dialogContext).pop(false),
             child: const Text('İptal'),
           ),
           ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
             child: const Text('Onayla'),
           ),
         ],

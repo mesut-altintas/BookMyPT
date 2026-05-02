@@ -37,7 +37,8 @@ service cloud.firestore {
     match /pts/{ptId}/members/{memberId} {
       allow read: if isAuthenticated() &&
         (isOwner(ptId) || isOwner(memberId));
-      allow create: if isAuthenticated() && isOwner(ptId);
+      // PT can add members directly; member can add themselves (invitation acceptance / PT Bul flow)
+      allow create: if isAuthenticated() && (isOwner(ptId) || isOwner(memberId));
       allow update: if isAuthenticated() && isOwner(ptId);
       allow delete: if isAuthenticated() && isOwner(ptId);
     }
@@ -98,6 +99,31 @@ service cloud.firestore {
       allow read: if isAuthenticated() &&
         (resource.data.memberId == request.auth.uid ||
          exists(/databases/$(database)/documents/pts/$(request.auth.uid)/members/$(resource.data.memberId)));
+      allow create: if isAuthenticated() &&
+        request.resource.data.memberId == request.auth.uid;
+      allow update: if isAuthenticated() &&
+        resource.data.memberId == request.auth.uid;
+      allow delete: if isAuthenticated() &&
+        resource.data.memberId == request.auth.uid;
+    }
+
+    // Invitations collection
+    match /invitations/{invitationId} {
+      allow read: if isAuthenticated() &&
+        (resource.data.ptId == request.auth.uid ||
+         resource.data.memberId == request.auth.uid);
+      allow create: if isAuthenticated() && isPt() &&
+        request.resource.data.ptId == request.auth.uid;
+      allow update: if isAuthenticated() &&
+        (resource.data.ptId == request.auth.uid ||
+         resource.data.memberId == request.auth.uid);
+      allow delete: if false;
+    }
+
+    // Personal events collection
+    match /personal_events/{eventId} {
+      allow read: if isAuthenticated() &&
+        resource.data.memberId == request.auth.uid;
       allow create: if isAuthenticated() &&
         request.resource.data.memberId == request.auth.uid;
       allow update: if isAuthenticated() &&

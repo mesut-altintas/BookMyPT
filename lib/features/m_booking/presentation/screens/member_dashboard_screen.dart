@@ -1,3 +1,4 @@
+import 'package:badges/badges.dart' as badges;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -5,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../../features/auth/providers/auth_provider.dart';
+import '../../../../features/m_calendar/providers/invitation_provider.dart';
 import '../../../../features/pt_calendar/providers/pt_calendar_provider.dart';
 import '../../../../features/m_progress/providers/progress_provider.dart';
 import '../../../../shared/models/progress_model.dart';
@@ -29,6 +31,7 @@ class MemberDashboardScreen extends ConsumerWidget {
           memberId: user.uid,
           memberName: user.name,
           photoUrl: user.photoUrl,
+          ptId: user.ptId,
         );
       },
     );
@@ -39,17 +42,20 @@ class _MemberDashboardContent extends ConsumerWidget {
   final String memberId;
   final String memberName;
   final String? photoUrl;
+  final String? ptId;
 
   const _MemberDashboardContent({
     required this.memberId,
     required this.memberName,
     this.photoUrl,
+    this.ptId,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final sessionsAsync = ref.watch(memberUpcomingSessionsProvider(memberId));
     final progressAsync = ref.watch(latestProgressProvider(memberId));
+    final pendingCount = ref.watch(pendingInvitationsCountProvider);
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -57,6 +63,7 @@ class _MemberDashboardContent extends ConsumerWidget {
         onRefresh: () async {
           ref.invalidate(memberUpcomingSessionsProvider(memberId));
           ref.invalidate(latestProgressProvider(memberId));
+          ref.invalidate(memberInvitationsProvider);
         },
         child: CustomScrollView(
           slivers: [
@@ -88,6 +95,23 @@ class _MemberDashboardContent extends ConsumerWidget {
                           ],
                         ),
                       ),
+                      if (pendingCount > 0)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: InkWell(
+                            onTap: () => context.push(AppRoutes.invitations),
+                            borderRadius: BorderRadius.circular(24),
+                            child: badges.Badge(
+                              badgeContent: Text(
+                                '$pendingCount',
+                                style: const TextStyle(
+                                    color: Colors.white, fontSize: 10),
+                              ),
+                              child: const Icon(Icons.notifications_outlined,
+                                  size: 28),
+                            ),
+                          ),
+                        ),
                       InkWell(
                         onTap: () => context.push(AppRoutes.profile),
                         child: UserAvatar(
@@ -105,14 +129,20 @@ class _MemberDashboardContent extends ConsumerWidget {
               padding: const EdgeInsets.all(16),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
+                  // PT Bul card — only when no PT assigned
+                  if (ptId == null || ptId!.isEmpty) ...[
+                    _FindPtBanner(),
+                    const SizedBox(height: 16),
+                  ],
+
                   // Quick Actions
                   _QuickActions(memberId: memberId),
                   const SizedBox(height: 24),
 
                   // Upcoming Sessions
                   _SectionHeader(
-                    title: 'Yaklaşan Randevular',
-                    onSeeAll: () => context.go(AppRoutes.booking),
+                    title: 'Yaklasan Randevular',
+                    onSeeAll: () => context.go(AppRoutes.memberCalendar),
                   ),
                   const SizedBox(height: 12),
                   sessionsAsync.when(
@@ -122,9 +152,9 @@ class _MemberDashboardContent extends ConsumerWidget {
                       if (sessions.isEmpty) {
                         return _EmptyCard(
                           icon: Icons.calendar_today_outlined,
-                          message: 'Yaklaşan randevu yok',
+                          message: 'Yaklasan randevu yok',
                           actionLabel: 'Randevu Al',
-                          onAction: () => context.go(AppRoutes.booking),
+                          onAction: () => context.push(AppRoutes.booking),
                         );
                       }
                       return Column(
@@ -139,7 +169,7 @@ class _MemberDashboardContent extends ConsumerWidget {
 
                   // Progress
                   _SectionHeader(
-                    title: 'Son İlerleme',
+                    title: 'Son Ilerleme',
                     onSeeAll: () => context.go(AppRoutes.progress),
                   ),
                   const SizedBox(height: 12),
@@ -150,7 +180,7 @@ class _MemberDashboardContent extends ConsumerWidget {
                       if (progress == null) {
                         return _EmptyCard(
                           icon: Icons.trending_up_outlined,
-                          message: 'İlerleme kaydı yok',
+                          message: 'Ilerleme kaydi yok',
                           actionLabel: 'Kaydet',
                           onAction: () => context.go(AppRoutes.addProgress),
                         );
@@ -169,6 +199,54 @@ class _MemberDashboardContent extends ConsumerWidget {
   }
 }
 
+class _FindPtBanner extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.secondaryContainer,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.person_search_outlined,
+                  color: theme.colorScheme.onSecondaryContainer, size: 22),
+              const SizedBox(width: 8),
+              Text(
+                'PT atanmamis',
+                style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: theme.colorScheme.onSecondaryContainer),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'PT bularak antrenmanlariniza baslayabilirsiniz',
+            style: TextStyle(
+                fontSize: 12,
+                color: theme.colorScheme.onSecondaryContainer),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => context.push(AppRoutes.findPt),
+              child: const Text('PT Bul'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _QuickActions extends StatelessWidget {
   final String memberId;
 
@@ -181,18 +259,18 @@ class _QuickActions extends StatelessWidget {
         _QuickActionButton(
           icon: Icons.calendar_month,
           label: 'Randevu Al',
-          onTap: () => context.go(AppRoutes.booking),
+          onTap: () => context.push(AppRoutes.booking),
         ),
         const SizedBox(width: 12),
         _QuickActionButton(
           icon: Icons.fitness_center,
-          label: 'Programım',
+          label: 'Programim',
           onTap: () => context.go(AppRoutes.memberPrograms),
         ),
         const SizedBox(width: 12),
         _QuickActionButton(
           icon: Icons.trending_up,
-          label: 'İlerleme',
+          label: 'Ilerleme',
           onTap: () => context.go(AppRoutes.progress),
         ),
         const SizedBox(width: 12),
@@ -272,7 +350,7 @@ class _SectionHeader extends StatelessWidget {
         ),
         const Spacer(),
         if (onSeeAll != null)
-          TextButton(onPressed: onSeeAll, child: const Text('Tümü')),
+          TextButton(onPressed: onSeeAll, child: const Text('Tumu')),
       ],
     );
   }
