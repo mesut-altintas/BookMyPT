@@ -21,22 +21,14 @@ final ptUserProvider = StreamProvider.family<UserModel?, String>((ref, ptId) {
 });
 
 final currentUserProvider = StreamProvider<UserModel?>((ref) {
-  return FirebaseAuth.instance.authStateChanges().asyncMap((user) async {
-    if (user == null) return null;
-    try {
-      await user.getIdToken(true);
-      await Future.delayed(const Duration(milliseconds: 500));
-    } catch (_) {}
-    try {
-      final doc = await FirebaseFirestore.instance
-          .collection(AppConstants.usersCollection)
-          .doc(user.uid)
-          .get();
-      return doc.exists ? UserModel.fromFirestore(doc) : null;
-    } catch (_) {
-      return null;
-    }
-  });
+  final user = ref.watch(authStateProvider).valueOrNull;
+  if (user == null) return Stream.value(null);
+  return FirebaseFirestore.instance
+      .collection(AppConstants.usersCollection)
+      .doc(user.uid)
+      .snapshots()
+      .map((doc) => doc.exists ? UserModel.fromFirestore(doc) : null)
+      .handleError((_) => null);
 });
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
