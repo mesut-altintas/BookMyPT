@@ -82,45 +82,33 @@ jobs:
           echo "$DECODED_PEM" >> $GITHUB_ENV
           echo "PEMEOF" >> $GITHUB_ENV
 
-      - name: Test API Authentication
-        env:
-          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_IDENTIFIER }}
-          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
-        run: |
-          echo -n "$DECODED_PEM" > /tmp/AuthKey.p8
-          pip3 install PyJWT cryptography -q --break-system-packages
-          python3 - <<PYEOF
-          import jwt, time, urllib.request, os
-
-          key_id = os.environ['APP_STORE_CONNECT_KEY_ID']
-          issuer_id = os.environ['APP_STORE_CONNECT_ISSUER_ID']
-          with open('/tmp/AuthKey.p8', 'r') as f:
-              private_key = f.read()
-
-          token = jwt.encode(
-              {'iss': issuer_id, 'iat': int(time.time()), 'exp': int(time.time())+600, 'aud': 'appstoreconnect-v1'},
-              private_key, algorithm='ES256', headers={'kid': key_id}
-          )
-          req = urllib.request.Request('https://api.appstoreconnect.apple.com/v1/apps?limit=1',
-              headers={'Authorization': f'Bearer {token}'})
-          try:
-              resp = urllib.request.urlopen(req)
-              print('AUTH OK - Status:', resp.status)
-          except urllib.error.HTTPError as e:
-              print('AUTH FAILED - Status:', e.code)
-              print(e.read().decode()[:500])
-          PYEOF
-
       - name: Upload to TestFlight
         env:
           APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_IDENTIFIER }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
         run: |
-          mkdir -p ~/.appstoreconnect/private_keys
-          echo "$DECODED_PEM" > ~/.appstoreconnect/private_keys/AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8
-          xcrun altool --upload-app \
-            --file $RUNNER_TEMP/export/fitcoach.ipa \
-            --type ios \
-            --apiKey $APP_STORE_CONNECT_KEY_ID \
-            --apiIssuer $APP_STORE_CONNECT_ISSUER_ID \
-            --verbose
+          # Write private key to file
+          printf '%s' "$DECODED_PEM" > /tmp/AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8
+
+          # Build API key JSON for Fastlane
+          python3 - <<PYEOF
+          import json, os
+          key_id = os.environ['APP_STORE_CONNECT_KEY_ID']
+          issuer_id = os.environ['APP_STORE_CONNECT_ISSUER_ID']
+          key = open(f'/tmp/AuthKey_{key_id}.p8').read()
+          data = {
+              "key_id": key_id,
+              "issuer_id": issuer_id,
+              "key": key,
+              "duration": 1200,
+              "in_house": False
+          }
+          json.dump(data, open('/tmp/api_key.json', 'w'))
+          print("API key JSON created")
+          PYEOF
+
+          # Upload via Fastlane pilot (uses App Store Connect REST API, not altool)
+          fastlane pilot upload \
+            --ipa "$RUNNER_TEMP/export/fitcoach.ipa" \
+            --api_key_path /tmp/api_key.json \
+            --skip_waiting_for_build_processing true
