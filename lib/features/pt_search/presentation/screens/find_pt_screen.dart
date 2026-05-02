@@ -72,6 +72,7 @@ class _FindPtScreenState extends ConsumerState<FindPtScreen> {
 
     final confirmed = await showDialog<bool>(
       context: context,
+      useRootNavigator: false,
       builder: (dialogContext) => AlertDialog(
         title: const Text('PT Ekle'),
         content: Text('${pt.name} ile baglanti kurmak istiyor musunuz?'),

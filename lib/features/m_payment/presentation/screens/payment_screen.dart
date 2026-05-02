@@ -167,6 +167,7 @@ class _PackageCard extends ConsumerWidget {
   Future<void> _purchase(BuildContext context, WidgetRef ref) async {
     final confirmed = await showDialog<bool>(
       context: context,
+      useRootNavigator: false,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Paket Satın Al'),
         content: Text(

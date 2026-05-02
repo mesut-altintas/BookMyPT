@@ -302,6 +302,7 @@ class _PersonalEventTile extends ConsumerWidget {
   Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
     final ok = await showDialog<bool>(
       context: context,
+      useRootNavigator: false,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Etkinliği Sil'),
         content: Text('"${event.title}" etkinliğini silmek istiyor musunuz?'),
