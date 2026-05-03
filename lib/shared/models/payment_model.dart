@@ -124,7 +124,7 @@ class PaymentModel {
       currency: data['currency'] as String? ?? 'TRY',
       status: PaymentStatusX.fromString(data['status'] as String? ?? 'pending'),
       packageName: data['packageName'] as String? ?? '',
-      sessionCount: data['sessionCount'] as int? ?? 0,
+      sessionCount: (data['sessionCount'] as num?)?.toInt() ?? 0,
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       transactionId: data['transactionId'] as String?,
     );

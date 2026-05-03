@@ -210,7 +210,7 @@ class _EarningsContent extends ConsumerWidget {
                     delegate: SliverChildBuilderDelegate(
                       (_, i) {
                         final list = [...completedPayments, ...otherPayments];
-                        return _PaymentTile(payment: list[i]);
+                        return _PaymentTile(payment: list[i], ptId: ptId);
                       },
                       childCount:
                           completedPayments.length + otherPayments.length,
@@ -490,13 +490,19 @@ class _PendingPaymentCardState extends ConsumerState<_PendingPaymentCard> {
   }
 }
 
-class _PaymentTile extends StatelessWidget {
+class _PaymentTile extends ConsumerWidget {
   final PaymentModel payment;
+  final String ptId;
 
-  const _PaymentTile({required this.payment});
+  const _PaymentTile({required this.payment, required this.ptId});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final memberAsync = ref.watch(
+      ptMemberDetailProvider((ptId: ptId, memberId: payment.memberId)),
+    );
+    final memberName = memberAsync.valueOrNull?.name ?? '';
+
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
@@ -520,10 +526,12 @@ class _PaymentTile extends StatelessWidget {
           ),
         ),
         title: Text(
-          payment.packageName,
+          memberName.isNotEmpty ? memberName : payment.packageName,
           style: const TextStyle(fontWeight: FontWeight.w600),
         ),
-        subtitle: Text(payment.createdAt.formattedDate),
+        subtitle: Text(
+          '${payment.packageName} • ${payment.createdAt.formattedDate}',
+        ),
         trailing: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.end,
