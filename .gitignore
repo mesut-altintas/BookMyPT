@@ -24,6 +24,9 @@ ios/Pods/
 ios/Runner.xcworkspace/
 *.ipa
 
+# Cloud Functions
+functions/node_modules/
+
 # Firebase
 google-services.json
 GoogleService-Info.plist
