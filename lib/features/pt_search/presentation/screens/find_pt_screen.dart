@@ -4,8 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../features/auth/providers/auth_provider.dart';
-import '../../../../features/pt_members/providers/pt_members_provider.dart';
-import '../../../../shared/models/member_model.dart';
+import '../../../../features/m_calendar/providers/invitation_provider.dart';
 import '../../../../shared/models/user_model.dart';
 import '../../../../shared/widgets/app_loading.dart';
 
@@ -21,7 +20,7 @@ class _FindPtScreenState extends ConsumerState<FindPtScreen> {
   List<UserModel> _allPts = [];
   List<UserModel> _results = [];
   bool _loadingAll = false;
-  bool _linking = false;
+  bool _sending = false;
   bool _searched = false;
 
   @override
@@ -66,7 +65,7 @@ class _FindPtScreenState extends ConsumerState<FindPtScreen> {
     });
   }
 
-  Future<void> _linkPt(UserModel pt) async {
+  Future<void> _sendRequest(UserModel pt) async {
     final user = ref.read(currentUserProvider).valueOrNull;
     if (user == null) return;
 
@@ -74,40 +73,35 @@ class _FindPtScreenState extends ConsumerState<FindPtScreen> {
       context: context,
       useRootNavigator: false,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('PT Ekle'),
-        content: Text('${pt.name} ile baglanti kurmak istiyor musunuz?'),
+        title: const Text('PT\'ye İstek Gönder'),
+        content: Text(
+            '${pt.name} adlı eğitmene katılım isteği göndermek istiyor musunuz?\n\nEğitmen isteği onayladıktan sonra bağlantı kurulacak.'),
         actions: [
           TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Iptal')),
+              child: const Text('İptal')),
           ElevatedButton(
               onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('Baglan')),
+              child: const Text('İstek Gönder')),
         ],
       ),
     );
 
     if (confirmed != true) return;
 
-    setState(() => _linking = true);
+    setState(() => _sending = true);
     try {
-      final memberRepo = ref.read(memberRepositoryProvider);
-
-      // Add member to PT's members subcollection so PT sees them in their list
-      await memberRepo.addMember(
-        ptId: pt.uid,
-        member: MemberProfile(
-          memberId: user.uid,
-          name: user.name,
-          email: user.email,
-          photoUrl: user.photoUrl,
-          joinedAt: DateTime.now(),
-        ),
-      );
+      await ref.read(invitationRepositoryProvider).createMemberRequest(
+            ptId: pt.uid,
+            ptName: pt.name,
+            memberId: user.uid,
+            memberName: user.name,
+            memberEmail: user.email,
+          );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('${pt.name} ile baglanti kuruldu'),
+          content: Text('${pt.name} adlı eğitmene istek gönderildi'),
           behavior: SnackBarBehavior.floating,
         ));
         Navigator.of(context).pop();
@@ -120,7 +114,7 @@ class _FindPtScreenState extends ConsumerState<FindPtScreen> {
             behavior: SnackBarBehavior.floating));
       }
     } finally {
-      if (mounted) setState(() => _linking = false);
+      if (mounted) setState(() => _sending = false);
     }
   }
 
@@ -137,7 +131,7 @@ class _FindPtScreenState extends ConsumerState<FindPtScreen> {
             child: TextField(
               controller: _searchCtrl,
               decoration: const InputDecoration(
-                hintText: 'Isim veya e-posta ile ara',
+                hintText: 'İsim veya e-posta ile ara',
                 prefixIcon: Icon(Icons.search),
               ),
               textInputAction: TextInputAction.search,
@@ -145,7 +139,7 @@ class _FindPtScreenState extends ConsumerState<FindPtScreen> {
               onChanged: (_) => _search(),
             ),
           ),
-          if (_linking) const LinearProgressIndicator(),
+          if (_sending) const LinearProgressIndicator(),
           Expanded(
             child: _loadingAll
                 ? const AppLoading()
@@ -159,7 +153,7 @@ class _FindPtScreenState extends ConsumerState<FindPtScreen> {
                                 color: theme.colorScheme.outlineVariant),
                             const SizedBox(height: 12),
                             Text(
-                              'PT aramak icin isim veya\ne-posta girin',
+                              'PT aramak için isim veya\ne-posta girin',
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                   color: theme.colorScheme.onSurfaceVariant),
@@ -170,7 +164,7 @@ class _FindPtScreenState extends ConsumerState<FindPtScreen> {
                     : _results.isEmpty
                         ? Center(
                             child: Text(
-                              '"${_searchCtrl.text.trim()}" icin sonuc bulunamadi',
+                              '"${_searchCtrl.text.trim()}" için sonuç bulunamadı',
                               style: TextStyle(
                                   color: theme.colorScheme.onSurfaceVariant),
                             ),
@@ -203,9 +197,10 @@ class _FindPtScreenState extends ConsumerState<FindPtScreen> {
                                               .colorScheme.onSurfaceVariant,
                                           fontSize: 12)),
                                   trailing: TextButton(
-                                    onPressed:
-                                        _linking ? null : () => _linkPt(pt),
-                                    child: const Text('Baglan'),
+                                    onPressed: _sending
+                                        ? null
+                                        : () => _sendRequest(pt),
+                                    child: const Text('İstek Gönder'),
                                   ),
                                 ),
                               );

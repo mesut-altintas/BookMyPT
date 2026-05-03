@@ -72,6 +72,43 @@ class _CalendarContent extends ConsumerWidget {
     required this.isSameDay,
   });
 
+  void _showAddOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.sports_gymnastics),
+              title: const Text('Randevu Talebi'),
+              subtitle: const Text('Eğitmeninizden randevu isteyin'),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                context.push(AppRoutes.booking);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.event_note_outlined),
+              title: const Text('Kişisel Etkinlik'),
+              subtitle: const Text('Antrenman, not veya hatırlatıcı ekleyin'),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => AddPersonalEventScreen(
+                    memberId: memberId,
+                    initialDate: selectedDay,
+                  ),
+                ));
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final personalEventsAsync =
@@ -98,13 +135,6 @@ class _CalendarContent extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Takvimim'),
-        actions: [
-          TextButton.icon(
-            onPressed: () => context.push(AppRoutes.booking),
-            icon: const Icon(Icons.event_available, size: 18),
-            label: const Text('Randevu'),
-          ),
-        ],
       ),
       body: Column(
         children: [
@@ -186,15 +216,8 @@ class _CalendarContent extends ConsumerWidget {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => AddPersonalEventScreen(
-              memberId: memberId,
-              initialDate: selectedDay,
-            ),
-          ),
-        ),
-        tooltip: 'Etkinlik Ekle',
+        onPressed: () => _showAddOptions(context),
+        tooltip: 'Ekle',
         child: const Icon(Icons.add),
       ),
     );

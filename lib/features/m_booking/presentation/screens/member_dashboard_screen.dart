@@ -7,6 +7,7 @@ import '../../../../core/router/app_router.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../../features/auth/providers/auth_provider.dart';
 import '../../../../features/m_calendar/providers/invitation_provider.dart';
+
 import '../../../../features/pt_calendar/providers/pt_calendar_provider.dart';
 import '../../../../features/m_progress/providers/progress_provider.dart';
 import '../../../../shared/models/progress_model.dart';
@@ -53,6 +54,7 @@ class _MemberDashboardContent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(membershipGuardProvider); // detects PT removal and clears ptId
     final sessionsAsync = ref.watch(memberUpcomingSessionsProvider(memberId));
     final progressAsync = ref.watch(latestProgressProvider(memberId));
     final pendingCount = ref.watch(pendingInvitationsCountProvider);
@@ -129,9 +131,12 @@ class _MemberDashboardContent extends ConsumerWidget {
               padding: const EdgeInsets.all(16),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
-                  // PT Bul card — only when no PT assigned
+                  // PT card or Find-PT banner
                   if (ptId == null || ptId!.isEmpty) ...[
                     _FindPtBanner(),
+                    const SizedBox(height: 16),
+                  ] else ...[
+                    _PtInfoCard(ptId: ptId!),
                     const SizedBox(height: 16),
                   ],
 
@@ -194,6 +199,64 @@ class _MemberDashboardContent extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _PtInfoCard extends ConsumerWidget {
+  final String ptId;
+  const _PtInfoCard({required this.ptId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ptAsync = ref.watch(ptUserProvider(ptId));
+    final theme = Theme.of(context);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primaryContainer,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: ptAsync.when(
+        loading: () => const SizedBox(height: 40, child: AppLoading(size: 24)),
+        error: (_, __) => Text('Eğitmen yüklenemedi',
+            style: TextStyle(color: theme.colorScheme.onPrimaryContainer)),
+        data: (pt) {
+          if (pt == null) {
+            return Text('Eğitmen bilgisi bulunamadi',
+                style: TextStyle(color: theme.colorScheme.onPrimaryContainer));
+          }
+          return Row(
+            children: [
+              UserAvatar(photoUrl: pt.photoUrl, name: pt.name, radius: 24),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Eğitmeniniz',
+                        style: TextStyle(
+                            fontSize: 11,
+                            color: theme.colorScheme.onPrimaryContainer
+                                .withOpacity(0.7))),
+                    Text(pt.name,
+                        style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: theme.colorScheme.onPrimaryContainer)),
+                    Text(pt.email,
+                        style: TextStyle(
+                            fontSize: 11,
+                            color: theme.colorScheme.onPrimaryContainer
+                                .withOpacity(0.7))),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

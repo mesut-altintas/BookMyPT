@@ -1,11 +1,16 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 import '../../../../core/utils/extensions.dart';
 import '../../../../features/auth/providers/auth_provider.dart';
+import '../../../../features/m_calendar/providers/invitation_provider.dart';
+import '../../../../features/m_calendar/providers/personal_event_provider.dart';
 import '../../../../features/pt_calendar/providers/pt_calendar_provider.dart';
+import '../../../../features/pt_members/providers/pt_members_provider.dart';
+import '../../../../shared/models/personal_event_model.dart';
 import '../../../../shared/models/session_model.dart';
 import '../../../../shared/widgets/app_loading.dart';
 import '../../../../shared/widgets/app_empty.dart';
@@ -32,19 +37,16 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
       error: (e, _) => Scaffold(body: Center(child: Text(e.toString()))),
       data: (user) {
         if (user == null) return const Scaffold(body: AppLoading());
-        return _buildContent(context, user.uid, user.name);
+        return _buildContent(context, user.uid, user.name, user.ptId);
       },
     );
   }
 
-  Widget _buildContent(BuildContext context, String memberId, String memberName) {
+  Widget _buildContent(BuildContext context, String memberId, String memberName, String? userPtId) {
     final sessionsAsync = ref.watch(memberSessionsProvider(memberId));
-
-    // Derive PT id from member's own sessions (empty string if none yet)
-    final ptId = sessionsAsync.valueOrNull?.isNotEmpty == true
-        ? sessionsAsync.valueOrNull!.first.ptId
-        : '';
+    final ptId = userPtId ?? '';
     final ptSessionsAsync = ref.watch(ptSessionsProvider(ptId));
+    final personalEventsAsync = ref.watch(memberPersonalEventsProvider(memberId));
 
     return Scaffold(
       appBar: AppBar(title: const Text('Randevularım')),
@@ -52,10 +54,10 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
         loading: () => const AppLoading(),
         error: (e, _) => Center(child: Text(e.toString())),
         data: (sessions) {
-          // PT's other members' sessions — shown as busy/blocked slots
           final ptBusy = (ptSessionsAsync.valueOrNull ?? [])
               .where((s) => s.memberId != memberId && s.status != SessionStatus.cancelled)
               .toList();
+          final personalEvents = personalEventsAsync.valueOrNull ?? [];
 
           final ownByDay = <DateTime, List<SessionModel>>{};
           for (final s in sessions) {
@@ -67,16 +69,30 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
             final key = DateTime(s.dateTime.year, s.dateTime.month, s.dateTime.day);
             ptByDay.putIfAbsent(key, () => []).add(s);
           }
+          final personalByDay = <DateTime, List<PersonalEventModel>>{};
+          for (final e in personalEvents) {
+            final key = DateTime(e.dateTime.year, e.dateTime.month, e.dateTime.day);
+            personalByDay.putIfAbsent(key, () => []).add(e);
+          }
 
           final selDay = DateTime(_selectedDay.year, _selectedDay.month, _selectedDay.day);
           final selectedOwn = ownByDay[selDay] ?? [];
           final selectedPt = ptByDay[selDay] ?? [];
-          final allSelected = [...selectedOwn, ...selectedPt]
-            ..sort((a, b) => a.dateTime.compareTo(b.dateTime));
+          final selectedPersonal = personalByDay[selDay] ?? [];
+
+          // Merge all items sorted by time; use Object to hold both types
+          final allSelected = <Object>[
+            ...selectedOwn,
+            ...selectedPt,
+            ...selectedPersonal,
+          ]..sort((a, b) {
+              DateTime timeOf(Object o) => o is SessionModel ? o.dateTime : (o as PersonalEventModel).dateTime;
+              return timeOf(a).compareTo(timeOf(b));
+            });
 
           return Column(
             children: [
-              TableCalendar<SessionModel>(
+              TableCalendar<Object>(
                 locale: 'tr_TR',
                 firstDay: DateTime.now().subtract(const Duration(days: 365)),
                 lastDay: DateTime.now().add(const Duration(days: 365)),
@@ -86,7 +102,11 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                 onFormatChanged: (f) => setState(() => _calendarFormat = f),
                 eventLoader: (day) {
                   final key = DateTime(day.year, day.month, day.day);
-                  return [...(ownByDay[key] ?? []), ...(ptByDay[key] ?? [])];
+                  return [
+                    ...(ownByDay[key] ?? []),
+                    ...(ptByDay[key] ?? []),
+                    ...(personalByDay[key] ?? []),
+                  ];
                 },
                 onDaySelected: (selected, focused) {
                   setState(() {
@@ -99,7 +119,8 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                     final key = DateTime(day.year, day.month, day.day);
                     final hasOwn = (ownByDay[key] ?? []).isNotEmpty;
                     final hasPt = (ptByDay[key] ?? []).isNotEmpty;
-                    if (!hasOwn && !hasPt) return null;
+                    final hasPersonal = (personalByDay[key] ?? []).isNotEmpty;
+                    if (!hasOwn && !hasPt && !hasPersonal) return null;
                     return Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -109,6 +130,15 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                             margin: const EdgeInsets.only(top: 4, right: 1),
                             decoration: BoxDecoration(
                               color: Theme.of(context).colorScheme.primary,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        if (hasPersonal)
+                          Container(
+                            width: 6, height: 6,
+                            margin: const EdgeInsets.only(top: 4, right: 1),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.secondary,
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -165,7 +195,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                         icon: Icons.event_available_outlined,
                         action: TextButton.icon(
                           onPressed: () => _openSheet(
-                              context, memberId, memberName, sessions),
+                              context, ref, memberId, memberName, ptId, sessions),
                           icon: const Icon(Icons.add),
                           label: const Text('Randevu Talep Et'),
                         ),
@@ -175,7 +205,11 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                         itemCount: allSelected.length,
                         separatorBuilder: (_, __) => const SizedBox(height: 8),
                         itemBuilder: (_, i) {
-                          final s = allSelected[i];
+                          final item = allSelected[i];
+                          if (item is PersonalEventModel) {
+                            return _PersonalEventCard(event: item);
+                          }
+                          final s = item as SessionModel;
                           return s.memberId == memberId
                               ? _SessionCard(session: s)
                               : _PtBusyCard(session: s);
@@ -191,25 +225,91 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
           final user = ref.read(currentUserProvider).valueOrNull;
           final sessions =
               ref.read(memberSessionsProvider(memberId)).valueOrNull ?? [];
-          _openSheet(context, memberId, user?.name ?? '', sessions);
+          _openSheet(context, ref, memberId, user?.name ?? '', user?.ptId ?? '', sessions);
         },
         child: const Icon(Icons.add),
       ),
     );
   }
 
-  void _openSheet(BuildContext context, String memberId, String memberName,
-      List<SessionModel> existingSessions) {
+  Future<void> _openSheet(BuildContext context, WidgetRef ref, String memberId,
+      String memberName, String ptId, List<SessionModel> existingSessions) async {
+    // Check active status if member has a PT
+    if (ptId.isNotEmpty) {
+      final memberDetail = ref
+          .read(ptMemberDetailProvider((ptId: ptId, memberId: memberId)))
+          .valueOrNull;
+      if (memberDetail != null && !memberDetail.isActive) {
+        if (!context.mounted) return;
+        await _showPassiveDialog(context, ref, ptId, memberId, memberName);
+        return;
+      }
+    }
+    if (!context.mounted) return;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       builder: (_) => _RequestSessionSheet(
         memberId: memberId,
         memberName: memberName,
+        ptId: ptId,
         initialDate: _selectedDay,
         existingSessions: existingSessions,
       ),
     );
+  }
+
+  Future<void> _showPassiveDialog(BuildContext context, WidgetRef ref,
+      String ptId, String memberId, String memberName) async {
+    final send = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Pasif Üye'),
+        content: const Text(
+            'Randevu alabilmek için aktif olmanız gerekiyor. Eğitmeninize aktivasyon isteği göndermek ister misiniz?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('İptal'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('İstek Gönder'),
+          ),
+        ],
+      ),
+    );
+    if (send != true || !context.mounted) return;
+    try {
+      // Get PT name
+      final ptDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(ptId)
+          .get();
+      final ptName = (ptDoc.data()?['name'] as String?) ?? '';
+      final user = ref.read(currentUserProvider).valueOrNull;
+      await ref.read(invitationRepositoryProvider).createActivationRequest(
+            ptId: ptId,
+            ptName: ptName,
+            memberId: memberId,
+            memberName: memberName,
+            memberEmail: user?.email ?? '',
+          );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Aktivasyon isteği gönderildi'),
+          behavior: SnackBarBehavior.floating,
+        ));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Hata: $e'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ));
+      }
+    }
   }
 }
 
@@ -303,15 +403,62 @@ class _PtBusyCard extends StatelessWidget {
   }
 }
 
+class _PersonalEventCard extends StatelessWidget {
+  final PersonalEventModel event;
+  const _PersonalEventCard({required this.event});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final dMin = event.durationMinutes;
+    final durStr = dMin < 60
+        ? '$dMin dk'
+        : '${dMin ~/ 60} sa${dMin % 60 != 0 ? ' ${dMin % 60} dk' : ''}';
+    return Card(
+      color: theme.colorScheme.secondaryContainer.withOpacity(0.4),
+      child: ListTile(
+        leading: Container(
+          width: 52,
+          height: 52,
+          decoration: BoxDecoration(
+            color: theme.colorScheme.secondaryContainer,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                DateFormat('HH:mm').format(event.dateTime),
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: theme.colorScheme.secondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+        title: Text(event.title,
+            style: const TextStyle(fontWeight: FontWeight.w600)),
+        subtitle: Text('$durStr • Kişisel etkinlik'),
+        trailing: Icon(Icons.fitness_center,
+            size: 18, color: theme.colorScheme.secondary),
+      ),
+    );
+  }
+}
+
 class _RequestSessionSheet extends StatefulWidget {
   final String memberId;
   final String memberName;
+  final String ptId;
   final DateTime initialDate;
   final List<SessionModel> existingSessions;
 
   const _RequestSessionSheet({
     required this.memberId,
     required this.memberName,
+    required this.ptId,
     required this.initialDate,
     required this.existingSessions,
   });
@@ -352,44 +499,11 @@ class _RequestSessionSheetState extends State<_RequestSessionSheet> {
   }
 
   Future<void> _findPt() async {
-    String? ptId;
-    bool needsUserDocUpdate = false;
+    final ptId = widget.ptId;
 
-    // First try: derive from existing sessions
-    if (widget.existingSessions.isNotEmpty) {
-      ptId = widget.existingSessions.first.ptId;
-      needsUserDocUpdate = true; // user doc may not have ptId yet
-    }
-
-    // Second try: read ptId from the member's own user document
-    if (ptId == null || ptId.isEmpty) {
-      try {
-        final userDoc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(widget.memberId)
-            .get();
-        final docPtId = userDoc.data()?['ptId'] as String?;
-        if (docPtId != null && docPtId.isNotEmpty) {
-          ptId = docPtId;
-          needsUserDocUpdate = false; // already in user doc
-        }
-      } catch (_) {}
-    }
-
-    if (ptId == null || ptId.isEmpty) {
+    if (ptId.isEmpty) {
       if (mounted) setState(() { _loadingPt = false; _needsPtLink = true; });
       return;
-    }
-
-    // Ensure user doc has ptId so the Firestore security rule
-    // (which does get(userDoc).ptId) permits reading PT's sessions.
-    if (needsUserDocUpdate) {
-      try {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(widget.memberId)
-            .update({'ptId': ptId});
-      } catch (_) {}
     }
 
     String ptName = '';
@@ -418,7 +532,7 @@ class _RequestSessionSheetState extends State<_RequestSessionSheet> {
 
     if (mounted) {
       setState(() {
-        _ptId = ptId!;
+        _ptId = ptId;
         _ptName = ptName;
         _ptSessions = ptSessions;
         _loadingPt = false;

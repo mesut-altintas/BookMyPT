@@ -121,6 +121,10 @@ class _PackageTile extends ConsumerWidget {
         ),
         trailing: PopupMenuButton(
           itemBuilder: (_) => [
+            const PopupMenuItem(
+              value: 'edit',
+              child: Text('Düzenle'),
+            ),
             PopupMenuItem(
               value: 'toggle',
               child: Text(package.isActive ? 'Pasife Al' : 'Aktive Et'),
@@ -132,7 +136,14 @@ class _PackageTile extends ConsumerWidget {
           ],
           onSelected: (value) async {
             final messenger = ScaffoldMessenger.of(context);
-            if (value == 'toggle') {
+            if (value == 'edit') {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                builder: (_) =>
+                    _EditPackageSheet(ptId: ptId, package: package, ref: ref),
+              );
+            } else if (value == 'toggle') {
               await repo.updatePackage(
                   ptId, package.id, {'isActive': !package.isActive});
             } else if (value == 'delete') {
@@ -176,6 +187,160 @@ class _PackageTile extends ConsumerWidget {
               }
             }
           },
+        ),
+      ),
+    );
+  }
+}
+
+class _EditPackageSheet extends ConsumerStatefulWidget {
+  final String ptId;
+  final PackageModel package;
+  final WidgetRef ref;
+
+  const _EditPackageSheet(
+      {required this.ptId, required this.package, required this.ref});
+
+  @override
+  ConsumerState<_EditPackageSheet> createState() => _EditPackageSheetState();
+}
+
+class _EditPackageSheetState extends ConsumerState<_EditPackageSheet> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _nameCtrl;
+  late final TextEditingController _priceCtrl;
+  late final TextEditingController _descCtrl;
+  late int _sessionCount;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameCtrl = TextEditingController(text: widget.package.name);
+    _priceCtrl =
+        TextEditingController(text: widget.package.price.toStringAsFixed(0));
+    _descCtrl = TextEditingController(text: widget.package.description ?? '');
+    _sessionCount = widget.package.sessionCount;
+  }
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _priceCtrl.dispose();
+    _descCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _isLoading = true);
+    try {
+      await ref.read(earningsRepositoryProvider).updatePackage(
+        widget.ptId,
+        widget.package.id,
+        {
+          'name': _nameCtrl.text.trim(),
+          'sessionCount': _sessionCount,
+          'price': double.parse(_priceCtrl.text.trim()),
+          'description':
+              _descCtrl.text.isEmpty ? null : _descCtrl.text.trim(),
+        },
+      );
+      if (mounted) Navigator.pop(context);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 24,
+        right: 24,
+        top: 24,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+      ),
+      child: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text(
+                    'Paketi Düzenle',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _nameCtrl,
+                validator: (v) => Validators.required(v, 'Paket adı'),
+                decoration: const InputDecoration(labelText: 'Paket Adı'),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  const Text('Seans Sayısı:',
+                      style: TextStyle(fontWeight: FontWeight.w500)),
+                  const Spacer(),
+                  ...([5, 10, 15, 20, 25]).map(
+                    (c) => Padding(
+                      padding: const EdgeInsets.only(left: 4),
+                      child: ChoiceChip(
+                        label: Text('$c'),
+                        selected: _sessionCount == c,
+                        onSelected: (_) =>
+                            setState(() => _sessionCount = c),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _priceCtrl,
+                keyboardType: TextInputType.number,
+                validator: Validators.positiveNumber,
+                decoration: const InputDecoration(
+                  labelText: 'Fiyat (TRY)',
+                  prefixText: '₺ ',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _descCtrl,
+                maxLines: 2,
+                decoration: const InputDecoration(
+                  labelText: 'Açıklama (İsteğe bağlı)',
+                  alignLabelWithHint: true,
+                ),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: _isLoading ? null : _save,
+                child: _isLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Kaydet'),
+              ),
+            ],
+          ),
         ),
       ),
     );

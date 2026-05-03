@@ -21,13 +21,22 @@ final ptUserProvider = StreamProvider.family<UserModel?, String>((ref, ptId) {
 });
 
 final currentUserProvider = StreamProvider<UserModel?>((ref) {
-  final user = ref.watch(authStateProvider).valueOrNull;
-  if (user == null) return Stream.value(null);
+  final authUser = ref.watch(authStateProvider).valueOrNull;
+  if (authUser == null) return Stream.value(null);
   return FirebaseFirestore.instance
       .collection(AppConstants.usersCollection)
-      .doc(user.uid)
+      .doc(authUser.uid)
       .snapshots()
-      .map((doc) => doc.exists ? UserModel.fromFirestore(doc) : null)
+      .map((doc) {
+        if (!doc.exists) return null;
+        final model = UserModel.fromFirestore(doc);
+        if (model.name.isNotEmpty) return model;
+        // Fallback chain: Firebase Auth displayName → email prefix
+        final fallback = (authUser.displayName?.isNotEmpty == true)
+            ? authUser.displayName!
+            : (authUser.email?.split('@').first ?? '');
+        return model.copyWith(name: fallback);
+      })
       .handleError((_) => null);
 });
 
@@ -121,37 +130,40 @@ class AuthRepository {
     required String? ptId,
     required String url,
   }) async {
+    // Core update — must succeed
     await _firestore
         .collection(AppConstants.usersCollection)
         .doc(uid)
         .update({'photoUrl': url});
+    await _auth.currentUser?.updatePhotoURL(url);
 
-    if (ptId != null && ptId.isNotEmpty) {
-      await _firestore
-          .collection(AppConstants.ptsCollection)
-          .doc(ptId)
-          .collection(AppConstants.membersSubCollection)
-          .doc(uid)
-          .update({'photoUrl': url});
-    }
+    // Best-effort secondary updates — don't fail the whole operation
+    try {
+      if (ptId != null && ptId.isNotEmpty) {
+        await _firestore
+            .collection(AppConstants.ptsCollection)
+            .doc(ptId)
+            .collection(AppConstants.membersSubCollection)
+            .doc(uid)
+            .update({'photoUrl': url});
+      }
 
-    final chatSnaps = await Future.wait([
-      _firestore
-          .collection(AppConstants.chatsCollection)
-          .where('ptId', isEqualTo: uid)
-          .get(),
-      _firestore
-          .collection(AppConstants.chatsCollection)
-          .where('memberId', isEqualTo: uid)
-          .get(),
-    ]);
+      final chatSnaps = await Future.wait([
+        _firestore
+            .collection(AppConstants.chatsCollection)
+            .where('ptId', isEqualTo: uid)
+            .get(),
+        _firestore
+            .collection(AppConstants.chatsCollection)
+            .where('memberId', isEqualTo: uid)
+            .get(),
+      ]);
 
-    await Future.wait([
-      ...chatSnaps[0].docs.map((d) => d.reference.update({'ptPhotoUrl': url})),
-      ...chatSnaps[1]
-          .docs
-          .map((d) => d.reference.update({'memberPhotoUrl': url})),
-    ]);
+      await Future.wait([
+        ...chatSnaps[0].docs.map((d) => d.reference.update({'ptPhotoUrl': url})),
+        ...chatSnaps[1].docs.map((d) => d.reference.update({'memberPhotoUrl': url})),
+      ]);
+    } catch (_) {}
   }
 }
 
@@ -238,3 +250,29 @@ final authNotifierProvider =
     StateNotifierProvider<AuthNotifier, AsyncValue<void>>(
   (ref) => AuthNotifier(ref.read(authRepositoryProvider)),
 );
+
+// Watches the member's slot in the PT's subcollection.
+// If the PT removes the member, this clears the member's own ptId.
+final membershipGuardProvider = StreamProvider.autoDispose<void>((ref) {
+  final user = ref.watch(currentUserProvider).valueOrNull;
+  if (user == null || !user.isMember) return Stream.value(null);
+  final ptId = user.ptId;
+  if (ptId == null || ptId.isEmpty) return Stream.value(null);
+
+  return FirebaseFirestore.instance
+      .collection(AppConstants.ptsCollection)
+      .doc(ptId)
+      .collection(AppConstants.membersSubCollection)
+      .doc(user.uid)
+      .snapshots()
+      .asyncMap((snap) async {
+        if (!snap.exists) {
+          try {
+            await FirebaseFirestore.instance
+                .collection(AppConstants.usersCollection)
+                .doc(user.uid)
+                .update({'ptId': ''});
+          } catch (_) {}
+        }
+      });
+});

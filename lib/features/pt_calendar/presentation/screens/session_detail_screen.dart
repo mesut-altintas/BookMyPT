@@ -10,6 +10,7 @@ import '../../../../shared/widgets/app_loading.dart';
 import '../../../../shared/widgets/app_error.dart';
 import '../../../../shared/widgets/status_badge.dart';
 import '../../../pt_calendar/providers/pt_calendar_provider.dart';
+import '../../../pt_members/providers/pt_members_provider.dart';
 
 class SessionDetailScreen extends ConsumerWidget {
   final String sessionId;
@@ -209,6 +210,11 @@ class _SessionDetailContent extends ConsumerWidget {
                 onPressed: () async {
                   await repo.updateStatus(
                       session.id, SessionStatus.completed);
+                  await ref.read(memberRepositoryProvider).updateRemainingSessions(
+                        ptId: session.ptId,
+                        memberId: session.memberId,
+                        delta: -1,
+                      );
                 },
                 icon: const Icon(Icons.done_all),
                 label: const Text('Tamamlandı Olarak İşaretle'),

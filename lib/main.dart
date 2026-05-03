@@ -28,7 +28,8 @@ void main() async {
   // carrying over across user sessions (logout → login permission-denied bug).
   FirebaseFirestore.instance.settings = const Settings(persistenceEnabled: false);
 
-  await NotificationService().initialize();
+  // Fire-and-forget — permission dialog must not block runApp
+  NotificationService().initialize().catchError((_) {});
 
   // Set preferred orientations
   await SystemChrome.setPreferredOrientations([

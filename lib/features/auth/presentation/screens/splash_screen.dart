@@ -38,31 +38,42 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     await Future.delayed(const Duration(milliseconds: 2000));
     if (!mounted) return;
 
-    final authState = ref.read(authStateProvider);
-    final user = authState.valueOrNull;
-    if (user == null) {
-      context.go(AppRoutes.login);
-      return;
-    }
-
-    // Firestore profili yüklenene kadar bekle (max 5s)
-    for (var i = 0; i < 50; i++) {
+    try {
+      // 1) authStateProvider resolve olana kadar bekle (max 5s)
+      for (var i = 0; i < 50; i++) {
+        if (!mounted) return;
+        if (!ref.read(authStateProvider).isLoading) break;
+        await Future.delayed(const Duration(milliseconds: 100));
+      }
       if (!mounted) return;
-      if (!ref.read(currentUserProvider).isLoading) break;
-      await Future.delayed(const Duration(milliseconds: 100));
-    }
-    if (!mounted) return;
 
-    final userModel = ref.read(currentUserProvider).valueOrNull;
-    if (userModel == null) {
-      // Giriş yapılmış ama profil yok → rol seçimine gönder
-      context.go(AppRoutes.roleSelection, extra: user.uid);
-      return;
-    }
-    if (userModel.role == AppConstants.roleTrainer) {
-      context.go(AppRoutes.ptDashboard);
-    } else {
-      context.go(AppRoutes.memberDashboard);
+      final user = ref.read(authStateProvider).valueOrNull;
+      if (user == null) {
+        context.go(AppRoutes.login);
+        return;
+      }
+
+      // 2) Firestore profili yüklenene kadar bekle (max 5s)
+      for (var i = 0; i < 50; i++) {
+        if (!mounted) return;
+        if (!ref.read(currentUserProvider).isLoading) break;
+        await Future.delayed(const Duration(milliseconds: 100));
+      }
+      if (!mounted) return;
+
+      final userModel = ref.read(currentUserProvider).valueOrNull;
+      if (userModel == null) {
+        // Giriş yapılmış ama profil yok → rol seçimine gönder
+        context.go(AppRoutes.roleSelection, extra: user.uid);
+        return;
+      }
+      if (userModel.role == AppConstants.roleTrainer) {
+        context.go(AppRoutes.ptDashboard);
+      } else {
+        context.go(AppRoutes.memberDashboard);
+      }
+    } catch (_) {
+      if (mounted) context.go(AppRoutes.login);
     }
   }
 
@@ -99,7 +110,18 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                     color: colorScheme.primary,
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 12),
+                Text(
+                  'Powered By',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    fontStyle: FontStyle.italic,
+                    color: Colors.white.withOpacity(0.75),
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 16),
                 Text(
                   AppConstants.appName,
                   style: Theme.of(context).textTheme.headlineLarge?.copyWith(

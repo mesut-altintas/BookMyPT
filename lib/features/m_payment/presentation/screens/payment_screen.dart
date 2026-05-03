@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
-import '../../../../core/router/app_router.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../../features/auth/providers/auth_provider.dart';
+import '../../../../features/pt_members/providers/pt_members_provider.dart';
 import '../../../../shared/models/payment_model.dart';
 import '../../../../shared/widgets/app_loading.dart';
 import '../../../../shared/widgets/app_empty.dart';
@@ -29,65 +29,295 @@ class PaymentScreen extends ConsumerWidget {
   }
 }
 
-class _PaymentContent extends StatelessWidget {
+class _PaymentContent extends ConsumerWidget {
   final String memberId;
   final String? ptId;
 
   const _PaymentContent({required this.memberId, this.ptId});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final hasPt = ptId != null && ptId!.isNotEmpty;
+    final memberDetailAsync = hasPt
+        ? ref.watch(ptMemberDetailProvider((ptId: ptId!, memberId: memberId)))
+        : const AsyncValue<dynamic>.data(null);
+    final paymentsAsync = ref.watch(memberPaymentsProvider(memberId));
+    final packagesAsync = hasPt
+        ? ref.watch(ptPackagesProvider(ptId!))
+        : const AsyncValue<List<PackageModel>>.data([]);
+
+    final remainingSessions =
+        (memberDetailAsync.valueOrNull?.remainingSessions as int?) ?? 0;
+    final payments = paymentsAsync.valueOrNull ?? [];
+    final packages = packagesAsync.valueOrNull ?? [];
+
+    final pendingPayments =
+        payments.where((p) => p.status == PaymentStatus.pending).toList();
+    final recentPayments = payments
+        .where((p) => p.status != PaymentStatus.pending)
+        .take(5)
+        .toList();
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Paketlerim'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.history),
-            onPressed: () => context.push(AppRoutes.paymentHistory),
-          ),
-        ],
-      ),
-      body: (ptId == null || ptId!.isEmpty)
-          ? const AppEmpty(
-              message: 'PT atanmamış',
-              subMessage:
-                  'PT\'niz sizi sisteme ekledikten sonra paketleri görebilirsiniz',
-              icon: Icons.person_off_outlined,
-            )
-          : _PackageList(memberId: memberId, ptId: ptId!),
+      appBar: AppBar(title: const Text('Paketlerim')),
+      body: memberDetailAsync.isLoading
+          ? const AppLoading()
+          : CustomScrollView(
+              slivers: [
+                // ── Section 1: Seans Durumu ──────────────────────────────
+                SliverToBoxAdapter(
+                  child: _SessionStatusCard(
+                    remainingSessions: remainingSessions,
+                    hasPt: hasPt,
+                  ),
+                ),
+
+                // Bekleyen ödemeler
+                if (pendingPayments.isNotEmpty) ...[
+                  _SectionHeader(
+                    title: 'Onay Bekliyor',
+                    icon: Icons.hourglass_top_outlined,
+                    color: Colors.orange,
+                  ),
+                  SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (_, i) => Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                        child: _PaymentCard(payment: pendingPayments[i]),
+                      ),
+                      childCount: pendingPayments.length,
+                    ),
+                  ),
+                ],
+
+                // Son işlemler
+                if (recentPayments.isNotEmpty) ...[
+                  _SectionHeader(
+                    title: 'Son İşlemler',
+                    icon: Icons.history,
+                  ),
+                  SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (_, i) => Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                        child: _PaymentCard(payment: recentPayments[i]),
+                      ),
+                      childCount: recentPayments.length,
+                    ),
+                  ),
+                ],
+
+                // ── Section 2: Paket Satın Al ────────────────────────────
+                if (!hasPt)
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: payments.isEmpty
+                        ? const AppEmpty(
+                            message: 'PT atanmamış',
+                            subMessage:
+                                'PT\'niz sizi sisteme ekledikten sonra paketleri görebilirsiniz',
+                            icon: Icons.person_off_outlined,
+                          )
+                        : const SizedBox.shrink(),
+                  )
+                else if (packagesAsync.isLoading)
+                  const SliverToBoxAdapter(child: AppLoading())
+                else if (packages.isEmpty)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: _SectionHeader(
+                        title: 'Paket Satın Al',
+                        icon: Icons.inventory_2_outlined,
+                      ),
+                    ),
+                  )
+                else ...[
+                  _SectionHeader(
+                    title: 'Paket Satın Al',
+                    icon: Icons.inventory_2_outlined,
+                  ),
+                  SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (_, i) => Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                        child: _PackageCard(
+                            package: packages[i], memberId: memberId),
+                      ),
+                      childCount: packages.length,
+                    ),
+                  ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                ],
+              ],
+            ),
     );
   }
 }
 
-class _PackageList extends ConsumerWidget {
-  final String memberId;
-  final String ptId;
+class _SessionStatusCard extends StatelessWidget {
+  final int remainingSessions;
+  final bool hasPt;
 
-  const _PackageList({required this.memberId, required this.ptId});
+  const _SessionStatusCard(
+      {required this.remainingSessions, required this.hasPt});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final packagesAsync = ref.watch(ptPackagesProvider(ptId));
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final color = remainingSessions > 0
+        ? theme.colorScheme.primary
+        : theme.colorScheme.error;
 
-    return packagesAsync.when(
-      loading: () => const AppLoading(),
-      error: (e, _) => Center(child: Text(e.toString())),
-      data: (packages) {
-        if (packages.isEmpty) {
-          return const AppEmpty(
-            message: 'Henüz paket tanımlanmamış',
-            subMessage: 'PT\'niz paket oluşturduğunda burada görünür',
-            icon: Icons.inventory_2_outlined,
-          );
-        }
-        return ListView.separated(
-          padding: const EdgeInsets.all(16),
-          itemCount: packages.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 12),
-          itemBuilder: (_, i) =>
-              _PackageCard(package: packages[i], memberId: memberId),
-        );
-      },
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Card(
+        color: color.withValues(alpha: 0.08),
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: color.withValues(alpha: 0.25)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Row(
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.fitness_center, color: color, size: 28),
+              ),
+              const SizedBox(width: 16),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '$remainingSessions',
+                    style: TextStyle(
+                      fontSize: 40,
+                      fontWeight: FontWeight.w800,
+                      color: color,
+                      height: 1,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'kalan seans hakkı',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  if (!hasPt)
+                    Text(
+                      'PT atanmamış',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.error,
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  final IconData? icon;
+  final Color? color;
+
+  const _SectionHeader({required this.title, this.icon, this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final c = color ?? theme.colorScheme.onSurfaceVariant;
+
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+        child: Row(
+          children: [
+            if (icon != null) ...[
+              Icon(icon, size: 16, color: c),
+              const SizedBox(width: 6),
+            ],
+            Text(
+              title,
+              style: theme.textTheme.titleSmall?.copyWith(
+                color: c,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PaymentCard extends StatelessWidget {
+  final PaymentModel payment;
+  const _PaymentCard({required this.payment});
+
+  @override
+  Widget build(BuildContext context) {
+    final isPending = payment.status == PaymentStatus.pending;
+    final statusColor = isPending ? Colors.orange : Colors.green;
+
+    return Card(
+      child: ListTile(
+        leading: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: statusColor.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(
+            isPending ? Icons.hourglass_top : Icons.check_circle_outline,
+            color: statusColor,
+            size: 22,
+          ),
+        ),
+        title: Text(payment.packageName,
+            style: const TextStyle(fontWeight: FontWeight.w600)),
+        subtitle: Text(
+            '${payment.sessionCount} seans • ${DateFormat('d MMM y', 'tr').format(payment.createdAt)}'),
+        trailing: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              payment.amount.formattedCurrency,
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+            Container(
+              margin: const EdgeInsets.only(top: 2),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: statusColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                payment.status.label,
+                style: TextStyle(
+                    fontSize: 10,
+                    color: statusColor,
+                    fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -101,7 +331,6 @@ class _PackageCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -113,11 +342,11 @@ class _PackageCard extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.primaryContainer,
+                    color: Theme.of(context).colorScheme.primaryContainer,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(Icons.fitness_center,
-                      color: theme.colorScheme.primary, size: 22),
+                  child: Icon(Icons.inventory_2,
+                      color: Theme.of(context).colorScheme.primary, size: 22),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -137,7 +366,7 @@ class _PackageCard extends ConsumerWidget {
                   package.price.formattedCurrency,
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
-                    fontSize: 18,
+                    fontSize: 20,
                     color: theme.colorScheme.primary,
                   ),
                 ),
@@ -148,7 +377,8 @@ class _PackageCard extends ConsumerWidget {
               const SizedBox(height: 10),
               Text(package.description!,
                   style: TextStyle(
-                      color: theme.colorScheme.onSurfaceVariant, fontSize: 13)),
+                      color: theme.colorScheme.onSurfaceVariant,
+                      fontSize: 13)),
             ],
             const SizedBox(height: 14),
             SizedBox(

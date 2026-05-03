@@ -6,11 +6,13 @@ import 'package:fl_chart/fl_chart.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../../features/auth/providers/auth_provider.dart';
+import '../../../pt_members/providers/pt_members_provider.dart';
 import '../../../../shared/models/payment_model.dart';
 import '../../../../shared/widgets/app_loading.dart';
 import '../../../../shared/widgets/app_empty.dart';
 import '../../../../shared/widgets/status_badge.dart';
 import '../../../pt_earnings/providers/pt_earnings_provider.dart';
+import '../../../m_payment/providers/payment_provider.dart';
 
 class EarningsScreen extends ConsumerWidget {
   const EarningsScreen({super.key});
@@ -60,8 +62,15 @@ class _EarningsContent extends ConsumerWidget {
         error: (e, _) => Center(child: Text(e.toString())),
         data: (payments) {
           final total = _totalEarnings(payments);
+          final pendingPayments =
+              payments.where((p) => p.status == PaymentStatus.pending).toList();
           final completedPayments =
               payments.where((p) => p.status == PaymentStatus.completed).toList();
+          final otherPayments = payments
+              .where((p) =>
+                  p.status != PaymentStatus.pending &&
+                  p.status != PaymentStatus.completed)
+              .toList();
 
           return CustomScrollView(
             slivers: [
@@ -70,7 +79,6 @@ class _EarningsContent extends ConsumerWidget {
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     children: [
-                      // Total Card
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(24),
@@ -110,8 +118,7 @@ class _EarningsContent extends ConsumerWidget {
                                 ),
                                 const SizedBox(width: 8),
                                 _StatChip(
-                                  label:
-                                      '${payments.where((p) => p.status == PaymentStatus.pending).length} Bekleyen',
+                                  label: '${pendingPayments.length} Bekleyen',
                                   icon: Icons.schedule,
                                 ),
                               ],
@@ -119,33 +126,61 @@ class _EarningsContent extends ConsumerWidget {
                           ],
                         ),
                       ),
-
-                      // Monthly chart
-                      if (completedPayments.length > 1) ...[
+                      if (completedPayments
+                              .map((p) => p.createdAt.month)
+                              .toSet()
+                              .length >
+                          1) ...[
                         const SizedBox(height: 20),
                         _MonthlyChart(payments: completedPayments),
                       ],
-
-                      const SizedBox(height: 20),
-                      Row(
-                        children: [
-                          Text(
-                            'İşlem Geçmişi',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
-                      ),
                     ],
                   ),
                 ),
               ),
+
+              // ── Onay Bekleyen Ödemeler ────────────────────────────────
+              if (pendingPayments.isNotEmpty) ...[
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                    child: Row(
+                      children: [
+                        Icon(Icons.pending_actions,
+                            size: 16, color: Colors.orange),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Onay Bekleyen (${pendingPayments.length})',
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: Colors.orange,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (_, i) => _PendingPaymentCard(
+                        payment: pendingPayments[i],
+                        ptId: ptId,
+                      ),
+                      childCount: pendingPayments.length,
+                    ),
+                  ),
+                ),
+              ],
+
+              // ── İşlem Geçmişi ─────────────────────────────────────────
               if (payments.isEmpty)
                 SliverFillRemaining(
                   child: AppEmpty(
                     message: 'Henüz ödeme yok',
-                    subMessage: 'Üyeleriniz paket satın aldığında burada görünür',
+                    subMessage:
+                        'Üyeleriniz paket satın aldığında burada görünür',
                     icon: Icons.account_balance_wallet_outlined,
                     action: ElevatedButton.icon(
                       onPressed: () =>
@@ -155,19 +190,34 @@ class _EarningsContent extends ConsumerWidget {
                     ),
                   ),
                 )
-              else
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (_, i) {
-                        final p = payments[i];
-                        return _PaymentTile(payment: p);
-                      },
-                      childCount: payments.length,
+              else if (completedPayments.isNotEmpty ||
+                  otherPayments.isNotEmpty) ...[
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                    child: Text(
+                      'İşlem Geçmişi',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ),
                 ),
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (_, i) {
+                        final list = [...completedPayments, ...otherPayments];
+                        return _PaymentTile(payment: list[i]);
+                      },
+                      childCount:
+                          completedPayments.length + otherPayments.length,
+                    ),
+                  ),
+                ),
+              ],
             ],
           );
         },
@@ -273,6 +323,166 @@ class _MonthlyChart extends StatelessWidget {
               ),
               dotData: const FlDotData(show: false),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PendingPaymentCard extends ConsumerStatefulWidget {
+  final PaymentModel payment;
+  final String ptId;
+
+  const _PendingPaymentCard({required this.payment, required this.ptId});
+
+  @override
+  ConsumerState<_PendingPaymentCard> createState() =>
+      _PendingPaymentCardState();
+}
+
+class _PendingPaymentCardState extends ConsumerState<_PendingPaymentCard> {
+  bool _loading = false;
+
+  String _memberName() {
+    final memberAsync = ref.watch(
+      ptMemberDetailProvider((ptId: widget.ptId, memberId: widget.payment.memberId)),
+    );
+    return memberAsync.valueOrNull?.name ?? widget.payment.memberId;
+  }
+
+  Future<void> _respond(bool approve) async {
+    setState(() => _loading = true);
+    try {
+      final paymentRepo = ref.read(paymentRepositoryProvider);
+      if (approve) {
+        await paymentRepo.updatePaymentStatus(
+            widget.payment.id, PaymentStatus.completed, null);
+        await ref.read(memberRepositoryProvider).updateRemainingSessions(
+              ptId: widget.ptId,
+              memberId: widget.payment.memberId,
+              delta: widget.payment.sessionCount,
+            );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(
+                '${widget.payment.sessionCount} seans üyeye yüklendi'),
+            behavior: SnackBarBehavior.floating,
+          ));
+        }
+      } else {
+        await paymentRepo.updatePaymentStatus(
+            widget.payment.id, PaymentStatus.failed, null);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Ödeme talebi reddedildi'),
+            behavior: SnackBarBehavior.floating,
+          ));
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Hata: $e'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ));
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final p = widget.payment;
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.orange.withValues(alpha: 0.4)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.inventory_2,
+                      color: Colors.orange, size: 20),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(_memberName(),
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w700, fontSize: 15)),
+                      Text(
+                        p.packageName,
+                        style: TextStyle(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            fontSize: 13),
+                      ),
+                      Text(
+                        '${p.sessionCount} seans • ${p.amount.formattedCurrency}',
+                        style: TextStyle(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Text('Onay Bekliyor',
+                      style: TextStyle(
+                          color: Colors.orange,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _loading
+                ? const Center(child: CircularProgressIndicator())
+                : Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => _respond(false),
+                          style: OutlinedButton.styleFrom(
+                              foregroundColor: theme.colorScheme.error),
+                          child: const Text('Reddet'),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () => _respond(true),
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                              foregroundColor: Colors.white),
+                          child: const Text('Onayla'),
+                        ),
+                      ),
+                    ],
+                  ),
           ],
         ),
       ),

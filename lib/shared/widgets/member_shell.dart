@@ -28,7 +28,17 @@ class MemberShell extends ConsumerWidget {
 
     return Scaffold(
       body: child,
-      bottomNavigationBar: NavigationBar(
+      bottomNavigationBar: NavigationBarTheme(
+        data: NavigationBarThemeData(
+          labelTextStyle: WidgetStateProperty.all(
+            const TextStyle(fontSize: 9, fontWeight: FontWeight.w500),
+          ),
+          iconTheme: WidgetStateProperty.all(
+            const IconThemeData(size: 18),
+          ),
+          height: 60,
+        ),
+        child: NavigationBar(
         selectedIndex: selectedIndex,
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         onDestinationSelected: (index) {
@@ -62,38 +72,39 @@ class MemberShell extends ConsumerWidget {
                       style: const TextStyle(
                           color: Colors.white, fontSize: 10),
                     ),
-                    child: const Icon(Icons.home_outlined, size: 20),
+                    child: const Icon(Icons.home_outlined),
                   )
-                : const Icon(Icons.home_outlined, size: 20),
-            selectedIcon: const Icon(Icons.home, size: 20),
+                : const Icon(Icons.home_outlined),
+            selectedIcon: const Icon(Icons.home),
             label: 'Ana Sayfa',
           ),
           const NavigationDestination(
-            icon: Icon(Icons.calendar_month_outlined, size: 20),
-            selectedIcon: Icon(Icons.calendar_month, size: 20),
+            icon: Icon(Icons.calendar_month_outlined),
+            selectedIcon: Icon(Icons.calendar_month),
             label: 'Takvim',
           ),
           const NavigationDestination(
-            icon: Icon(Icons.fitness_center_outlined, size: 20),
-            selectedIcon: Icon(Icons.fitness_center, size: 20),
+            icon: Icon(Icons.fitness_center_outlined),
+            selectedIcon: Icon(Icons.fitness_center),
             label: 'Program',
           ),
           const NavigationDestination(
-            icon: Icon(Icons.trending_up_outlined, size: 20),
-            selectedIcon: Icon(Icons.trending_up, size: 20),
-            label: 'Ilerleme',
+            icon: Icon(Icons.trending_up_outlined),
+            selectedIcon: Icon(Icons.trending_up),
+            label: 'İlerleme',
           ),
           const NavigationDestination(
-            icon: Icon(Icons.inventory_2_outlined, size: 20),
-            selectedIcon: Icon(Icons.inventory_2, size: 20),
-            label: 'Paketlerim',
+            icon: Icon(Icons.inventory_2_outlined),
+            selectedIcon: Icon(Icons.inventory_2),
+            label: 'Paketler',
           ),
           const NavigationDestination(
-            icon: Icon(Icons.chat_outlined, size: 20),
-            selectedIcon: Icon(Icons.chat, size: 20),
+            icon: Icon(Icons.chat_outlined),
+            selectedIcon: Icon(Icons.chat),
             label: 'Mesaj',
           ),
         ],
+      ),
       ),
     );
   }

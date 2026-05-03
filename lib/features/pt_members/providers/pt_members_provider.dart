@@ -1,4 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_constants.dart';
@@ -49,20 +51,22 @@ class MemberRepository {
     required String ptId,
     required MemberProfile member,
   }) async {
+    final authUid = FirebaseAuth.instance.currentUser?.uid;
+    debugPrint('[addMember] ptId=$ptId memberId=${member.memberId} authUid=$authUid');
     await _firestore
         .collection(AppConstants.ptsCollection)
         .doc(ptId)
         .collection(AppConstants.membersSubCollection)
         .doc(member.memberId)
         .set(member.toFirestore());
-    // Best-effort: stamp ptId on the member's user doc so the member can find
-    // their PT without querying sessions. Silently ignored if rules not deployed.
     try {
       await _firestore
           .collection(AppConstants.usersCollection)
           .doc(member.memberId)
           .update({'ptId': ptId});
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[addMember] ptId update failed: $e');
+    }
   }
 
   Future<void> updateMember({
@@ -80,13 +84,25 @@ class MemberRepository {
   Future<void> removeMember({
     required String ptId,
     required String memberId,
-  }) =>
-      _firestore
-          .collection(AppConstants.ptsCollection)
-          .doc(ptId)
-          .collection(AppConstants.membersSubCollection)
+  }) async {
+    debugPrint('[removeMember] START ptId=$ptId memberId=$memberId');
+    await _firestore
+        .collection(AppConstants.ptsCollection)
+        .doc(ptId)
+        .collection(AppConstants.membersSubCollection)
+        .doc(memberId)
+        .delete();
+    debugPrint('[removeMember] subcollection deleted, clearing ptId');
+    try {
+      await _firestore
+          .collection(AppConstants.usersCollection)
           .doc(memberId)
-          .delete();
+          .update({'ptId': ''});
+      debugPrint('[removeMember] ptId cleared OK');
+    } catch (e) {
+      debugPrint('[removeMember] ptId clear FAILED: $e');
+    }
+  }
 
   Future<UserModel?> getUserByEmail(String email) async {
     final snap = await _firestore
