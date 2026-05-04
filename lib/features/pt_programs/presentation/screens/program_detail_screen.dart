@@ -82,6 +82,7 @@ class ProgramDetailScreen extends ConsumerWidget {
                     } else if (value == 'delete') {
                       final confirm = await showDialog<bool>(
                         context: context,
+                        useRootNavigator: false,
                         barrierDismissible: false,
                         builder: (dialogCtx) => AlertDialog(
                           title: const Text('Programı Sil'),

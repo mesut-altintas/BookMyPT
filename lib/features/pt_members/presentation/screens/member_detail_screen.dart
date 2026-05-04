@@ -156,6 +156,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen>
                       } else if (value == 'remove') {
                         final confirm = await showDialog<bool>(
                           context: context,
+                          useRootNavigator: false,
                           builder: (dialogCtx) => AlertDialog(
                             title: const Text('Üyeyi Sil'),
                             content: Text(

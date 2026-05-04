@@ -263,6 +263,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
       String ptId, String memberId, String memberName) async {
     final send = await showDialog<bool>(
       context: context,
+      useRootNavigator: false,
       builder: (ctx) => AlertDialog(
         title: const Text('Pasif Üye'),
         content: const Text(

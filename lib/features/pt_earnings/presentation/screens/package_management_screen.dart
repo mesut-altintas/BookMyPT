@@ -149,6 +149,7 @@ class _PackageTile extends ConsumerWidget {
             } else if (value == 'delete') {
               final confirm = await showDialog<bool>(
                 context: context,
+                useRootNavigator: false,
                 builder: (dialogContext) => AlertDialog(
                   title: const Text('Paketi Sil'),
                   content: const Text('Bu paketi silmek istiyor musunuz?'),

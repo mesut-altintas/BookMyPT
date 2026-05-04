@@ -60,16 +60,19 @@ class _SessionDetailContent extends ConsumerWidget {
               if (value == 'delete') {
                 final confirm = await showDialog<bool>(
                   context: context,
-                  builder: (_) => AlertDialog(
+                  useRootNavigator: false,
+                  builder: (dialogContext) => AlertDialog(
                     title: const Text('Seansı Sil'),
                     content: const Text('Bu seansı silmek istiyor musunuz?'),
                     actions: [
                       TextButton(
-                        onPressed: () => Navigator.pop(context, false),
+                        onPressed: () =>
+                            Navigator.pop(dialogContext, false),
                         child: const Text('İptal'),
                       ),
                       ElevatedButton(
-                        onPressed: () => Navigator.pop(context, true),
+                        onPressed: () =>
+                            Navigator.pop(dialogContext, true),
                         style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.red),
                         child: const Text('Sil'),
@@ -83,10 +86,19 @@ class _SessionDetailContent extends ConsumerWidget {
                     if (context.mounted) context.go(AppRoutes.ptCalendar);
                   } catch (e) {
                     if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        content: Text('Silme hatası: $e'),
-                        backgroundColor: Colors.red,
-                      ));
+                      showDialog(
+                        context: context,
+                        builder: (_) => AlertDialog(
+                          title: const Text('Silme Hatası'),
+                          content: Text(e.toString()),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('Tamam'),
+                            ),
+                          ],
+                        ),
+                      );
                     }
                   }
                 }
