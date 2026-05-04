@@ -78,15 +78,16 @@ class _SessionDetailContent extends ConsumerWidget {
                   ),
                 );
                 if (confirm == true && context.mounted) {
-                  final messenger = ScaffoldMessenger.of(context);
-                  context.go(AppRoutes.ptCalendar);
                   try {
                     await repo.deleteSession(session.id);
+                    if (context.mounted) context.go(AppRoutes.ptCalendar);
                   } catch (e) {
-                    messenger.showSnackBar(SnackBar(
-                      content: Text('Silme hatası: $e'),
-                      backgroundColor: Colors.red,
-                    ));
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        content: Text('Silme hatası: $e'),
+                        backgroundColor: Colors.red,
+                      ));
+                    }
                   }
                 }
               }

@@ -179,21 +179,22 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen>
                         );
                         if (confirm == true && mounted) {
                           final repo = ref.read(memberRepositoryProvider);
-                          final messenger = ScaffoldMessenger.of(context);
-                          context.pop();
                           try {
                             await repo.removeMember(
                               ptId: ptId,
                               memberId: widget.memberId,
                             );
+                            if (context.mounted) context.pop();
                           } catch (e) {
-                            messenger.showSnackBar(
-                              SnackBar(
-                                content: Text('Silme hatası: $e'),
-                                backgroundColor: Colors.red,
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Silme hatası: $e'),
+                                  backgroundColor: Colors.red,
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            }
                           }
                         }
                       }
