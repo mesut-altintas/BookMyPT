@@ -225,11 +225,14 @@ class _SessionDetailContent extends ConsumerWidget {
             if (session.status == SessionStatus.confirmed) ...[
               ElevatedButton.icon(
                 onPressed: () async {
+                  final memberRepo = ref.read(memberRepositoryProvider);
+                  final ptId = session.ptId;
+                  final memberId = session.memberId;
                   await repo.updateStatus(
                       session.id, SessionStatus.completed);
-                  await ref.read(memberRepositoryProvider).updateRemainingSessions(
-                        ptId: session.ptId,
-                        memberId: session.memberId,
+                  await memberRepo.updateRemainingSessions(
+                        ptId: ptId,
+                        memberId: memberId,
                         delta: -1,
                       );
                 },

@@ -353,20 +353,25 @@ class _PendingPaymentCardState extends ConsumerState<_PendingPaymentCard> {
 
   Future<void> _respond(bool approve) async {
     setState(() => _loading = true);
+    // Capture repos before any await — widget may be disposed by the
+    // Firestore stream update that fires when payment status changes.
+    final paymentRepo = ref.read(paymentRepositoryProvider);
+    final memberRepo = ref.read(memberRepositoryProvider);
+    final sessionCount = widget.payment.sessionCount;
+    final ptId = widget.ptId;
+    final memberId = widget.payment.memberId;
     try {
-      final paymentRepo = ref.read(paymentRepositoryProvider);
       if (approve) {
         await paymentRepo.updatePaymentStatus(
             widget.payment.id, PaymentStatus.completed, null);
-        await ref.read(memberRepositoryProvider).updateRemainingSessions(
-              ptId: widget.ptId,
-              memberId: widget.payment.memberId,
-              delta: widget.payment.sessionCount,
+        await memberRepo.updateRemainingSessions(
+              ptId: ptId,
+              memberId: memberId,
+              delta: sessionCount,
             );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(
-                '${widget.payment.sessionCount} seans üyeye yüklendi'),
+            content: Text('$sessionCount seans üyeye yüklendi'),
             behavior: SnackBarBehavior.floating,
           ));
         }
