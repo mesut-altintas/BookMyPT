@@ -26,6 +26,13 @@ class NotificationService {
     await _requestPermission();
     await _initLocalNotifications();
 
+    // iOS: show notification banner even when app is in foreground
+    await _messaging.setForegroundNotificationPresentationOptions(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
     // Foreground: show local notification
