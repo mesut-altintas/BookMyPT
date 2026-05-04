@@ -21,14 +21,19 @@ class SessionDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final sessionAsync = ref.watch(sessionDetailProvider(sessionId));
 
+    ref.listen(sessionDetailProvider(sessionId), (prev, next) {
+      final hadValue = prev?.hasValue == true && prev?.value != null;
+      final nowNull = next.hasValue && next.value == null;
+      if (hadValue && nowNull && context.mounted) {
+        context.go(AppRoutes.ptCalendar);
+      }
+    });
+
     return sessionAsync.when(
       loading: () => const Scaffold(body: AppLoading()),
       error: (e, _) => Scaffold(body: AppError(message: e.toString())),
       data: (session) {
-        if (session == null) {
-          return const Scaffold(
-              body: Center(child: Text('Seans bulunamadı')));
-        }
+        if (session == null) return const Scaffold(body: AppLoading());
         return _SessionDetailContent(session: session);
       },
     );
@@ -83,7 +88,6 @@ class _SessionDetailContent extends ConsumerWidget {
                 if (confirm == true && context.mounted) {
                   try {
                     await repo.deleteSession(session.id);
-                    if (context.mounted) context.go(AppRoutes.ptCalendar);
                   } catch (e) {
                     if (context.mounted) {
                       showDialog(
