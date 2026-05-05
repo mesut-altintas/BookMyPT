@@ -1,4 +1,4 @@
-const { onDocumentCreated, onDocumentUpdated } = require('firebase-functions/v2/firestore');
+const functions = require('firebase-functions/v1');
 const { initializeApp } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
 const { getMessaging } = require('firebase-admin/messaging');
@@ -17,44 +17,44 @@ async function sendNotification(token, title, body) {
   if (!token) return;
   try {
     await messaging.send({ token, notification: { title, body } });
+    console.log('Notification sent to', token.substring(0, 20) + '...');
   } catch (e) {
     console.error('FCM send error:', e.message);
   }
 }
 
-// Yeni seans oluşturulduğunda PT'ye bildirim gönder
-exports.onSessionCreated = onDocumentCreated('sessions/{sessionId}', async (event) => {
-  const session = event.data?.data();
-  if (!session) return;
+exports.sessionCreated = functions.firestore
+  .document('sessions/{sessionId}')
+  .onCreate(async (snap) => {
+    const session = snap.data();
+    if (!session) return;
 
-  const { ptId, memberName } = session;
-  const token = await getFcmToken(ptId);
-  await sendNotification(token, 'Yeni Randevu Talebi', `${memberName || 'Bir üye'} randevu talep etti`);
-});
+    const { ptId, memberName } = session;
+    const token = await getFcmToken(ptId);
+    await sendNotification(token, 'Yeni Randevu Talebi', `${memberName || 'Bir üye'} randevu talep etti`);
+  });
 
-// Seans durumu değiştiğinde ilgili tarafı bilgilendir
-exports.onSessionUpdated = onDocumentUpdated('sessions/{sessionId}', async (event) => {
-  const before = event.data?.before?.data();
-  const after = event.data?.after?.data();
-  if (!before || !after) return;
+exports.sessionUpdated = functions.firestore
+  .document('sessions/{sessionId}')
+  .onUpdate(async (change) => {
+    const before = change.before.data();
+    const after = change.after.data();
+    if (!before || !after) return;
 
-  const statusChanged = before.status !== after.status;
-  if (!statusChanged) return;
+    if (before.status === after.status) return;
 
-  const { memberId, ptId, memberName } = after;
+    const { memberId, ptId, memberName } = after;
 
-  if (after.status === 'confirmed' && before.status === 'pending') {
-    // Üyeye: randevu onaylandı
-    const token = await getFcmToken(memberId);
-    await sendNotification(token, 'Randevunuz Onaylandı', 'Eğitmeniniz randevunuzu onayladı');
-  } else if (after.status === 'cancelled') {
-    // Kim iptal etti belli değil, ikisini de bilgilendir
-    const memberToken = await getFcmToken(memberId);
-    const ptToken = await getFcmToken(ptId);
-    await sendNotification(memberToken, 'Randevu İptal Edildi', 'Bir randevunuz iptal edildi');
-    await sendNotification(ptToken, 'Randevu İptal Edildi', `${memberName || 'Üye'} randevusunu iptal etti`);
-  } else if (after.status === 'completed') {
-    const token = await getFcmToken(memberId);
-    await sendNotification(token, 'Seans Tamamlandı', 'Seansınız tamamlandı. Harika iş!');
-  }
-});
+    if (after.status === 'confirmed' && before.status === 'pending') {
+      const token = await getFcmToken(memberId);
+      await sendNotification(token, 'Randevunuz Onaylandı', 'Eğitmeniniz randevunuzu onayladı');
+    } else if (after.status === 'cancelled') {
+      const memberToken = await getFcmToken(memberId);
+      const ptToken = await getFcmToken(ptId);
+      await sendNotification(memberToken, 'Randevu İptal Edildi', 'Bir randevunuz iptal edildi');
+      await sendNotification(ptToken, 'Randevu İptal Edildi', `${memberName || 'Üye'} randevusunu iptal etti`);
+    } else if (after.status === 'completed') {
+      const token = await getFcmToken(memberId);
+      await sendNotification(token, 'Seans Tamamlandı', 'Seansınız tamamlandı. Harika iş!');
+    }
+  });
