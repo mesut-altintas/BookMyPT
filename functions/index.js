@@ -72,9 +72,10 @@ exports.sessionCreated = functions.firestore
     const session = snap.data();
     if (!session) return;
 
-    const { ptId, memberName } = session;
-    const token = await getFcmToken(ptId);
-    await sendNotification(token, 'Yeni Randevu Talebi', `${memberName || 'Bir üye'} randevu talep etti`);
+    const { ptId, memberId, memberName } = session;
+    const [ptToken, memberToken] = await Promise.all([getFcmToken(ptId), getFcmToken(memberId)]);
+    await sendNotification(ptToken, 'Yeni Randevu Talebi', `${memberName || 'Bir üye'} randevu talep etti`);
+    await sendNotification(memberToken, 'Randevu Talebiniz Alındı', 'Eğitmeniniz talebinizi inceleyecek');
   });
 
 exports.sessionUpdated = functions.firestore
