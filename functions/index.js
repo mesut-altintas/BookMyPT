@@ -8,9 +8,14 @@ initializeApp();
 const db = getFirestore();
 const messaging = getMessaging();
 
-async function getFcmToken(uid) {
+async function getUserData(uid) {
   const snap = await db.collection('users').doc(uid).get();
-  return snap.data()?.fcmToken ?? null;
+  return snap.data() ?? {};
+}
+
+async function getFcmToken(uid) {
+  const data = await getUserData(uid);
+  return data.fcmToken ?? null;
 }
 
 async function sendNotification(token, title, body) {
@@ -22,6 +27,44 @@ async function sendNotification(token, title, body) {
     console.error('FCM send error:', e.message);
   }
 }
+
+exports.paymentCreated = functions.firestore
+  .document('payments/{paymentId}')
+  .onCreate(async (snap) => {
+    const payment = snap.data();
+    if (!payment) return;
+
+    const { ptId, memberId, packageName, sessionCount } = payment;
+    const memberData = await getUserData(memberId);
+    const memberName = memberData.name || memberData.displayName || 'Bir üye';
+
+    const ptToken = await getFcmToken(ptId);
+    await sendNotification(
+      ptToken,
+      'Yeni Paket Satın Alındı',
+      `${memberName} "${packageName}" paketini (${sessionCount} seans) satın aldı`
+    );
+  });
+
+exports.paymentUpdated = functions.firestore
+  .document('payments/{paymentId}')
+  .onUpdate(async (change) => {
+    const before = change.before.data();
+    const after = change.after.data();
+    if (!before || !after) return;
+    if (before.status === after.status) return;
+
+    const { memberId, packageName, sessionCount } = after;
+
+    if (after.status === 'completed' && before.status === 'pending') {
+      const memberToken = await getFcmToken(memberId);
+      await sendNotification(
+        memberToken,
+        'Paketiniz Onaylandı',
+        `"${packageName}" paketi (${sessionCount} seans) onaylandı ve hesabınıza eklendi`
+      );
+    }
+  });
 
 exports.sessionCreated = functions.firestore
   .document('sessions/{sessionId}')
