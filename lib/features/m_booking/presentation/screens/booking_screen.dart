@@ -47,6 +47,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
     final ptId = userPtId ?? '';
     final ptSessionsAsync = ref.watch(ptSessionsProvider(ptId));
     final personalEventsAsync = ref.watch(memberPersonalEventsProvider(memberId));
+    final ptPersonalEventsAsync = ref.watch(memberPersonalEventsProvider(ptId));
 
     return Scaffold(
       appBar: AppBar(title: const Text('Randevularım')),
@@ -58,6 +59,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
               .where((s) => s.memberId != memberId && s.status != SessionStatus.cancelled)
               .toList();
           final personalEvents = personalEventsAsync.valueOrNull ?? [];
+          final ptPersonalEvents = ptPersonalEventsAsync.valueOrNull ?? [];
 
           final ownByDay = <DateTime, List<SessionModel>>{};
           for (final s in sessions) {
@@ -74,19 +76,29 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
             final key = DateTime(e.dateTime.year, e.dateTime.month, e.dateTime.day);
             personalByDay.putIfAbsent(key, () => []).add(e);
           }
+          final ptPersonalByDay = <DateTime, List<PersonalEventModel>>{};
+          for (final e in ptPersonalEvents) {
+            final key = DateTime(e.dateTime.year, e.dateTime.month, e.dateTime.day);
+            ptPersonalByDay.putIfAbsent(key, () => []).add(e);
+          }
 
           final selDay = DateTime(_selectedDay.year, _selectedDay.month, _selectedDay.day);
           final selectedOwn = ownByDay[selDay] ?? [];
           final selectedPt = ptByDay[selDay] ?? [];
           final selectedPersonal = personalByDay[selDay] ?? [];
+          final selectedPtPersonal = ptPersonalByDay[selDay] ?? [];
 
-          // Merge all items sorted by time; use Object to hold both types
           final allSelected = <Object>[
             ...selectedOwn,
             ...selectedPt,
+            ...selectedPtPersonal.map(_PtPersonalBusy.new),
             ...selectedPersonal,
           ]..sort((a, b) {
-              DateTime timeOf(Object o) => o is SessionModel ? o.dateTime : (o as PersonalEventModel).dateTime;
+              DateTime timeOf(Object o) {
+                if (o is SessionModel) return o.dateTime;
+                if (o is _PtPersonalBusy) return o.event.dateTime;
+                return (o as PersonalEventModel).dateTime;
+              }
               return timeOf(a).compareTo(timeOf(b));
             });
 
@@ -105,6 +117,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                   return [
                     ...(ownByDay[key] ?? []),
                     ...(ptByDay[key] ?? []),
+                    ...(ptPersonalByDay[key] ?? []),
                     ...(personalByDay[key] ?? []),
                   ];
                 },
@@ -118,7 +131,8 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                   markerBuilder: (context, day, _) {
                     final key = DateTime(day.year, day.month, day.day);
                     final hasOwn = (ownByDay[key] ?? []).isNotEmpty;
-                    final hasPt = (ptByDay[key] ?? []).isNotEmpty;
+                    final hasPt = (ptByDay[key] ?? []).isNotEmpty ||
+                        (ptPersonalByDay[key] ?? []).isNotEmpty;
                     final hasPersonal = (personalByDay[key] ?? []).isNotEmpty;
                     if (!hasOwn && !hasPt && !hasPersonal) return null;
                     return Row(
@@ -206,6 +220,9 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                         separatorBuilder: (_, __) => const SizedBox(height: 8),
                         itemBuilder: (_, i) {
                           final item = allSelected[i];
+                          if (item is _PtPersonalBusy) {
+                            return _PtBusyPersonalCard(event: item.event);
+                          }
                           if (item is PersonalEventModel) {
                             return _PersonalEventCard(event: item);
                           }
@@ -246,6 +263,8 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
       }
     }
     if (!context.mounted) return;
+    final ptPersonalEvents =
+        ref.read(memberPersonalEventsProvider(ptId)).valueOrNull ?? [];
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -255,6 +274,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
         ptId: ptId,
         initialDate: _selectedDay,
         existingSessions: existingSessions,
+        ptPersonalEvents: ptPersonalEvents,
       ),
     );
   }
@@ -312,6 +332,11 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
       }
     }
   }
+}
+
+class _PtPersonalBusy {
+  final PersonalEventModel event;
+  const _PtPersonalBusy(this.event);
 }
 
 class _SessionCard extends StatelessWidget {
@@ -404,6 +429,55 @@ class _PtBusyCard extends StatelessWidget {
   }
 }
 
+class _PtBusyPersonalCard extends StatelessWidget {
+  final PersonalEventModel event;
+  const _PtBusyPersonalCard({required this.event});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      child: ListTile(
+        leading: Container(
+          width: 52,
+          height: 52,
+          decoration: BoxDecoration(
+            color: Colors.grey.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                DateFormat('HH:mm').format(event.dateTime),
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
+        title: Text(
+          '● ● ●',
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            letterSpacing: 4,
+          ),
+        ),
+        subtitle: Text(
+          '${event.durationMinutes} dk — PT meşgul',
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+        ),
+        trailing: Icon(Icons.lock_outline,
+            size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant),
+      ),
+    );
+  }
+}
+
 class _PersonalEventCard extends StatelessWidget {
   final PersonalEventModel event;
   const _PersonalEventCard({required this.event});
@@ -455,6 +529,7 @@ class _RequestSessionSheet extends StatefulWidget {
   final String ptId;
   final DateTime initialDate;
   final List<SessionModel> existingSessions;
+  final List<PersonalEventModel> ptPersonalEvents;
 
   const _RequestSessionSheet({
     required this.memberId,
@@ -462,6 +537,7 @@ class _RequestSessionSheet extends StatefulWidget {
     required this.ptId,
     required this.initialDate,
     required this.existingSessions,
+    required this.ptPersonalEvents,
   });
 
   @override
@@ -609,13 +685,22 @@ class _RequestSessionSheetState extends State<_RequestSessionSheet> {
     return _selectedDateTime.isBefore(sEnd) && newEnd.isAfter(s.dateTime);
   }
 
+  bool _overlapsEvent(PersonalEventModel e) {
+    final eEnd = e.dateTime.add(Duration(minutes: e.durationMinutes));
+    final newEnd = _selectedDateTime.add(Duration(minutes: _duration));
+    return _selectedDateTime.isBefore(eEnd) && newEnd.isAfter(e.dateTime);
+  }
+
   bool get _memberConflict => widget.existingSessions
       .where((s) => s.status != SessionStatus.cancelled)
       .any(_overlaps);
 
   bool get _ptConflict => _ptSessions.any(_overlaps);
 
-  bool get _isConflict => _memberConflict || _ptConflict;
+  bool get _ptPersonalConflict =>
+      widget.ptPersonalEvents.any(_overlapsEvent);
+
+  bool get _isConflict => _memberConflict || _ptConflict || _ptPersonalConflict;
 
   Future<void> _pickDateTime() async {
     final pickedDate = await showDatePicker(
@@ -764,7 +849,7 @@ class _RequestSessionSheetState extends State<_RequestSessionSheet> {
                   prefixIcon: const Icon(Icons.access_time),
                   errorText: _memberConflict
                       ? 'Bu saatte zaten randevunuz var'
-                      : _ptConflict
+                      : (_ptConflict || _ptPersonalConflict)
                           ? 'PT bu saatte müsait değil'
                           : null,
                 ),

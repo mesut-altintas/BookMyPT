@@ -241,6 +241,10 @@ class _PtCalendarScreenState extends ConsumerState<PtCalendarScreen> {
   void _showAddSessionSheet(BuildContext context, String ptId) {
     final members = ref.read(ptMembersProvider(ptId)).valueOrNull ?? [];
     final repo = ref.read(sessionRepositoryProvider);
+    final existingSessions =
+        ref.read(ptSessionsProvider(ptId)).valueOrNull ?? [];
+    final ptPersonalEvents =
+        ref.read(memberPersonalEventsProvider(ptId)).valueOrNull ?? [];
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -250,6 +254,8 @@ class _PtCalendarScreenState extends ConsumerState<PtCalendarScreen> {
         initialDate: _selectedDay,
         members: members,
         repo: repo,
+        existingSessions: existingSessions,
+        ptPersonalEvents: ptPersonalEvents,
       ),
     );
   }
@@ -372,12 +378,16 @@ class _AddSessionSheet extends StatefulWidget {
   final DateTime initialDate;
   final List<MemberProfile> members;
   final SessionRepository repo;
+  final List<SessionModel> existingSessions;
+  final List<PersonalEventModel> ptPersonalEvents;
 
   const _AddSessionSheet({
     required this.ptId,
     required this.initialDate,
     required this.members,
     required this.repo,
+    required this.existingSessions,
+    required this.ptPersonalEvents,
   });
 
   @override
@@ -402,6 +412,23 @@ class _AddSessionSheetState extends State<_AddSessionSheet> {
       0,
     );
   }
+
+  bool _overlapsSession(SessionModel s) {
+    if (s.status == SessionStatus.cancelled) return false;
+    final sEnd = s.dateTime.add(Duration(minutes: s.durationMinutes));
+    final newEnd = _selectedDateTime.add(Duration(minutes: _duration));
+    return _selectedDateTime.isBefore(sEnd) && newEnd.isAfter(s.dateTime);
+  }
+
+  bool _overlapsEvent(PersonalEventModel e) {
+    final eEnd = e.dateTime.add(Duration(minutes: e.durationMinutes));
+    final newEnd = _selectedDateTime.add(Duration(minutes: _duration));
+    return _selectedDateTime.isBefore(eEnd) && newEnd.isAfter(e.dateTime);
+  }
+
+  bool get _hasConflict =>
+      widget.existingSessions.any(_overlapsSession) ||
+      widget.ptPersonalEvents.any(_overlapsEvent);
 
   Future<void> _save() async {
     if (_selectedMemberId == null) return;
@@ -493,9 +520,10 @@ class _AddSessionSheetState extends State<_AddSessionSheet> {
           InkWell(
             onTap: _pickTime,
             child: InputDecorator(
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Saat',
-                prefixIcon: Icon(Icons.access_time),
+                prefixIcon: const Icon(Icons.access_time),
+                errorText: _hasConflict ? 'Bu saatte çakışan etkinlik var' : null,
               ),
               child: Text(
                 '${_selectedDateTime.formattedDate} ${_selectedDateTime.formattedTime}',
@@ -521,7 +549,9 @@ class _AddSessionSheetState extends State<_AddSessionSheet> {
           ),
           const SizedBox(height: 24),
           ElevatedButton(
-            onPressed: _selectedMemberId == null || _isLoading ? null : _save,
+            onPressed: _selectedMemberId == null || _isLoading || _hasConflict
+                ? null
+                : _save,
             child: _isLoading
                 ? const SizedBox(
                     height: 20,
