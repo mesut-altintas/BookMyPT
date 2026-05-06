@@ -223,10 +223,13 @@ class _PtCalendarScreenState extends ConsumerState<PtCalendarScreen> {
               subtitle: const Text('Antrenman, not veya hatırlatıcı ekle'),
               onTap: () {
                 Navigator.of(ctx).pop();
+                final sessions =
+                    ref.read(ptSessionsProvider(ptId)).valueOrNull ?? [];
                 Navigator.of(context).push(MaterialPageRoute(
                   builder: (_) => AddPersonalEventScreen(
                     memberId: ptId,
                     initialDate: _selectedDay,
+                    existingSessions: sessions,
                   ),
                 ));
               },

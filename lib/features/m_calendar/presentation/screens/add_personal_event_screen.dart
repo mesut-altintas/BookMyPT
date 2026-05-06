@@ -3,16 +3,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../shared/models/personal_event_model.dart';
+import '../../../../shared/models/session_model.dart';
 import '../../providers/personal_event_provider.dart';
 
 class AddPersonalEventScreen extends ConsumerStatefulWidget {
   final String memberId;
   final DateTime? initialDate;
+  final List<SessionModel> existingSessions;
 
   const AddPersonalEventScreen({
     super.key,
     required this.memberId,
     this.initialDate,
+    this.existingSessions = const [],
   });
 
   @override
@@ -32,6 +35,21 @@ class _AddPersonalEventScreenState
   int _durationMinutes = 60;
 
   static const _durations = [30, 45, 60, 90, 120];
+
+  DateTime get _selectedDt => DateTime(
+        _selectedDate.year, _selectedDate.month, _selectedDate.day,
+        _selectedTime.hour, _selectedTime.minute,
+      );
+
+  bool _overlapsSession(SessionModel s) {
+    if (s.status == SessionStatus.cancelled) return false;
+    final sEnd = s.dateTime.add(Duration(minutes: s.durationMinutes));
+    final newEnd = _selectedDt.add(Duration(minutes: _durationMinutes));
+    return _selectedDt.isBefore(sEnd) && newEnd.isAfter(s.dateTime);
+  }
+
+  bool get _hasConflict =>
+      widget.existingSessions.any(_overlapsSession);
 
   @override
   void initState() {
@@ -67,7 +85,7 @@ class _AddPersonalEventScreenState
   }
 
   Future<void> _save() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate() || _hasConflict) return;
     setState(() => _loading = true);
 
     final dt = DateTime(
@@ -119,7 +137,7 @@ class _AddPersonalEventScreenState
         title: const Text('Etkinlik Ekle'),
         actions: [
           TextButton(
-            onPressed: _loading ? null : _save,
+            onPressed: (_loading || _hasConflict) ? null : _save,
             child: const Text('Kaydet'),
           ),
         ],
@@ -163,10 +181,30 @@ class _AddPersonalEventScreenState
                             onPressed: _pickTime,
                             icon: const Icon(Icons.access_time, size: 18),
                             label: Text(timeStr),
+                            style: _hasConflict
+                                ? OutlinedButton.styleFrom(
+                                    foregroundColor:
+                                        Theme.of(context).colorScheme.error,
+                                    side: BorderSide(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .error),
+                                  )
+                                : null,
                           ),
                         ),
                       ],
                     ),
+                    if (_hasConflict) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        'Bu saatte çakışan seans var',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 20),
                     Text('Süre',
                         style: theme.textTheme.titleSmall

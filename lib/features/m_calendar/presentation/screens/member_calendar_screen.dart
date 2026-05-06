@@ -72,7 +72,7 @@ class _CalendarContent extends ConsumerWidget {
     required this.isSameDay,
   });
 
-  void _showAddOptions(BuildContext context) {
+  void _showAddOptions(BuildContext context, WidgetRef ref) {
     showModalBottomSheet(
       context: context,
       builder: (ctx) => SafeArea(
@@ -94,10 +94,13 @@ class _CalendarContent extends ConsumerWidget {
               subtitle: const Text('Antrenman, not veya hatırlatıcı ekleyin'),
               onTap: () {
                 Navigator.of(ctx).pop();
+                final sessions =
+                    ref.read(memberSessionsProvider(memberId)).valueOrNull ?? [];
                 Navigator.of(context).push(MaterialPageRoute(
                   builder: (_) => AddPersonalEventScreen(
                     memberId: memberId,
                     initialDate: selectedDay,
+                    existingSessions: sessions,
                   ),
                 ));
               },
@@ -216,7 +219,7 @@ class _CalendarContent extends ConsumerWidget {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddOptions(context),
+        onPressed: () => _showAddOptions(context, ref),
         tooltip: 'Ekle',
         child: const Icon(Icons.add),
       ),
