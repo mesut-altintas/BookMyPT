@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 import '../../../../core/utils/extensions.dart';
 import '../../../../features/auth/providers/auth_provider.dart';
+import '../../../../features/m_calendar/presentation/screens/add_personal_event_screen.dart';
+import '../../../../features/m_calendar/providers/personal_event_provider.dart';
 import '../../../../shared/models/member_model.dart';
+import '../../../../shared/models/personal_event_model.dart';
 import '../../../../shared/models/session_model.dart';
 import '../../../../shared/widgets/app_loading.dart';
 import '../../../../shared/widgets/app_empty.dart';
@@ -25,6 +29,9 @@ class _PtCalendarScreenState extends ConsumerState<PtCalendarScreen> {
   DateTime _selectedDay = DateTime.now();
   CalendarFormat _calendarFormat = CalendarFormat.week;
 
+  bool _isSameDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
+
   @override
   Widget build(BuildContext context) {
     final userAsync = ref.watch(currentUserProvider);
@@ -34,7 +41,6 @@ class _PtCalendarScreenState extends ConsumerState<PtCalendarScreen> {
       error: (e, _) => Scaffold(body: Center(child: Text(e.toString()))),
       data: (user) {
         if (user == null) return const Scaffold(body: AppLoading());
-        // Pre-load members so the sheet gets cached data immediately
         ref.watch(ptMembersProvider(user.uid));
         return _buildCalendar(context, ref, user.uid);
       },
@@ -43,126 +49,191 @@ class _PtCalendarScreenState extends ConsumerState<PtCalendarScreen> {
 
   Widget _buildCalendar(BuildContext context, WidgetRef ref, String ptId) {
     final sessionsAsync = ref.watch(ptSessionsProvider(ptId));
+    final personalEventsAsync = ref.watch(memberPersonalEventsProvider(ptId));
+    final theme = Theme.of(context);
+
+    final sessions = sessionsAsync.valueOrNull ?? [];
+    final personalEvents = personalEventsAsync.valueOrNull ?? [];
+
+    final selectedSessions = sessions
+        .where((s) =>
+            _isSameDay(s.dateTime, _selectedDay) &&
+            s.status != SessionStatus.cancelled)
+        .toList()
+      ..sort((a, b) => a.dateTime.compareTo(b.dateTime));
+
+    final selectedPersonalEvents = personalEvents
+        .where((e) => _isSameDay(e.dateTime, _selectedDay))
+        .toList()
+      ..sort((a, b) => a.dateTime.compareTo(b.dateTime));
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Takvim'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => _showAddSessionSheet(context, ptId),
+      ),
+      body: Column(
+        children: [
+          TableCalendar<Object>(
+            locale: 'tr_TR',
+            firstDay: DateTime.now().subtract(const Duration(days: 365)),
+            lastDay: DateTime.now().add(const Duration(days: 365)),
+            focusedDay: _focusedDay,
+            selectedDayPredicate: (d) => isSameDay(d, _selectedDay),
+            calendarFormat: _calendarFormat,
+            startingDayOfWeek: StartingDayOfWeek.monday,
+            headerStyle: const HeaderStyle(titleCentered: true),
+            eventLoader: (day) {
+              final hasSession = sessions.any((s) =>
+                  _isSameDay(s.dateTime, day) &&
+                  s.status != SessionStatus.cancelled);
+              final hasPersonal =
+                  personalEvents.any((e) => _isSameDay(e.dateTime, day));
+              return [
+                if (hasSession) 'session',
+                if (hasPersonal) 'personal',
+              ];
+            },
+            calendarBuilders: CalendarBuilders(
+              markerBuilder: (context, day, events) {
+                if (events.isEmpty) return null;
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: events.map((e) {
+                    final color = e == 'session'
+                        ? Colors.green
+                        : theme.colorScheme.secondary;
+                    return Container(
+                      width: 6,
+                      height: 6,
+                      margin: const EdgeInsets.symmetric(horizontal: 1),
+                      decoration:
+                          BoxDecoration(color: color, shape: BoxShape.circle),
+                    );
+                  }).toList(),
+                );
+              },
+            ),
+            onDaySelected: (selected, focused) {
+              setState(() {
+                _selectedDay = selected;
+                _focusedDay = focused;
+              });
+            },
+            onFormatChanged: (format) =>
+                setState(() => _calendarFormat = format),
+            calendarStyle: CalendarStyle(
+              todayDecoration: BoxDecoration(
+                color: theme.colorScheme.primaryContainer,
+                shape: BoxShape.circle,
+              ),
+              todayTextStyle:
+                  TextStyle(color: theme.colorScheme.onPrimaryContainer),
+              selectedDecoration: BoxDecoration(
+                color: theme.colorScheme.primary,
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          const Divider(height: 1),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            child: Row(
+              children: [
+                Text(
+                  _selectedDay.formattedDate,
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleSmall
+                      ?.copyWith(fontWeight: FontWeight.w700),
+                ),
+                const Spacer(),
+                if (selectedSessions.isNotEmpty)
+                  Text(
+                    '${selectedSessions.length} seans',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                  ),
+                if (selectedSessions.isNotEmpty &&
+                    selectedPersonalEvents.isNotEmpty)
+                  const Text(' · '),
+                if (selectedPersonalEvents.isNotEmpty)
+                  Text(
+                    '${selectedPersonalEvents.length} etkinlik',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                  ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: (selectedSessions.isEmpty && selectedPersonalEvents.isEmpty)
+                ? AppEmpty(
+                    message: 'Bu gün etkinlik yok',
+                    icon: Icons.event_available_outlined,
+                    action: TextButton.icon(
+                      onPressed: () => _showAddOptions(context, ptId),
+                      icon: const Icon(Icons.add),
+                      label: const Text('Ekle'),
+                    ),
+                  )
+                : ListView(
+                    padding: const EdgeInsets.all(16),
+                    children: [
+                      ...selectedSessions.map((s) => _SessionTile(
+                            session: s,
+                            onTap: () =>
+                                context.push('/pt/calendar/${s.id}'),
+                          )),
+                      ...selectedPersonalEvents.map((e) =>
+                          _PersonalEventTile(event: e)),
+                    ],
+                  ),
           ),
         ],
       ),
-      body: sessionsAsync.when(
-        loading: () => const AppLoading(),
-        error: (e, _) => Center(child: Text(e.toString())),
-        data: (sessions) {
-          final sessionsByDay = <DateTime, List<SessionModel>>{};
-          for (final s in sessions) {
-            final key = DateTime(
-                s.dateTime.year, s.dateTime.month, s.dateTime.day);
-            sessionsByDay.putIfAbsent(key, () => []).add(s);
-          }
-
-          final selectedSessions = sessionsByDay[DateTime(
-                  _selectedDay.year,
-                  _selectedDay.month,
-                  _selectedDay.day)] ??
-              [];
-
-          return Column(
-            children: [
-              TableCalendar<SessionModel>(
-                locale: 'tr_TR',
-                firstDay: DateTime.now().subtract(const Duration(days: 365)),
-                lastDay: DateTime.now().add(const Duration(days: 365)),
-                focusedDay: _focusedDay,
-                selectedDayPredicate: (d) => isSameDay(d, _selectedDay),
-                calendarFormat: _calendarFormat,
-                eventLoader: (day) {
-                  final key = DateTime(day.year, day.month, day.day);
-                  return sessionsByDay[key] ?? [];
-                },
-                onDaySelected: (selected, focused) {
-                  setState(() {
-                    _selectedDay = selected;
-                    _focusedDay = focused;
-                  });
-                },
-                onFormatChanged: (format) =>
-                    setState(() => _calendarFormat = format),
-                calendarStyle: CalendarStyle(
-                  markerDecoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary,
-                    shape: BoxShape.circle,
-                  ),
-                  todayDecoration: BoxDecoration(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .primary
-                        .withOpacity(0.3),
-                    shape: BoxShape.circle,
-                  ),
-                  selectedDecoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-              const Divider(height: 1),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                child: Row(
-                  children: [
-                    Text(
-                      _selectedDay.formattedDate,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
-                    ),
-                    const Spacer(),
-                    Text(
-                      '${selectedSessions.length} seans',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurfaceVariant,
-                          ),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: selectedSessions.isEmpty
-                    ? AppEmpty(
-                        message: 'Bu gün seans yok',
-                        icon: Icons.event_available_outlined,
-                        action: TextButton.icon(
-                          onPressed: () =>
-                              _showAddSessionSheet(context, ptId),
-                          icon: const Icon(Icons.add),
-                          label: const Text('Seans Ekle'),
-                        ),
-                      )
-                    : ListView.separated(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: selectedSessions.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 8),
-                        itemBuilder: (_, i) => _SessionTile(
-                          session: selectedSessions[i],
-                          onTap: () => context.push(
-                              '/pt/calendar/${selectedSessions[i].id}'),
-                        ),
-                      ),
-              ),
-            ],
-          );
-        },
-      ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddSessionSheet(context, ptId),
+        onPressed: () => _showAddOptions(context, ptId),
         child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  void _showAddOptions(BuildContext context, String ptId) {
+    showModalBottomSheet(
+      context: context,
+      useRootNavigator: false,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.sports_gymnastics),
+              title: const Text('Seans Ekle'),
+              subtitle: const Text('Üye ile antrenman seansı planla'),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                _showAddSessionSheet(context, ptId);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.event_note_outlined),
+              title: const Text('Kişisel Etkinlik'),
+              subtitle: const Text('Antrenman, not veya hatırlatıcı ekle'),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => AddPersonalEventScreen(
+                    memberId: ptId,
+                    initialDate: _selectedDay,
+                  ),
+                ));
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
       ),
     );
   }
@@ -173,6 +244,7 @@ class _PtCalendarScreenState extends ConsumerState<PtCalendarScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: false,
       builder: (_) => _AddSessionSheet(
         ptId: ptId,
         initialDate: _selectedDay,
@@ -192,6 +264,7 @@ class _SessionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
         onTap: onTap,
         leading: Container(
@@ -219,10 +292,78 @@ class _SessionTile extends StatelessWidget {
           session.memberName.isNotEmpty ? session.memberName : 'İsimsiz Üye',
           style: const TextStyle(fontWeight: FontWeight.w600),
         ),
-        subtitle: Text('${session.durationMinutes} dk · ${session.dateTime.formattedTime}'),
+        subtitle: Text(
+            '${session.durationMinutes} dk · ${session.dateTime.formattedTime}'),
         trailing: StatusBadge.session(session.status),
       ),
     );
+  }
+}
+
+class _PersonalEventTile extends ConsumerWidget {
+  final PersonalEventModel event;
+
+  const _PersonalEventTile({required this.event});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final timeStr = DateFormat('HH:mm').format(event.dateTime);
+    final dMin = event.durationMinutes;
+    final durStr = dMin < 60
+        ? '$dMin dk'
+        : '${dMin ~/ 60} sa${dMin % 60 != 0 ? ' ${dMin % 60} dk' : ''}';
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: ListTile(
+        leading: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: theme.colorScheme.secondaryContainer,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(Icons.fitness_center,
+              color: theme.colorScheme.secondary, size: 20),
+        ),
+        title:
+            Text(event.title, style: const TextStyle(fontWeight: FontWeight.w600)),
+        subtitle: Text('$timeStr • $durStr'),
+        trailing: IconButton(
+          icon:
+              Icon(Icons.delete_outline, color: theme.colorScheme.error, size: 20),
+          onPressed: () => _confirmDelete(context, ref),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      useRootNavigator: false,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Etkinliği Sil'),
+        content:
+            Text('"${event.title}" etkinliğini silmek istiyor musunuz?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('İptal'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: TextButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.error),
+            child: const Text('Sil'),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) {
+      await ref.read(personalEventRepositoryProvider).deleteEvent(event.id);
+    }
   }
 }
 
@@ -319,9 +460,10 @@ class _AddSessionSheetState extends State<_AddSessionSheet> {
             children: [
               Text(
                 'Seans Ekle',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+                style: Theme.of(context)
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(fontWeight: FontWeight.w700),
               ),
               const Spacer(),
               IconButton(
@@ -361,18 +503,21 @@ class _AddSessionSheetState extends State<_AddSessionSheet> {
             ),
           ),
           const SizedBox(height: 12),
-          const Text('Süre (dk):', style: TextStyle(fontWeight: FontWeight.w500)),
+          const Text('Süre (dk):',
+              style: TextStyle(fontWeight: FontWeight.w500)),
           const SizedBox(height: 8),
           Wrap(
             spacing: 6,
-            children: [30, 45, 60, 90, 120].map(
-              (d) => ChoiceChip(
-                label: Text('$d'),
-                selected: _duration == d,
-                onSelected: (_) => setState(() => _duration = d),
-                visualDensity: VisualDensity.compact,
-              ),
-            ).toList(),
+            children: [30, 45, 60, 90, 120]
+                .map(
+                  (d) => ChoiceChip(
+                    label: Text('$d'),
+                    selected: _duration == d,
+                    onSelected: (_) => setState(() => _duration = d),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                )
+                .toList(),
           ),
           const SizedBox(height: 24),
           ElevatedButton(
