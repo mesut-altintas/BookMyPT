@@ -14,6 +14,7 @@ class MemberProfile {
   final String? phone;
   final int remainingSessions;
   final bool isActive;
+  final int? sessionDurationMinutes;
 
   const MemberProfile({
     required this.memberId,
@@ -29,6 +30,7 @@ class MemberProfile {
     this.phone,
     this.remainingSessions = 0,
     this.isActive = true,
+    this.sessionDurationMinutes,
   });
 
   factory MemberProfile.fromFirestore(DocumentSnapshot doc) {
@@ -47,6 +49,7 @@ class MemberProfile {
       phone: data['phone'] as String?,
       remainingSessions: data['remainingSessions'] as int? ?? 0,
       isActive: data['isActive'] as bool? ?? true,
+      sessionDurationMinutes: data['sessionDurationMinutes'] as int?,
     );
   }
 
@@ -64,6 +67,8 @@ class MemberProfile {
         if (phone != null) 'phone': phone,
         'remainingSessions': remainingSessions,
         'isActive': isActive,
+        if (sessionDurationMinutes != null)
+          'sessionDurationMinutes': sessionDurationMinutes,
       };
 
   MemberProfile copyWith({
@@ -78,6 +83,7 @@ class MemberProfile {
     String? phone,
     int? remainingSessions,
     bool? isActive,
+    int? sessionDurationMinutes,
   }) =>
       MemberProfile(
         memberId: memberId,
@@ -93,5 +99,7 @@ class MemberProfile {
         phone: phone ?? this.phone,
         remainingSessions: remainingSessions ?? this.remainingSessions,
         isActive: isActive ?? this.isActive,
+        sessionDurationMinutes:
+            sessionDurationMinutes ?? this.sessionDurationMinutes,
       );
 }

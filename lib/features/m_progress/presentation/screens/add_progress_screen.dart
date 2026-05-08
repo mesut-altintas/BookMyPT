@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:intl/intl.dart';
 import 'dart:io';
 
 import '../../../../features/auth/providers/auth_provider.dart';
@@ -30,6 +31,7 @@ class _AddProgressScreenState extends ConsumerState<AddProgressScreen> {
   final _notesCtrl = TextEditingController();
   File? _selectedPhoto;
   bool _isLoading = false;
+  DateTime _selectedDate = DateTime.now();
 
   @override
   void dispose() {
@@ -54,6 +56,16 @@ class _AddProgressScreenState extends ConsumerState<AddProgressScreen> {
     if (picked != null) {
       setState(() => _selectedPhoto = File(picked.path));
     }
+  }
+
+  Future<void> _pickDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime.now().subtract(const Duration(days: 365 * 2)),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null) setState(() => _selectedDate = picked);
   }
 
   Future<String?> _uploadPhoto(String memberId) async {
@@ -100,7 +112,7 @@ class _AddProgressScreenState extends ConsumerState<AddProgressScreen> {
       final progress = ProgressModel(
         id: '',
         memberId: user.uid,
-        date: DateTime.now(),
+        date: DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day),
         weight: weight,
         measurements: measurements,
         photoUrl: photoUrl,
@@ -183,7 +195,21 @@ class _AddProgressScreenState extends ConsumerState<AddProgressScreen> {
                     : null,
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
+
+            // Date picker
+            OutlinedButton.icon(
+              onPressed: _pickDate,
+              icon: const Icon(Icons.calendar_today, size: 18),
+              label: Text(
+                DateFormat('d MMMM yyyy', 'tr').format(_selectedDate),
+              ),
+              style: OutlinedButton.styleFrom(
+                alignment: Alignment.centerLeft,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              ),
+            ),
+            const SizedBox(height: 16),
 
             // Weight
             TextFormField(

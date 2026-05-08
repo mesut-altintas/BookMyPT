@@ -24,7 +24,7 @@ async function sendNotification(token, title, body) {
     await messaging.send({ token, notification: { title, body } });
     console.log('Notification sent to', token.substring(0, 20) + '...');
   } catch (e) {
-    console.error('FCM send error:', e.message);
+    console.error('FCM send error:', e.message, '| code:', e.code, '| token prefix:', token.substring(0, 15));
   }
 }
 
@@ -85,9 +85,32 @@ exports.sessionUpdated = functions.firestore
     const after = change.after.data();
     if (!before || !after) return;
 
-    if (before.status === after.status) return;
-
     const { memberId, ptId, memberName } = after;
+
+    // Member updated their pending request (date/time or duration changed)
+    if (before.status === 'pending' && after.status === 'pending') {
+      const beforeMs = before.dateTime ? before.dateTime.toMillis() : 0;
+      const afterMs  = after.dateTime  ? after.dateTime.toMillis()  : 0;
+      const dateChanged     = beforeMs !== afterMs;
+      const durationChanged = before.durationMinutes !== after.durationMinutes;
+      if (dateChanged || durationChanged) {
+        const dateObj = after.dateTime.toDate();
+        const dateStr = dateObj.toLocaleDateString('tr-TR', {
+          day: 'numeric', month: 'long',
+          hour: '2-digit', minute: '2-digit',
+          timeZone: 'Europe/Istanbul',
+        });
+        const ptToken = await getFcmToken(ptId);
+        await sendNotification(
+          ptToken,
+          'Randevu Talebi Güncellendi',
+          `${memberName || 'Üye'} talebini ${dateStr} olarak değiştirdi`
+        );
+      }
+      return;
+    }
+
+    if (before.status === after.status) return;
 
     if (after.status === 'confirmed' && before.status === 'pending') {
       const token = await getFcmToken(memberId);

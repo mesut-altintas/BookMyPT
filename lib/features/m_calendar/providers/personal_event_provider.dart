@@ -40,6 +40,17 @@ class PersonalEventRepository {
     ).toFirestore());
   }
 
+  Future<void> updateEvent(PersonalEventModel event) =>
+      _firestore
+          .collection(AppConstants.personalEventsCollection)
+          .doc(event.id)
+          .update({
+        'title': event.title,
+        'dateTime': Timestamp.fromDate(event.dateTime),
+        'durationMinutes': event.durationMinutes,
+        'notes': event.notes,
+      });
+
   Future<void> deleteEvent(String eventId) =>
       _firestore
           .collection(AppConstants.personalEventsCollection)

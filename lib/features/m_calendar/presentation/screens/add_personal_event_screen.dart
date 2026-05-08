@@ -10,12 +10,14 @@ class AddPersonalEventScreen extends ConsumerStatefulWidget {
   final String memberId;
   final DateTime? initialDate;
   final List<SessionModel> existingSessions;
+  final PersonalEventModel? eventToEdit;
 
   const AddPersonalEventScreen({
     super.key,
     required this.memberId,
     this.initialDate,
     this.existingSessions = const [],
+    this.eventToEdit,
   });
 
   @override
@@ -33,6 +35,8 @@ class _AddPersonalEventScreenState
   late DateTime _selectedDate;
   late TimeOfDay _selectedTime;
   int _durationMinutes = 60;
+
+  bool get _isEditing => widget.eventToEdit != null;
 
   static const _durations = [30, 45, 60, 90, 120];
 
@@ -54,9 +58,18 @@ class _AddPersonalEventScreenState
   @override
   void initState() {
     super.initState();
-    final base = widget.initialDate ?? DateTime.now();
-    _selectedDate = DateTime(base.year, base.month, base.day);
-    _selectedTime = TimeOfDay.now();
+    final edit = widget.eventToEdit;
+    if (edit != null) {
+      _titleCtrl.text = edit.title;
+      _notesCtrl.text = edit.notes ?? '';
+      _selectedDate = DateTime(edit.dateTime.year, edit.dateTime.month, edit.dateTime.day);
+      _selectedTime = TimeOfDay(hour: edit.dateTime.hour, minute: edit.dateTime.minute);
+      _durationMinutes = edit.durationMinutes;
+    } else {
+      final base = widget.initialDate ?? DateTime.now();
+      _selectedDate = DateTime(base.year, base.month, base.day);
+      _selectedTime = TimeOfDay.now();
+    }
   }
 
   @override
@@ -97,19 +110,32 @@ class _AddPersonalEventScreenState
     );
 
     try {
-      await ref.read(personalEventRepositoryProvider).createEvent(
-            PersonalEventModel(
-              id: '',
-              memberId: widget.memberId,
-              title: _titleCtrl.text.trim(),
-              dateTime: dt,
-              durationMinutes: _durationMinutes,
-              notes: _notesCtrl.text.trim().isNotEmpty
-                  ? _notesCtrl.text.trim()
-                  : null,
-              createdAt: DateTime.now(),
-            ),
-          );
+      final repo = ref.read(personalEventRepositoryProvider);
+      if (_isEditing) {
+        await repo.updateEvent(PersonalEventModel(
+          id: widget.eventToEdit!.id,
+          memberId: widget.eventToEdit!.memberId,
+          title: _titleCtrl.text.trim(),
+          dateTime: dt,
+          durationMinutes: _durationMinutes,
+          notes: _notesCtrl.text.trim().isNotEmpty ? _notesCtrl.text.trim() : null,
+          createdAt: widget.eventToEdit!.createdAt,
+        ));
+      } else {
+        await repo.createEvent(
+          PersonalEventModel(
+            id: '',
+            memberId: widget.memberId,
+            title: _titleCtrl.text.trim(),
+            dateTime: dt,
+            durationMinutes: _durationMinutes,
+            notes: _notesCtrl.text.trim().isNotEmpty
+                ? _notesCtrl.text.trim()
+                : null,
+            createdAt: DateTime.now(),
+          ),
+        );
+      }
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
       if (mounted) {
@@ -134,7 +160,7 @@ class _AddPersonalEventScreenState
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Etkinlik Ekle'),
+        title: Text(_isEditing ? 'Etkinliği Düzenle' : 'Etkinlik Ekle'),
         actions: [
           TextButton(
             onPressed: (_loading || _hasConflict) ? null : _save,

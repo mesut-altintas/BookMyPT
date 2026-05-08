@@ -48,21 +48,30 @@ class PackageModel {
   final String ptId;
   final String name;
   final int sessionCount;
+  final int? sessionDurationMinutes;
   final double price;
   final String currency;
   final String? description;
   final bool isActive;
+  final String? forMemberId;
+  final String? forMemberName;
 
   const PackageModel({
     required this.id,
     required this.ptId,
     required this.name,
     required this.sessionCount,
+    this.sessionDurationMinutes,
     required this.price,
     this.currency = 'TRY',
     this.description,
     this.isActive = true,
+    this.forMemberId,
+    this.forMemberName,
   });
+
+  bool get isForSpecificMember =>
+      forMemberId != null && forMemberId!.isNotEmpty;
 
   factory PackageModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
@@ -70,11 +79,15 @@ class PackageModel {
       id: doc.id,
       ptId: data['ptId'] as String? ?? '',
       name: data['name'] as String? ?? '',
-      sessionCount: data['sessionCount'] as int? ?? 1,
+      sessionCount: (data['sessionCount'] as num?)?.toInt() ?? 1,
+      sessionDurationMinutes:
+          (data['sessionDurationMinutes'] as num?)?.toInt(),
       price: (data['price'] as num?)?.toDouble() ?? 0.0,
       currency: data['currency'] as String? ?? 'TRY',
       description: data['description'] as String?,
       isActive: data['isActive'] as bool? ?? true,
+      forMemberId: data['forMemberId'] as String?,
+      forMemberName: data['forMemberName'] as String?,
     );
   }
 
@@ -82,10 +95,16 @@ class PackageModel {
         'ptId': ptId,
         'name': name,
         'sessionCount': sessionCount,
+        if (sessionDurationMinutes != null)
+          'sessionDurationMinutes': sessionDurationMinutes,
         'price': price,
         'currency': currency,
         if (description != null) 'description': description,
         'isActive': isActive,
+        if (forMemberId != null && forMemberId!.isNotEmpty)
+          'forMemberId': forMemberId,
+        if (forMemberName != null && forMemberName!.isNotEmpty)
+          'forMemberName': forMemberName,
       };
 }
 

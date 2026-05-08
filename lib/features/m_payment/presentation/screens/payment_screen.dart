@@ -43,7 +43,8 @@ class _PaymentContent extends ConsumerWidget {
         : const AsyncValue<dynamic>.data(null);
     final paymentsAsync = ref.watch(memberPaymentsProvider(memberId));
     final packagesAsync = hasPt
-        ? ref.watch(ptPackagesProvider(ptId!))
+        ? ref.watch(memberFacingPackagesProvider(
+            (ptId: ptId!, memberId: memberId)))
         : const AsyncValue<List<PackageModel>>.data([]);
 
     final remainingSessions =
@@ -356,9 +357,13 @@ class _PackageCard extends ConsumerWidget {
                       Text(package.name,
                           style: const TextStyle(
                               fontWeight: FontWeight.w700, fontSize: 16)),
-                      Text('${package.sessionCount} seans',
-                          style: TextStyle(
-                              color: theme.colorScheme.onSurfaceVariant)),
+                      Text(
+                        package.sessionDurationMinutes != null
+                            ? '${package.sessionCount} seans • ${package.sessionDurationMinutes} dk/seans'
+                            : '${package.sessionCount} seans',
+                        style: TextStyle(
+                            color: theme.colorScheme.onSurfaceVariant),
+                      ),
                     ],
                   ),
                 ),

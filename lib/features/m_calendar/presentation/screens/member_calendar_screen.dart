@@ -138,6 +138,13 @@ class _CalendarContent extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Takvimim'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            tooltip: 'Ekle',
+            onPressed: () => _showAddOptions(context, ref),
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -212,16 +219,13 @@ class _CalendarContent extends ConsumerWidget {
                     children: [
                       ...daySessions.map((s) => _SessionTile(session: s)),
                       ...dayPersonalEvents.map((e) => _PersonalEventTile(
-                          event: e, memberId: memberId)),
+                          event: e,
+                          memberId: memberId,
+                          existingSessions: sessions)),
                     ],
                   ),
           ),
         ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddOptions(context, ref),
-        tooltip: 'Ekle',
-        child: const Icon(Icons.add),
       ),
     );
   }
@@ -287,9 +291,13 @@ class _SessionTile extends StatelessWidget {
 class _PersonalEventTile extends ConsumerWidget {
   final PersonalEventModel event;
   final String memberId;
+  final List<SessionModel> existingSessions;
 
-  const _PersonalEventTile(
-      {required this.event, required this.memberId});
+  const _PersonalEventTile({
+    required this.event,
+    required this.memberId,
+    required this.existingSessions,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -303,6 +311,13 @@ class _PersonalEventTile extends ConsumerWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
+        onTap: () => Navigator.of(context).push(MaterialPageRoute(
+          builder: (_) => AddPersonalEventScreen(
+            memberId: memberId,
+            existingSessions: existingSessions,
+            eventToEdit: event,
+          ),
+        )),
         leading: Container(
           width: 40,
           height: 40,

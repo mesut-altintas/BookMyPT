@@ -48,9 +48,30 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
     final ptSessionsAsync = ref.watch(ptSessionsProvider(ptId));
     final personalEventsAsync = ref.watch(memberPersonalEventsProvider(memberId));
     final ptPersonalEventsAsync = ref.watch(memberPersonalEventsProvider(ptId));
+    final sessionDurationMinutes = ptId.isNotEmpty
+        ? ref
+            .watch(ptMemberDetailProvider((ptId: ptId, memberId: memberId)))
+            .valueOrNull
+            ?.sessionDurationMinutes
+        : null;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Randevularım')),
+      appBar: AppBar(
+        title: const Text('Randevularım'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            tooltip: 'Randevu Talep Et',
+            onPressed: () {
+              final user = ref.read(currentUserProvider).valueOrNull;
+              final sessions =
+                  ref.read(memberSessionsProvider(memberId)).valueOrNull ?? [];
+              _openSheet(context, ref, memberId, user?.name ?? '',
+                  user?.ptId ?? '', sessions, sessionDurationMinutes);
+            },
+          ),
+        ],
+      ),
       body: sessionsAsync.when(
         loading: () => const AppLoading(),
         error: (e, _) => Center(child: Text(e.toString())),
@@ -208,8 +229,8 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                         message: 'Bu gün randevu yok',
                         icon: Icons.event_available_outlined,
                         action: TextButton.icon(
-                          onPressed: () => _openSheet(
-                              context, ref, memberId, memberName, ptId, sessions),
+                          onPressed: () => _openSheet(context, ref, memberId,
+                              memberName, ptId, sessions, sessionDurationMinutes),
                           icon: const Icon(Icons.add),
                           label: const Text('Randevu Talep Et'),
                         ),
@@ -227,9 +248,27 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                             return _PersonalEventCard(event: item);
                           }
                           final s = item as SessionModel;
-                          return s.memberId == memberId
-                              ? _SessionCard(session: s)
-                              : _PtBusyCard(session: s);
+                          if (s.memberId == memberId) {
+                            return _SessionCard(
+                              session: s,
+                              onTap: s.status == SessionStatus.pending
+                                  ? () => _openEditSheet(
+                                        context,
+                                        ref,
+                                        s,
+                                        sessions,
+                                        (ptSessionsAsync.valueOrNull ?? [])
+                                            .where((p) =>
+                                                p.id != s.id &&
+                                                p.status != SessionStatus.cancelled)
+                                            .toList(),
+                                        ptPersonalEvents,
+                                        sessionDurationMinutes,
+                                      )
+                                  : null,
+                            );
+                          }
+                          return _PtBusyCard(session: s);
                         },
                       ),
               ),
@@ -237,20 +276,18 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          final user = ref.read(currentUserProvider).valueOrNull;
-          final sessions =
-              ref.read(memberSessionsProvider(memberId)).valueOrNull ?? [];
-          _openSheet(context, ref, memberId, user?.name ?? '', user?.ptId ?? '', sessions);
-        },
-        child: const Icon(Icons.add),
-      ),
     );
   }
 
-  Future<void> _openSheet(BuildContext context, WidgetRef ref, String memberId,
-      String memberName, String ptId, List<SessionModel> existingSessions) async {
+  Future<void> _openSheet(
+    BuildContext context,
+    WidgetRef ref,
+    String memberId,
+    String memberName,
+    String ptId,
+    List<SessionModel> existingSessions,
+    int? sessionDurationMinutes,
+  ) async {
     // Check active status if member has a PT
     if (ptId.isNotEmpty) {
       final memberDetail = ref
@@ -275,6 +312,34 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
         initialDate: _selectedDay,
         existingSessions: existingSessions,
         ptPersonalEvents: ptPersonalEvents,
+        sessionDurationMinutes: sessionDurationMinutes,
+      ),
+    );
+  }
+
+  void _openEditSheet(
+    BuildContext context,
+    WidgetRef ref,
+    SessionModel session,
+    List<SessionModel> memberSessions,
+    List<SessionModel> ptSessions,
+    List<PersonalEventModel> ptPersonalEvents,
+    int? sessionDurationMinutes,
+  ) {
+    final repo = ref.read(sessionRepositoryProvider);
+    final memberOther = memberSessions
+        .where((s) => s.id != session.id && s.status != SessionStatus.cancelled)
+        .toList();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => _EditSessionSheet(
+        session: session,
+        repo: repo,
+        memberSessions: memberOther,
+        ptSessions: ptSessions,
+        ptPersonalEvents: ptPersonalEvents,
+        sessionDurationMinutes: sessionDurationMinutes,
       ),
     );
   }
@@ -341,19 +406,23 @@ class _PtPersonalBusy {
 
 class _SessionCard extends StatelessWidget {
   final SessionModel session;
+  final VoidCallback? onTap;
 
-  const _SessionCard({required this.session});
+  const _SessionCard({required this.session, this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return Card(
       child: ListTile(
+        onTap: onTap,
+        dense: true,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         leading: Container(
-          width: 52,
-          height: 52,
+          width: 44,
+          height: 44,
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.primaryContainer,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -361,7 +430,7 @@ class _SessionCard extends StatelessWidget {
               Text(
                 session.dateTime.formattedTime,
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 13,
                   fontWeight: FontWeight.w700,
                   color: Theme.of(context).colorScheme.primary,
                 ),
@@ -374,7 +443,18 @@ class _SessionCard extends StatelessWidget {
           style: const TextStyle(fontWeight: FontWeight.w600),
         ),
         subtitle: Text('${session.durationMinutes} dk seans'),
-        trailing: StatusBadge.session(session.status),
+        trailing: onTap != null
+            ? Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  StatusBadge.session(session.status),
+                  const SizedBox(width: 4),
+                  Icon(Icons.edit_outlined,
+                      size: 16,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant),
+                ],
+              )
+            : StatusBadge.session(session.status),
       ),
     );
   }
@@ -389,12 +469,14 @@ class _PtBusyCard extends StatelessWidget {
     return Card(
       color: Theme.of(context).colorScheme.surfaceContainerHighest,
       child: ListTile(
+        dense: true,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         leading: Container(
-          width: 52,
-          height: 52,
+          width: 44,
+          height: 44,
           decoration: BoxDecoration(
             color: Colors.grey.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -402,7 +484,7 @@ class _PtBusyCard extends StatelessWidget {
               Text(
                 session.dateTime.formattedTime,
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: FontWeight.w700,
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
@@ -438,12 +520,14 @@ class _PtBusyPersonalCard extends StatelessWidget {
     return Card(
       color: Theme.of(context).colorScheme.surfaceContainerHighest,
       child: ListTile(
+        dense: true,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         leading: Container(
-          width: 52,
-          height: 52,
+          width: 44,
+          height: 44,
           decoration: BoxDecoration(
             color: Colors.grey.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -451,7 +535,7 @@ class _PtBusyPersonalCard extends StatelessWidget {
               Text(
                 DateFormat('HH:mm').format(event.dateTime),
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: FontWeight.w700,
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
@@ -492,12 +576,14 @@ class _PersonalEventCard extends StatelessWidget {
     return Card(
       color: theme.colorScheme.secondaryContainer.withOpacity(0.4),
       child: ListTile(
+        dense: true,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         leading: Container(
-          width: 52,
-          height: 52,
+          width: 44,
+          height: 44,
           decoration: BoxDecoration(
             color: theme.colorScheme.secondaryContainer,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -505,7 +591,7 @@ class _PersonalEventCard extends StatelessWidget {
               Text(
                 DateFormat('HH:mm').format(event.dateTime),
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 13,
                   fontWeight: FontWeight.w700,
                   color: theme.colorScheme.secondary,
                 ),
@@ -530,6 +616,7 @@ class _RequestSessionSheet extends StatefulWidget {
   final DateTime initialDate;
   final List<SessionModel> existingSessions;
   final List<PersonalEventModel> ptPersonalEvents;
+  final int? sessionDurationMinutes;
 
   const _RequestSessionSheet({
     required this.memberId,
@@ -538,6 +625,7 @@ class _RequestSessionSheet extends StatefulWidget {
     required this.initialDate,
     required this.existingSessions,
     required this.ptPersonalEvents,
+    this.sessionDurationMinutes,
   });
 
   @override
@@ -572,6 +660,7 @@ class _RequestSessionSheetState extends State<_RequestSessionSheet> {
       9,
       0,
     );
+    _duration = widget.sessionDurationMinutes ?? 60;
     _findPt();
   }
 
@@ -859,20 +948,45 @@ class _RequestSessionSheetState extends State<_RequestSessionSheet> {
               ),
             ),
             const SizedBox(height: 12),
-            const Text('Süre (dk):',
-                style: TextStyle(fontWeight: FontWeight.w500)),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 6,
-              children: [30, 45, 60, 90, 120]
-                  .map((d) => ChoiceChip(
-                        label: Text('$d'),
-                        selected: _duration == d,
-                        onSelected: (_) => setState(() => _duration = d),
-                        visualDensity: VisualDensity.compact,
-                      ))
-                  .toList(),
-            ),
+            if (widget.sessionDurationMinutes != null)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.timer_outlined,
+                        size: 18,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Seans süresi: ${widget.sessionDurationMinutes} dk',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w500,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else ...[
+              const Text('Süre (dk):',
+                  style: TextStyle(fontWeight: FontWeight.w500)),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 6,
+                children: [30, 45, 60, 90, 120]
+                    .map((d) => ChoiceChip(
+                          label: Text('$d'),
+                          selected: _duration == d,
+                          onSelected: (_) => setState(() => _duration = d),
+                          visualDensity: VisualDensity.compact,
+                        ))
+                    .toList(),
+              ),
+            ],
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: _isConflict || _isLoading ? null : _submit,
@@ -885,6 +999,223 @@ class _RequestSessionSheetState extends State<_RequestSessionSheet> {
                   : const Text('Randevu Talep Et'),
             ),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Edit Sheet — only for pending sessions
+// ---------------------------------------------------------------------------
+
+class _EditSessionSheet extends StatefulWidget {
+  final SessionModel session;
+  final SessionRepository repo;
+  final List<SessionModel> memberSessions;   // member's other sessions (excl. current)
+  final List<SessionModel> ptSessions;       // PT's other sessions (excl. current)
+  final List<PersonalEventModel> ptPersonalEvents;
+  final int? sessionDurationMinutes;
+
+  const _EditSessionSheet({
+    required this.session,
+    required this.repo,
+    required this.memberSessions,
+    required this.ptSessions,
+    required this.ptPersonalEvents,
+    this.sessionDurationMinutes,
+  });
+
+  @override
+  State<_EditSessionSheet> createState() => _EditSessionSheetState();
+}
+
+class _EditSessionSheetState extends State<_EditSessionSheet> {
+  late DateTime _selectedDateTime;
+  late int _duration;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedDateTime = widget.session.dateTime;
+    _duration = widget.sessionDurationMinutes ?? widget.session.durationMinutes;
+  }
+
+  bool _overlapsSession(SessionModel s) {
+    if (s.status == SessionStatus.cancelled) return false;
+    final sEnd = s.dateTime.add(Duration(minutes: s.durationMinutes));
+    final newEnd = _selectedDateTime.add(Duration(minutes: _duration));
+    return _selectedDateTime.isBefore(sEnd) && newEnd.isAfter(s.dateTime);
+  }
+
+  bool _overlapsEvent(PersonalEventModel e) {
+    final eEnd = e.dateTime.add(Duration(minutes: e.durationMinutes));
+    final newEnd = _selectedDateTime.add(Duration(minutes: _duration));
+    return _selectedDateTime.isBefore(eEnd) && newEnd.isAfter(e.dateTime);
+  }
+
+  bool get _memberConflict => widget.memberSessions.any(_overlapsSession);
+  bool get _ptConflict => widget.ptSessions.any(_overlapsSession);
+  bool get _ptPersonalConflict => widget.ptPersonalEvents.any(_overlapsEvent);
+  bool get _isConflict => _memberConflict || _ptConflict || _ptPersonalConflict;
+
+  bool get _unchanged =>
+      _selectedDateTime == widget.session.dateTime &&
+      _duration == widget.session.durationMinutes;
+
+  Future<void> _pickDateTime() async {
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: _selectedDateTime,
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 90)),
+    );
+    if (pickedDate == null || !mounted) return;
+    final pickedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(_selectedDateTime),
+    );
+    if (pickedTime == null || !mounted) return;
+    setState(() {
+      _selectedDateTime = DateTime(
+        pickedDate.year, pickedDate.month, pickedDate.day,
+        pickedTime.hour, pickedTime.minute,
+      );
+    });
+  }
+
+  Future<void> _save() async {
+    if (_isConflict || _unchanged) return;
+    setState(() => _isLoading = true);
+    try {
+      await widget.repo.updateSession(widget.session.id, {
+        'dateTime': Timestamp.fromDate(_selectedDateTime),
+        'durationMinutes': _duration,
+      });
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Hata: $e'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ));
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: EdgeInsets.only(
+        left: 24, right: 24, top: 24,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Randevu Düzenle',
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w700),
+                  ),
+                  Text(
+                    'Sadece bekleyen talepler düzenlenebilir',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                  ),
+                ],
+              ),
+              const Spacer(),
+              IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          InkWell(
+            onTap: _pickDateTime,
+            borderRadius: BorderRadius.circular(8),
+            child: InputDecorator(
+              decoration: InputDecoration(
+                labelText: 'Tarih ve Saat',
+                prefixIcon: const Icon(Icons.access_time),
+                errorText: _memberConflict
+                    ? 'Bu saatte zaten randevunuz var'
+                    : (_ptConflict || _ptPersonalConflict)
+                        ? 'PT bu saatte müsait değil'
+                        : null,
+              ),
+              child: Text(
+                '${_selectedDateTime.formattedDate} ${_selectedDateTime.formattedTime}',
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          if (widget.sessionDurationMinutes != null)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.timer_outlined,
+                      size: 18,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Seans süresi: ${widget.sessionDurationMinutes} dk',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w500,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else ...[
+            const Text('Süre (dk):', style: TextStyle(fontWeight: FontWeight.w500)),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              children: [30, 45, 60, 90, 120]
+                  .map((d) => ChoiceChip(
+                        label: Text('$d'),
+                        selected: _duration == d,
+                        onSelected: (_) => setState(() => _duration = d),
+                        visualDensity: VisualDensity.compact,
+                      ))
+                  .toList(),
+            ),
+          ],
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _isConflict || _unchanged || _isLoading ? null : _save,
+              child: _isLoading
+                  ? const SizedBox(
+                      height: 20, width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Güncelle'),
+            ),
+          ),
         ],
       ),
     );

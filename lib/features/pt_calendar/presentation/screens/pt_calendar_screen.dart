@@ -70,6 +70,13 @@ class _PtCalendarScreenState extends ConsumerState<PtCalendarScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Takvim'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            tooltip: 'Ekle',
+            onPressed: () => _showAddOptions(context, ptId),
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -187,15 +194,17 @@ class _PtCalendarScreenState extends ConsumerState<PtCalendarScreen> {
                                 context.push('/pt/calendar/${s.id}'),
                           )),
                       ...selectedPersonalEvents.map((e) =>
-                          _PersonalEventTile(event: e)),
+                          _PersonalEventTile(
+                            event: e,
+                            ptId: ptId,
+                            existingSessions: sessions
+                                .where((s) => s.status != SessionStatus.cancelled)
+                                .toList(),
+                          )),
                     ],
                   ),
           ),
         ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddOptions(context, ptId),
-        child: const Icon(Icons.add),
       ),
     );
   }
@@ -311,8 +320,14 @@ class _SessionTile extends StatelessWidget {
 
 class _PersonalEventTile extends ConsumerWidget {
   final PersonalEventModel event;
+  final String ptId;
+  final List<SessionModel> existingSessions;
 
-  const _PersonalEventTile({required this.event});
+  const _PersonalEventTile({
+    required this.event,
+    required this.ptId,
+    required this.existingSessions,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -326,6 +341,13 @@ class _PersonalEventTile extends ConsumerWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
+        onTap: () => Navigator.of(context).push(MaterialPageRoute(
+          builder: (_) => AddPersonalEventScreen(
+            memberId: ptId,
+            existingSessions: existingSessions,
+            eventToEdit: event,
+          ),
+        )),
         leading: Container(
           width: 40,
           height: 40,

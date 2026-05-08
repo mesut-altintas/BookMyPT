@@ -34,6 +34,27 @@ final ptPackagesProvider =
       .handleError((e, st) {});
 });
 
+/// Member-facing: active packages visible to this specific member.
+/// Includes public packages (no forMemberId) and packages created for this member.
+final memberFacingPackagesProvider = StreamProvider.family<List<PackageModel>,
+    ({String ptId, String memberId})>((ref, args) {
+  if (ref.watch(currentUserProvider).valueOrNull == null)
+    return Stream.value(const <PackageModel>[]);
+  return FirebaseFirestore.instance
+      .collection(AppConstants.ptsCollection)
+      .doc(args.ptId)
+      .collection(AppConstants.packagesSubCollection)
+      .where('isActive', isEqualTo: true)
+      .snapshots()
+      .map((snap) {
+        final all = snap.docs.map((d) => PackageModel.fromFirestore(d)).toList();
+        return all
+            .where((p) =>
+                !p.isForSpecificMember || p.forMemberId == args.memberId)
+            .toList();
+      }).handleError((e, st) {});
+});
+
 final allPtPackagesProvider =
     StreamProvider.family<List<PackageModel>, String>((ref, ptId) {
   if (ref.watch(currentUserProvider).valueOrNull == null) return Stream.value(const <PackageModel>[]);
@@ -68,10 +89,13 @@ class EarningsRepository {
       ptId: package.ptId,
       name: package.name,
       sessionCount: package.sessionCount,
+      sessionDurationMinutes: package.sessionDurationMinutes,
       price: package.price,
       currency: package.currency,
       description: package.description,
       isActive: package.isActive,
+      forMemberId: package.forMemberId,
+      forMemberName: package.forMemberName,
     );
     await doc.set(newPackage.toFirestore());
     return doc.id;

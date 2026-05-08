@@ -1,4 +1,5 @@
 import 'package:badges/badges.dart' as badges;
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,7 +8,7 @@ import '../../../../core/router/app_router.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../../features/auth/providers/auth_provider.dart';
 import '../../../../features/m_calendar/providers/invitation_provider.dart';
-
+import '../../../../features/pt_members/providers/pt_members_provider.dart';
 import '../../../../features/pt_calendar/providers/pt_calendar_provider.dart';
 import '../../../../features/m_progress/providers/progress_provider.dart';
 import '../../../../shared/models/progress_model.dart';
@@ -136,7 +137,7 @@ class _MemberDashboardContent extends ConsumerWidget {
                     _FindPtBanner(),
                     const SizedBox(height: 16),
                   ] else ...[
-                    _PtInfoCard(ptId: ptId!),
+                    _PtInfoCard(ptId: ptId!, memberId: memberId),
                     const SizedBox(height: 16),
                   ],
 
@@ -206,11 +207,14 @@ class _MemberDashboardContent extends ConsumerWidget {
 
 class _PtInfoCard extends ConsumerWidget {
   final String ptId;
-  const _PtInfoCard({required this.ptId});
+  final String memberId;
+  const _PtInfoCard({required this.ptId, required this.memberId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ptAsync = ref.watch(ptUserProvider(ptId));
+    final memberDetailAsync =
+        ref.watch(ptMemberDetailProvider((ptId: ptId, memberId: memberId)));
     final theme = Theme.of(context);
 
     return Container(
@@ -226,32 +230,61 @@ class _PtInfoCard extends ConsumerWidget {
             style: TextStyle(color: theme.colorScheme.onPrimaryContainer)),
         data: (pt) {
           if (pt == null) {
-            return Text('Eğitmen bilgisi bulunamadi',
+            return Text('Eğitmen bilgisi bulunamadı',
                 style: TextStyle(color: theme.colorScheme.onPrimaryContainer));
           }
-          return Row(
+          final remainingSessions =
+              memberDetailAsync.valueOrNull?.remainingSessions ?? 0;
+          return Column(
             children: [
-              UserAvatar(photoUrl: pt.photoUrl, name: pt.name, radius: 24),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Eğitmeniniz',
-                        style: TextStyle(
-                            fontSize: 11,
-                            color: theme.colorScheme.onPrimaryContainer
-                                .withOpacity(0.7))),
-                    Text(pt.name,
-                        style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            color: theme.colorScheme.onPrimaryContainer)),
-                    Text(pt.email,
-                        style: TextStyle(
-                            fontSize: 11,
-                            color: theme.colorScheme.onPrimaryContainer
-                                .withOpacity(0.7))),
-                  ],
+              Row(
+                children: [
+                  UserAvatar(photoUrl: pt.photoUrl, name: pt.name, radius: 24),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Eğitmeniniz',
+                            style: TextStyle(
+                                fontSize: 11,
+                                color: theme.colorScheme.onPrimaryContainer
+                                    .withOpacity(0.7))),
+                        Text(pt.name,
+                            style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                color: theme.colorScheme.onPrimaryContainer)),
+                        Text(pt.email,
+                            style: TextStyle(
+                                fontSize: 11,
+                                color: theme.colorScheme.onPrimaryContainer
+                                    .withOpacity(0.7))),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  onPressed: () => _confirmLeave(
+                      context, ref, pt.name, remainingSessions),
+                  icon: Icon(Icons.logout,
+                      size: 15,
+                      color: theme.colorScheme.error.withOpacity(0.85)),
+                  label: Text(
+                    'Üyeliği Bırak',
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: theme.colorScheme.error.withOpacity(0.85)),
+                  ),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 4),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
                 ),
               ),
             ],
@@ -259,6 +292,81 @@ class _PtInfoCard extends ConsumerWidget {
         },
       ),
     );
+  }
+
+  Future<void> _confirmLeave(BuildContext context, WidgetRef ref,
+      String ptName, int remainingSessions) async {
+    final theme = Theme.of(context);
+    final ok = await showDialog<bool>(
+      context: context,
+      useRootNavigator: false,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Üyeliği Bırak'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('$ptName ile üyeliğinizi sonlandırmak istiyor musunuz?'),
+            if (remainingSessions > 0) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.errorContainer,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.warning_amber_rounded,
+                        size: 18,
+                        color: theme.colorScheme.onErrorContainer),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '$remainingSessions kalan seansınız bulunuyor.',
+                        style: TextStyle(
+                            fontSize: 13,
+                            color: theme.colorScheme.onErrorContainer,
+                            fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Hayır'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: TextButton.styleFrom(
+                foregroundColor: theme.colorScheme.error),
+            child: const Text('Evet, Bırak'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !context.mounted) return;
+    try {
+      // Clear ptId from user doc — member has permission per Firestore rules
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(memberId)
+          .update({'ptId': ''});
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Hata: $e'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ));
+      }
+    }
   }
 }
 
