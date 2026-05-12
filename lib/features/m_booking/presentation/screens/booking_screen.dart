@@ -23,10 +23,24 @@ class BookingScreen extends ConsumerStatefulWidget {
   ConsumerState<BookingScreen> createState() => _BookingScreenState();
 }
 
-class _BookingScreenState extends ConsumerState<BookingScreen> {
+class _BookingScreenState extends ConsumerState<BookingScreen>
+    with SingleTickerProviderStateMixin {
   DateTime _focusedDay = DateTime.now();
   DateTime _selectedDay = DateTime.now();
   CalendarFormat _calendarFormat = CalendarFormat.week;
+  late final TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -71,6 +85,13 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
             },
           ),
         ],
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: const [
+            Tab(icon: Icon(Icons.calendar_month_outlined), text: 'Takvim'),
+            Tab(icon: Icon(Icons.history_outlined), text: 'Geçmişim'),
+          ],
+        ),
       ),
       body: sessionsAsync.when(
         loading: () => const AppLoading(),
@@ -123,7 +144,11 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
               return timeOf(a).compareTo(timeOf(b));
             });
 
-          return Column(
+          return TabBarView(
+            controller: _tabController,
+            children: [
+              // ── Tab 0: Takvim ────────────────────────────────────────────
+              Column(
             children: [
               TableCalendar<Object>(
                 locale: 'tr_TR',
@@ -272,6 +297,10 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                         },
                       ),
               ),
+            ],
+          ),
+              // ── Tab 1: Geçmişim ──────────────────────────────────────────
+              _HistoryTab(sessions: sessions, memberId: memberId),
             ],
           );
         },
@@ -1217,6 +1246,240 @@ class _EditSessionSheetState extends State<_EditSessionSheet> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Geçmişim Tab
+// ---------------------------------------------------------------------------
+
+class _HistoryTab extends StatelessWidget {
+  final List<SessionModel> sessions;
+  final String memberId;
+
+  const _HistoryTab({required this.sessions, required this.memberId});
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final theme = Theme.of(context);
+
+    final upcoming = sessions
+        .where((s) =>
+            s.status == SessionStatus.confirmed && s.dateTime.isAfter(now))
+        .toList()
+      ..sort((a, b) => a.dateTime.compareTo(b.dateTime));
+
+    final completed = sessions
+        .where((s) => s.status == SessionStatus.completed)
+        .toList()
+      ..sort((a, b) => b.dateTime.compareTo(a.dateTime));
+
+    final totalMinutes =
+        completed.fold(0, (sum, s) => sum + s.durationMinutes);
+    final totalHours = totalMinutes ~/ 60;
+    final remainMins = totalMinutes % 60;
+    final durationStr = totalHours > 0
+        ? '$totalHours sa${remainMins > 0 ? ' $remainMins dk' : ''}'
+        : '$totalMinutes dk';
+
+    if (upcoming.isEmpty && completed.isEmpty) {
+      return const AppEmpty(
+        message: 'Henüz tamamlanan seans yok',
+        subMessage: 'Onaylanan seanslarınız tamamlandıkça burada görünecek',
+        icon: Icons.fitness_center_outlined,
+      );
+    }
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        // ── Özet Kart ────────────────────────────────────────────────────
+        Card(
+          color: theme.colorScheme.primaryContainer,
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _StatCell(
+                    label: 'Tamamlanan',
+                    value: '${completed.length}',
+                    unit: 'seans',
+                    color: theme.colorScheme.onPrimaryContainer,
+                  ),
+                ),
+                Container(
+                  width: 1,
+                  height: 40,
+                  color: theme.colorScheme.onPrimaryContainer.withValues(alpha: 0.2),
+                ),
+                Expanded(
+                  child: _StatCell(
+                    label: 'Toplam süre',
+                    value: durationStr,
+                    unit: '',
+                    color: theme.colorScheme.onPrimaryContainer,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // ── Yaklaşan Onaylı Seanslar ─────────────────────────────────────
+        if (upcoming.isNotEmpty) ...[
+          const SizedBox(height: 20),
+          _HistorySectionHeader(
+            title: 'Yaklaşan Seanslarım',
+            icon: Icons.event_outlined,
+            color: theme.colorScheme.primary,
+          ),
+          const SizedBox(height: 8),
+          ...upcoming.map((s) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: _HistorySessionCard(session: s),
+              )),
+        ],
+
+        // ── Tamamlanan Seanslar ───────────────────────────────────────────
+        if (completed.isNotEmpty) ...[
+          const SizedBox(height: 20),
+          _HistorySectionHeader(
+            title: 'Tamamlanan Seanslar',
+            icon: Icons.check_circle_outline,
+            color: Colors.green,
+          ),
+          const SizedBox(height: 8),
+          ...completed.map((s) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: _HistorySessionCard(session: s),
+              )),
+        ],
+
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+}
+
+class _StatCell extends StatelessWidget {
+  final String label;
+  final String value;
+  final String unit;
+  final Color color;
+
+  const _StatCell({
+    required this.label,
+    required this.value,
+    required this.unit,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(
+          label,
+          style: TextStyle(fontSize: 12, color: color.withValues(alpha: 0.7)),
+        ),
+        const SizedBox(height: 4),
+        RichText(
+          text: TextSpan(
+            children: [
+              TextSpan(
+                text: value,
+                style: TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w800,
+                  color: color,
+                ),
+              ),
+              if (unit.isNotEmpty)
+                TextSpan(
+                  text: ' $unit',
+                  style: TextStyle(
+                      fontSize: 13, color: color.withValues(alpha: 0.7)),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _HistorySectionHeader extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final Color color;
+
+  const _HistorySectionHeader({
+    required this.title,
+    required this.icon,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: color),
+        const SizedBox(width: 6),
+        Text(
+          title,
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                color: color,
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+      ],
+    );
+  }
+}
+
+class _HistorySessionCard extends StatelessWidget {
+  final SessionModel session;
+
+  const _HistorySessionCard({required this.session});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isCompleted = session.status == SessionStatus.completed;
+    final color = isCompleted ? Colors.green : theme.colorScheme.primary;
+
+    return Card(
+      child: ListTile(
+        dense: true,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        leading: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(
+            isCompleted ? Icons.fitness_center : Icons.event_outlined,
+            color: color,
+            size: 20,
+          ),
+        ),
+        title: Text(
+          DateFormat('d MMMM y, EEEE', 'tr').format(session.dateTime),
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+        ),
+        subtitle: Text(
+          '${DateFormat('HH:mm').format(session.dateTime)} • ${session.durationMinutes} dk',
+          style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+        ),
+        trailing: StatusBadge.session(session.status),
       ),
     );
   }
