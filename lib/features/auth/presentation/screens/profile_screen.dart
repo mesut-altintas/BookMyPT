@@ -15,6 +15,8 @@ import '../../../../core/theme/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../../../shared/widgets/user_avatar.dart';
 import '../../../../shared/widgets/app_loading.dart';
+import '../../../../shared/services/theme_service.dart';
+import '../../../../shared/services/locale_service.dart';
 import 'help_screen.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -264,6 +266,163 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
+  void _showThemeSettings() {
+    final current = ref.read(themeModeProvider);
+    showModalBottomSheet(
+      context: context,
+      useRootNavigator: false,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        final theme = Theme.of(ctx);
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.outlineVariant,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Görünüm',
+                  style: theme.textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 8),
+                StatefulBuilder(
+                  builder: (ctx, setStateSB) {
+                    ThemeMode selected = current;
+                    return Column(
+                      children: [
+                        _ThemeOption(
+                          icon: Icons.brightness_auto_outlined,
+                          label: 'Sistem Varsayılanı',
+                          subtitle: 'Cihazınızın temasını takip eder',
+                          value: ThemeMode.system,
+                          groupValue: selected,
+                          onChanged: (v) {
+                            setStateSB(() => selected = v!);
+                            ref.read(themeModeProvider.notifier).setThemeMode(v!);
+                          },
+                        ),
+                        _ThemeOption(
+                          icon: Icons.light_mode_outlined,
+                          label: 'Açık Tema',
+                          subtitle: 'Her zaman açık renk tema',
+                          value: ThemeMode.light,
+                          groupValue: selected,
+                          onChanged: (v) {
+                            setStateSB(() => selected = v!);
+                            ref.read(themeModeProvider.notifier).setThemeMode(v!);
+                          },
+                        ),
+                        _ThemeOption(
+                          icon: Icons.dark_mode_outlined,
+                          label: 'Koyu Tema',
+                          subtitle: 'Her zaman koyu renk tema',
+                          value: ThemeMode.dark,
+                          groupValue: selected,
+                          onChanged: (v) {
+                            setStateSB(() => selected = v!);
+                            ref.read(themeModeProvider.notifier).setThemeMode(v!);
+                          },
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showLanguageSettings() {
+    final currentLocale = ref.read(localeProvider);
+    showModalBottomSheet(
+      context: context,
+      useRootNavigator: false,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        final theme = Theme.of(ctx);
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.outlineVariant,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Dil / Language',
+                  style: theme.textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 8),
+                StatefulBuilder(
+                  builder: (ctx, setStateSB) {
+                    Locale selected = currentLocale;
+                    return Column(
+                      children: [
+                        _LocaleOption(
+                          flag: '🇹🇷',
+                          label: 'Türkçe',
+                          value: const Locale('tr', 'TR'),
+                          groupValue: selected,
+                          onChanged: (v) {
+                            setStateSB(() => selected = v!);
+                            ref.read(localeProvider.notifier).setLocale(v!);
+                            Navigator.of(ctx).pop();
+                          },
+                        ),
+                        _LocaleOption(
+                          flag: '🇬🇧',
+                          label: 'English',
+                          value: const Locale('en', 'US'),
+                          groupValue: selected,
+                          onChanged: (v) {
+                            setStateSB(() => selected = v!);
+                            ref.read(localeProvider.notifier).setLocale(v!);
+                            Navigator.of(ctx).pop();
+                          },
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> _signOut() async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -407,18 +566,36 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ),
                   ),
                 ),
-                ListTile(
-                  leading: const Icon(Icons.language),
-                  title: const Text('Dil'),
-                  trailing: const Text('Türkçe'),
-                  onTap: () {},
-                ),
-                ListTile(
-                  leading: const Icon(Icons.dark_mode_outlined),
-                  title: const Text('Görünüm'),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () {},
-                ),
+                Consumer(builder: (ctx, r, _) {
+                  final locale = r.watch(localeProvider);
+                  final label = locale.languageCode == 'tr' ? '🇹🇷  Türkçe' : '🇬🇧  English';
+                  return ListTile(
+                    leading: const Icon(Icons.language),
+                    title: const Text('Dil'),
+                    trailing: Text(label,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        )),
+                    onTap: _showLanguageSettings,
+                  );
+                }),
+                Consumer(builder: (ctx, r, _) {
+                  final mode = r.watch(themeModeProvider);
+                  final label = switch (mode) {
+                    ThemeMode.light  => '☀️  Açık',
+                    ThemeMode.dark   => '🌙  Koyu',
+                    ThemeMode.system => '⚙️  Sistem',
+                  };
+                  return ListTile(
+                    leading: const Icon(Icons.dark_mode_outlined),
+                    title: const Text('Görünüm'),
+                    trailing: Text(label,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        )),
+                    onTap: _showThemeSettings,
+                  );
+                }),
                 const Divider(),
                 ListTile(
                   leading: Icon(Icons.logout, color: AppColors.error),
@@ -437,6 +614,150 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 }
 
+// ── Theme option row ──────────────────────────────────────────────────────────
+class _ThemeOption extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String subtitle;
+  final ThemeMode value;
+  final ThemeMode groupValue;
+  final ValueChanged<ThemeMode?> onChanged;
+
+  const _ThemeOption({
+    required this.icon,
+    required this.label,
+    required this.subtitle,
+    required this.value,
+    required this.groupValue,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final selected = value == groupValue;
+    return InkWell(
+      onTap: () => onChanged(value),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: selected
+                ? theme.colorScheme.primary
+                : theme.colorScheme.outlineVariant,
+            width: selected ? 2 : 1,
+          ),
+          color: selected
+              ? theme.colorScheme.primaryContainer.withValues(alpha: 0.3)
+              : null,
+        ),
+        child: Row(
+          children: [
+            Icon(icon,
+                color: selected
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.onSurfaceVariant),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: selected
+                            ? theme.colorScheme.primary
+                            : theme.colorScheme.onSurface,
+                      )),
+                  Text(subtitle,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      )),
+                ],
+              ),
+            ),
+            Radio<ThemeMode>(
+              value: value,
+              groupValue: groupValue,
+              onChanged: onChanged,
+              activeColor: theme.colorScheme.primary,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Locale option row ─────────────────────────────────────────────────────────
+class _LocaleOption extends StatelessWidget {
+  final String flag;
+  final String label;
+  final Locale value;
+  final Locale groupValue;
+  final ValueChanged<Locale?> onChanged;
+
+  const _LocaleOption({
+    required this.flag,
+    required this.label,
+    required this.value,
+    required this.groupValue,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final selected = value == groupValue;
+    return InkWell(
+      onTap: () => onChanged(value),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: selected
+                ? theme.colorScheme.primary
+                : theme.colorScheme.outlineVariant,
+            width: selected ? 2 : 1,
+          ),
+          color: selected
+              ? theme.colorScheme.primaryContainer.withValues(alpha: 0.3)
+              : null,
+        ),
+        child: Row(
+          children: [
+            Text(flag, style: const TextStyle(fontSize: 24)),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(label,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                    color: selected
+                        ? theme.colorScheme.primary
+                        : theme.colorScheme.onSurface,
+                  )),
+            ),
+            Radio<Locale>(
+              value: value,
+              groupValue: groupValue,
+              onChanged: onChanged,
+              activeColor: theme.colorScheme.primary,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Edit name dialog ──────────────────────────────────────────────────────────
 class _EditNameDialog extends StatefulWidget {
   final String initialName;
   final void Function(String) onSave;

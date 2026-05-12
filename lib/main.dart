@@ -13,6 +13,7 @@ import 'features/auth/providers/auth_provider.dart';
 import 'firebase_options.dart';
 import 'shared/services/notification_service.dart';
 import 'shared/services/theme_service.dart';
+import 'shared/services/locale_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -58,6 +59,7 @@ class FitCoachApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
     final themeMode = ref.watch(themeModeProvider);
+    final locale = ref.watch(localeProvider);
     final currentUser = ref.watch(currentUserProvider);
     final isPt = currentUser.valueOrNull?.isPt ?? false;
 
@@ -92,7 +94,7 @@ class FitCoachApp extends ConsumerWidget {
         Locale('tr', 'TR'),
         Locale('en', 'US'),
       ],
-      locale: const Locale('tr', 'TR'),
+      locale: locale,
       builder: (context, child) {
         return MediaQuery(
           data: MediaQuery.of(context).copyWith(
