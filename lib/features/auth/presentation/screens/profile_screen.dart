@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'dart:io';
 
 import '../../../../core/constants/app_constants.dart';
@@ -131,6 +133,134 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ),
       );
     }
+  }
+
+  Future<void> _showNotificationSettings() async {
+    // Mevcut izin durumunu al
+    final settings = await FirebaseMessaging.instance.getNotificationSettings();
+    final isGranted =
+        settings.authorizationStatus == AuthorizationStatus.authorized ||
+        settings.authorizationStatus == AuthorizationStatus.provisional;
+
+    if (!mounted) return;
+
+    showModalBottomSheet(
+      context: context,
+      useRootNavigator: false,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        final theme = Theme.of(ctx);
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.outlineVariant,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Bildirim Ayarları',
+                  style: theme.textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: isGranted
+                        ? Colors.green.withValues(alpha: 0.08)
+                        : theme.colorScheme.errorContainer
+                            .withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isGranted
+                          ? Colors.green.withValues(alpha: 0.3)
+                          : theme.colorScheme.error.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        isGranted
+                            ? Icons.notifications_active_outlined
+                            : Icons.notifications_off_outlined,
+                        color: isGranted
+                            ? Colors.green
+                            : theme.colorScheme.error,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              isGranted ? 'Bildirimler Açık' : 'Bildirimler Kapalı',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: isGranted
+                                    ? Colors.green
+                                    : theme.colorScheme.error,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              isGranted
+                                  ? 'Randevu ve seans bildirimleri alıyorsunuz'
+                                  : 'Randevu ve seans bildirimleri için izin gerekli',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.settings_outlined),
+                    label: const Text('Sistem Ayarlarını Aç'),
+                    onPressed: () {
+                      Navigator.of(ctx).pop();
+                      openAppSettings();
+                    },
+                  ),
+                ),
+                if (!isGranted) ...[
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.notifications_outlined),
+                      label: const Text('İzin İste'),
+                      onPressed: () async {
+                        Navigator.of(ctx).pop();
+                        await FirebaseMessaging.instance.requestPermission();
+                      },
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _signOut() async {
@@ -264,7 +394,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   leading: const Icon(Icons.notifications_outlined),
                   title: const Text('Bildirimler'),
                   trailing: const Icon(Icons.chevron_right),
-                  onTap: () {},
+                  onTap: _showNotificationSettings,
                 ),
                 ListTile(
                   leading: const Icon(Icons.language),
