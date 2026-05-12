@@ -15,6 +15,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../../../shared/widgets/user_avatar.dart';
 import '../../../../shared/widgets/app_loading.dart';
+import 'help_screen.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -395,6 +396,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   title: const Text('Bildirimler'),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: _showNotificationSettings,
+                ),
+                ListTile(
+                  leading: const Icon(Icons.menu_book_outlined),
+                  title: const Text('Kullanım Kılavuzu'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => HelpScreen(isPt: user.isPt),
+                    ),
+                  ),
                 ),
                 ListTile(
                   leading: const Icon(Icons.language),
