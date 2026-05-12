@@ -21,7 +21,30 @@ async function getFcmToken(uid) {
 async function sendNotification(token, title, body) {
   if (!token) return;
   try {
-    await messaging.send({ token, notification: { title, body } });
+    await messaging.send({
+      token,
+      notification: { title, body },
+      // iOS (APNs) — sound + high priority required for visible notification
+      apns: {
+        headers: {
+          'apns-priority': '10',
+        },
+        payload: {
+          aps: {
+            sound: 'default',
+            badge: 1,
+          },
+        },
+      },
+      // Android — high priority channel
+      android: {
+        priority: 'high',
+        notification: {
+          sound: 'default',
+          channelId: 'bookmypt_default',
+        },
+      },
+    });
     console.log('Notification sent to', token.substring(0, 20) + '...');
   } catch (e) {
     console.error('FCM send error:', e.message, '| code:', e.code, '| token prefix:', token.substring(0, 15));
