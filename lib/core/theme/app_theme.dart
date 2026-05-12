@@ -54,6 +54,30 @@ class AppTheme {
     brightness: Brightness.dark,
   );
 
+  static ThemeData sportLightTheme = _buildTheme(
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: AppColors.sportPrimary,
+      brightness: Brightness.light,
+      primary: AppColors.sportPrimary,
+      secondary: AppColors.sportSecondary,
+      error: AppColors.error,
+      surface: AppColors.surfaceLight,
+    ),
+    brightness: Brightness.light,
+  );
+
+  static ThemeData sportDarkTheme = _buildTheme(
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: AppColors.sportPrimary,
+      brightness: Brightness.dark,
+      primary: AppColors.sportPrimaryLight,
+      secondary: AppColors.sportSecondary,
+      error: AppColors.errorLight,
+      surface: AppColors.surfaceDark,
+    ),
+    brightness: Brightness.dark,
+  );
+
   static ThemeData _buildTheme({
     required ColorScheme colorScheme,
     required Brightness brightness,

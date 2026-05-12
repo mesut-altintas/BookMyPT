@@ -2971,6 +2971,36 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Program hakkında kısa bilgi'**
   String get programDescriptionHint;
+
+  /// Color scheme section header in appearance sheet
+  ///
+  /// In tr, this message translates to:
+  /// **'Renk Şeması'**
+  String get colorSchemeSection;
+
+  /// Classic color scheme name
+  ///
+  /// In tr, this message translates to:
+  /// **'Klasik'**
+  String get colorSchemeClassic;
+
+  /// Classic color scheme subtitle
+  ///
+  /// In tr, this message translates to:
+  /// **'Varsayılan renk teması'**
+  String get colorSchemeClassicSub;
+
+  /// Sport color scheme name
+  ///
+  /// In tr, this message translates to:
+  /// **'Spor'**
+  String get colorSchemeSport;
+
+  /// Sport color scheme subtitle
+  ///
+  /// In tr, this message translates to:
+  /// **'Canlı ve enerjik renkler'**
+  String get colorSchemeSportSub;
 }
 
 class _AppLocalizationsDelegate

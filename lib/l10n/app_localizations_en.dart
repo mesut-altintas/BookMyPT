@@ -1566,4 +1566,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get programDescriptionHint => 'Brief info about the program';
+
+  @override
+  String get colorSchemeSection => 'Color Scheme';
+
+  @override
+  String get colorSchemeClassic => 'Classic';
+
+  @override
+  String get colorSchemeClassicSub => 'Default color theme';
+
+  @override
+  String get colorSchemeSport => 'Sport';
+
+  @override
+  String get colorSchemeSportSub => 'Vibrant and energetic colors';
 }

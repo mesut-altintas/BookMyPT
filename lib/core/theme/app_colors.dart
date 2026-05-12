@@ -45,6 +45,13 @@ class AppColors {
   static const Color surfaceDark = Color(0xFF1E1E1E);
   static const Color cardDark = Color(0xFF2C2C2C);
 
+  // Sport Theme — Vibrant Orange / Amber
+  static const Color sportPrimary      = Color(0xFFFF5722); // Deep Orange 600
+  static const Color sportPrimaryLight = Color(0xFFFF7043); // Deep Orange 400
+  static const Color sportPrimaryDark  = Color(0xFFE64A19); // Deep Orange 700
+  static const Color sportSecondary    = Color(0xFFFFC107); // Amber
+  static const Color sportAccent       = Color(0xFFFFEB3B); // Yellow
+
   // Session Status Colors
   static const Color pending = Color(0xFFF57F17);
   static const Color confirmed = Color(0xFF2E7D32);

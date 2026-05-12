@@ -1567,4 +1567,19 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get programDescriptionHint => 'Program hakkında kısa bilgi';
+
+  @override
+  String get colorSchemeSection => 'Renk Şeması';
+
+  @override
+  String get colorSchemeClassic => 'Klasik';
+
+  @override
+  String get colorSchemeClassicSub => 'Varsayılan renk teması';
+
+  @override
+  String get colorSchemeSport => 'Spor';
+
+  @override
+  String get colorSchemeSportSub => 'Canlı ve enerjik renkler';
 }

@@ -15,6 +15,7 @@ import 'firebase_options.dart';
 import 'shared/services/notification_service.dart';
 import 'shared/services/theme_service.dart';
 import 'shared/services/locale_service.dart';
+import 'shared/services/color_scheme_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -61,6 +62,7 @@ class FitCoachApp extends ConsumerWidget {
     final router = ref.watch(routerProvider);
     final themeMode = ref.watch(themeModeProvider);
     final locale = ref.watch(localeProvider);
+    final colorScheme = ref.watch(colorSchemeProvider);
     final currentUser = ref.watch(currentUserProvider);
     final isPt = currentUser.valueOrNull?.isPt ?? false;
 
@@ -83,8 +85,12 @@ class FitCoachApp extends ConsumerWidget {
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
       themeMode: themeMode,
-      theme: isPt ? AppTheme.ptLightTheme : AppTheme.memberLightTheme,
-      darkTheme: isPt ? AppTheme.ptDarkTheme : AppTheme.memberDarkTheme,
+      theme: colorScheme == AppColorScheme.sport
+          ? AppTheme.sportLightTheme
+          : (isPt ? AppTheme.ptLightTheme : AppTheme.memberLightTheme),
+      darkTheme: colorScheme == AppColorScheme.sport
+          ? AppTheme.sportDarkTheme
+          : (isPt ? AppTheme.ptDarkTheme : AppTheme.memberDarkTheme),
       routerConfig: router,
       localizationsDelegates: const [
         AppLocalizations.delegate,

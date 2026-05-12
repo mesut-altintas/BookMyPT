@@ -1547,5 +1547,20 @@
   "@programNameHint": { "description": "Program name field hint text" },
 
   "programDescriptionHint": "Program hakkında kısa bilgi",
-  "@programDescriptionHint": { "description": "Program description field hint text" }
+  "@programDescriptionHint": { "description": "Program description field hint text" },
+
+  "colorSchemeSection": "Renk Şeması",
+  "@colorSchemeSection": { "description": "Color scheme section header in appearance sheet" },
+
+  "colorSchemeClassic": "Klasik",
+  "@colorSchemeClassic": { "description": "Classic color scheme name" },
+
+  "colorSchemeClassicSub": "Varsayılan renk teması",
+  "@colorSchemeClassicSub": { "description": "Classic color scheme subtitle" },
+
+  "colorSchemeSport": "Spor",
+  "@colorSchemeSport": { "description": "Sport color scheme name" },
+
+  "colorSchemeSportSub": "Canlı ve enerjik renkler",
+  "@colorSchemeSportSub": { "description": "Sport color scheme subtitle" }
 }

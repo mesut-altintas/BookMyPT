@@ -17,6 +17,7 @@ import '../../providers/auth_provider.dart';
 import '../../../../shared/widgets/user_avatar.dart';
 import '../../../../shared/widgets/app_loading.dart';
 import '../../../../shared/services/theme_service.dart';
+import '../../../../shared/services/color_scheme_service.dart';
 import '../../../../shared/services/locale_service.dart';
 import 'help_screen.dart';
 
@@ -268,6 +269,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       builder: (ctx) => Consumer(
         builder: (ctx, r, _) {
           final current = r.watch(themeModeProvider);
+          final currentScheme = r.watch(colorSchemeProvider);
           final theme = Theme.of(ctx);
           final l10n = ctx.l10n;
 
@@ -310,6 +312,33 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     groupValue: current,
                     onChanged: (v) =>
                         r.read(themeModeProvider.notifier).setThemeMode(v!),
+                  ),
+                  const SizedBox(height: 20),
+                  Divider(height: 1, color: theme.dividerColor),
+                  const SizedBox(height: 16),
+                  Text(l10n.colorSchemeSection,
+                      style: theme.textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 12),
+                  _ColorSchemeOption(
+                    color: const Color(0xFF00796B),
+                    label: l10n.colorSchemeClassic,
+                    subtitle: l10n.colorSchemeClassicSub,
+                    value: AppColorScheme.classic,
+                    groupValue: currentScheme,
+                    onChanged: (v) => r
+                        .read(colorSchemeProvider.notifier)
+                        .setColorScheme(v!),
+                  ),
+                  _ColorSchemeOption(
+                    color: const Color(0xFFFF5722),
+                    label: l10n.colorSchemeSport,
+                    subtitle: l10n.colorSchemeSportSub,
+                    value: AppColorScheme.sport,
+                    groupValue: currentScheme,
+                    onChanged: (v) => r
+                        .read(colorSchemeProvider.notifier)
+                        .setColorScheme(v!),
                   ),
                 ],
               ),
@@ -644,6 +673,91 @@ class _ThemeOption extends StatelessWidget {
               groupValue: groupValue,
               onChanged: onChanged,
               activeColor: theme.colorScheme.primary,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Color scheme option row ──────────────────────────────────────────────────
+class _ColorSchemeOption extends StatelessWidget {
+  final Color color;
+  final String label;
+  final String subtitle;
+  final AppColorScheme value;
+  final AppColorScheme groupValue;
+  final ValueChanged<AppColorScheme?> onChanged;
+
+  const _ColorSchemeOption({
+    required this.color,
+    required this.label,
+    required this.subtitle,
+    required this.value,
+    required this.groupValue,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final selected = value == groupValue;
+    return InkWell(
+      onTap: () => onChanged(value),
+      borderRadius: BorderRadius.circular(12),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: selected ? color : theme.colorScheme.outlineVariant,
+            width: selected ? 2 : 1,
+          ),
+          color: selected
+              ? color.withValues(alpha: 0.08)
+              : theme.colorScheme.surface,
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                color: color,
+                shape: BoxShape.circle,
+                boxShadow: selected
+                    ? [BoxShadow(color: color.withValues(alpha: 0.4), blurRadius: 6, spreadRadius: 1)]
+                    : null,
+              ),
+              child: selected
+                  ? const Icon(Icons.check, color: Colors.white, size: 16)
+                  : null,
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: selected ? color : theme.colorScheme.onSurface,
+                      )),
+                  Text(subtitle,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      )),
+                ],
+              ),
+            ),
+            Radio<AppColorScheme>(
+              value: value,
+              groupValue: groupValue,
+              onChanged: onChanged,
+              activeColor: color,
             ),
           ],
         ),

@@ -509,5 +509,11 @@
   "activationRequest": "Activation request",
   "joinRequest": "Join request",
   "programNameHint": "Beginner Program",
-  "programDescriptionHint": "Brief info about the program"
+  "programDescriptionHint": "Brief info about the program",
+
+  "colorSchemeSection": "Color Scheme",
+  "colorSchemeClassic": "Classic",
+  "colorSchemeClassicSub": "Default color theme",
+  "colorSchemeSport": "Sport",
+  "colorSchemeSportSub": "Vibrant and energetic colors"
 }
