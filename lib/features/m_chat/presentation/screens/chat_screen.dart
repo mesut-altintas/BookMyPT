@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/l10n/extensions.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../../features/auth/providers/auth_provider.dart';
 import '../../../../features/m_chat/providers/chat_provider.dart';
@@ -62,7 +63,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       if (mounted) {
         _msgCtrl.text = text;
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Gönderilemedi: $e'),
+          content: Text(context.l10n.sendFailed('$e')),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
         ));
@@ -102,9 +103,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   error: (e, _) => Center(child: Text(e.toString())),
                   data: (messages) {
                     if (messages.isEmpty) {
-                      return const Center(
+                      return Center(
                         child: Text(
-                          'Henüz mesaj yok.\nMerhaba diyerek başlayın!',
+                          context.l10n.chatEmptyMessage,
                           textAlign: TextAlign.center,
                         ),
                       );
@@ -178,7 +179,7 @@ class _ChatAppBarTitle extends ConsumerWidget {
         ? null
         : rooms.where((r) => r.id == chatId).firstOrNull;
 
-    if (room == null) return const Text('Mesajlaşma');
+    if (room == null) return Text(context.l10n.messaging);
 
     final otherName = room.getOtherName(userId);
     final otherPhoto = room.getOtherPhoto(userId);
@@ -320,7 +321,7 @@ class _ChatInputBar extends StatelessWidget {
               minLines: 1,
               textInputAction: TextInputAction.newline,
               decoration: InputDecoration(
-                hintText: 'Mesaj yaz...',
+                hintText: context.l10n.typeMessage,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24),
                   borderSide: BorderSide.none,

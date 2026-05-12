@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/l10n/extensions.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../features/auth/providers/auth_provider.dart';
 import '../../../../features/m_calendar/providers/invitation_provider.dart';
@@ -52,9 +53,8 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
       if (memberUser == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                  'Bu e-posta ile kayitli uye bulunamadi. Once uye kayit olmalidir.'),
+            SnackBar(
+              content: Text(context.l10n.memberNotFoundByEmail),
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -76,7 +76,7 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${memberUser.name} adresine davet gonderildi'),
+            content: Text(context.l10n.invitationSent(memberUser.name)),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -100,9 +100,9 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Uye Davet Et')),
+      appBar: AppBar(title: Text(context.l10n.addMemberTitle)),
       body: _isLoading
-          ? const AppLoading(message: 'Davet gonderiliyor...')
+          ? AppLoading(message: context.l10n.sendingInvitation)
           : SingleChildScrollView(
               padding: const EdgeInsets.all(24),
               child: Form(
@@ -111,7 +111,7 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Uye Bilgileri',
+                      context.l10n.memberInfo,
                       style:
                           Theme.of(context).textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.w700,
@@ -119,7 +119,7 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Uyenin e-posta adresiyle arama yapin. Uye once uygulamaya kayit olmali.',
+                      context.l10n.memberEmailInstructions,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color:
                                 Theme.of(context).colorScheme.onSurfaceVariant,
@@ -130,36 +130,36 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
                       controller: _emailCtrl,
                       keyboardType: TextInputType.emailAddress,
                       validator: Validators.email,
-                      decoration: const InputDecoration(
-                        labelText: 'Uye E-postasi',
-                        hintText: 'uye@email.com',
-                        prefixIcon: Icon(Icons.search),
+                      decoration: InputDecoration(
+                        labelText: context.l10n.memberEmail,
+                        hintText: context.l10n.emailHint,
+                        prefixIcon: const Icon(Icons.search),
                       ),
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _goalCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'Hedef (Istege bagli)',
-                        hintText: 'Kilo verme, kas kazanma...',
-                        prefixIcon: Icon(Icons.flag_outlined),
+                      decoration: InputDecoration(
+                        labelText: context.l10n.goalOptional,
+                        hintText: context.l10n.goalHintAlt,
+                        prefixIcon: const Icon(Icons.flag_outlined),
                       ),
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _notesCtrl,
                       maxLines: 3,
-                      decoration: const InputDecoration(
-                        labelText: 'Notlar (Istege bagli)',
-                        hintText: 'Ozel durumlar, saglik notlari...',
-                        prefixIcon: Icon(Icons.notes_outlined),
+                      decoration: InputDecoration(
+                        labelText: context.l10n.notesOptional,
+                        hintText: context.l10n.notesHint,
+                        prefixIcon: const Icon(Icons.notes_outlined),
                         alignLabelWithHint: true,
                       ),
                     ),
                     const SizedBox(height: 32),
                     ElevatedButton(
                       onPressed: _sendInvitation,
-                      child: const Text('Davet Gonder'),
+                      child: Text(context.l10n.sendInvitation),
                     ),
                   ],
                 ),

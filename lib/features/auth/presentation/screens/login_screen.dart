@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/l10n/extensions.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/constants/app_constants.dart';
@@ -55,7 +56,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (!mounted) return;
     final state = ref.read(authNotifierProvider);
     if (state.hasError) {
-      _showError('Google ile giriş başarısız');
+      _showError(context.l10n.errorGoogleSignIn);
       return;
     }
     await _navigateBasedOnRole();
@@ -103,14 +104,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   String _parseError(String error) {
-    if (error.contains('user-not-found')) return 'Bu e-posta kayıtlı değil';
-    if (error.contains('wrong-password')) return 'Şifre hatalı';
-    if (error.contains('invalid-credential')) return 'E-posta veya şifre hatalı';
-    if (error.contains('too-many-requests')) return 'Çok fazla deneme. Lütfen bekleyin';
-    if (error.contains('invalid-email')) return 'Geçersiz e-posta adresi';
-    if (error.contains('network-request-failed')) return 'İnternet bağlantısı hatası';
-    if (error.contains('user-disabled')) return 'Bu hesap devre dışı bırakıldı';
-    return 'Giriş başarısız. Lütfen tekrar deneyin';
+    final l10n = context.l10n;
+    if (error.contains('user-not-found')) return l10n.errorUserNotFound;
+    if (error.contains('wrong-password')) return l10n.errorWrongPassword;
+    if (error.contains('invalid-credential')) return l10n.errorInvalidCredential;
+    if (error.contains('too-many-requests')) return l10n.errorTooManyRequests;
+    if (error.contains('invalid-email')) return l10n.errorInvalidEmail;
+    if (error.contains('network-request-failed')) return l10n.errorNetworkFailed;
+    if (error.contains('user-disabled')) return l10n.errorUserDisabled;
+    return l10n.errorSignInFailed;
   }
 
   @override
@@ -118,6 +120,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final authState = ref.watch(authNotifierProvider);
     final isLoading = authState.isLoading;
     final theme = Theme.of(context);
+    final l10n = context.l10n;
 
     return Scaffold(
       body: SafeArea(
@@ -146,14 +149,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
                 const SizedBox(height: 32),
                 Text(
-                  'Hoş Geldiniz',
+                  l10n.welcomeTitle,
                   style: theme.textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Hesabınıza giriş yapın',
+                  l10n.signInSubtitle,
                   style: theme.textTheme.bodyLarge?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -161,8 +164,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 const SizedBox(height: 40),
                 AuthTextField(
                   controller: _emailCtrl,
-                  label: 'E-posta',
-                  hint: 'ornek@email.com',
+                  label: l10n.email,
+                  hint: l10n.emailHint,
                   keyboardType: TextInputType.emailAddress,
                   prefixIcon: Icons.email_outlined,
                   validator: Validators.email,
@@ -171,7 +174,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 const SizedBox(height: 16),
                 AuthTextField(
                   controller: _passCtrl,
-                  label: 'Şifre',
+                  label: l10n.password,
                   hint: '••••••',
                   obscureText: _obscurePass,
                   prefixIcon: Icons.lock_outlined,
@@ -193,7 +196,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: () => context.push(AppRoutes.forgotPassword),
-                    child: const Text('Şifremi Unuttum'),
+                    child: Text(l10n.forgotPassword),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -205,7 +208,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           width: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('Giriş Yap'),
+                      : Text(l10n.signIn),
                 ),
                 const SizedBox(height: 16),
                 Row(
@@ -214,7 +217,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Text(
-                        'veya',
+                        l10n.orDivider,
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.outlineVariant,
                         ),
@@ -230,12 +233,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'Hesabınız yok mu? ',
+                      l10n.noAccount,
                       style: theme.textTheme.bodyMedium,
                     ),
                     TextButton(
                       onPressed: () => context.push(AppRoutes.register),
-                      child: const Text('Kayıt Ol'),
+                      child: Text(l10n.register),
                     ),
                   ],
                 ),

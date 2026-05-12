@@ -7,6 +7,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:intl/intl.dart';
 import 'dart:io';
 
+import '../../../../core/l10n/extensions.dart';
 import '../../../../features/auth/providers/auth_provider.dart';
 import '../../../../shared/models/progress_model.dart';
 import '../../../../shared/widgets/app_loading.dart';
@@ -87,7 +88,7 @@ class _AddProgressScreenState extends ConsumerState<AddProgressScreen> {
     if (weight == null && _selectedPhoto == null &&
         _waistCtrl.text.isEmpty && _chestCtrl.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('En az bir ölçüm girin')),
+        SnackBar(content: Text(context.l10n.enterAtLeastOneMeasurement)),
       );
       return;
     }
@@ -123,14 +124,14 @@ class _AddProgressScreenState extends ConsumerState<AddProgressScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('İlerleme kaydedildi')),
+          SnackBar(content: Text(context.l10n.progressSaved)),
         );
         context.pop();
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Hata: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text(context.l10n.error('$e')), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -141,14 +142,14 @@ class _AddProgressScreenState extends ConsumerState<AddProgressScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(body: AppLoading(message: 'Kaydediliyor...'));
+      return Scaffold(body: AppLoading(message: context.l10n.saving));
     }
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('İlerleme Ekle'),
+        title: Text(context.l10n.addProgressTitle),
         actions: [
-          TextButton(onPressed: _save, child: const Text('Kaydet')),
+          TextButton(onPressed: _save, child: Text(context.l10n.save)),
         ],
       ),
       body: Form(
@@ -185,7 +186,7 @@ class _AddProgressScreenState extends ConsumerState<AddProgressScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'İlerleme Fotoğrafı Ekle',
+                            context.l10n.addProgressPhoto,
                             style: TextStyle(
                               color: Theme.of(context).colorScheme.primary,
                             ),
@@ -215,15 +216,15 @@ class _AddProgressScreenState extends ConsumerState<AddProgressScreen> {
             TextFormField(
               controller: _weightCtrl,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Kilo (kg)',
-                prefixIcon: Icon(Icons.monitor_weight_outlined),
+              decoration: InputDecoration(
+                labelText: context.l10n.weight,
+                prefixIcon: const Icon(Icons.monitor_weight_outlined),
               ),
             ),
             const SizedBox(height: 16),
 
             Text(
-              'Vücut Ölçüleri (cm)',
+              context.l10n.bodyMeasurements,
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -236,7 +237,7 @@ class _AddProgressScreenState extends ConsumerState<AddProgressScreen> {
                   child: TextFormField(
                     controller: _chestCtrl,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: 'Göğüs'),
+                    decoration: InputDecoration(labelText: context.l10n.chest),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -244,7 +245,7 @@ class _AddProgressScreenState extends ConsumerState<AddProgressScreen> {
                   child: TextFormField(
                     controller: _waistCtrl,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: 'Bel'),
+                    decoration: InputDecoration(labelText: context.l10n.waist),
                   ),
                 ),
               ],
@@ -256,7 +257,7 @@ class _AddProgressScreenState extends ConsumerState<AddProgressScreen> {
                   child: TextFormField(
                     controller: _hipsCtrl,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: 'Kalça'),
+                    decoration: InputDecoration(labelText: context.l10n.hips),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -264,7 +265,7 @@ class _AddProgressScreenState extends ConsumerState<AddProgressScreen> {
                   child: TextFormField(
                     controller: _bicepCtrl,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: 'Kol (bicep)'),
+                    decoration: InputDecoration(labelText: context.l10n.armBicep),
                   ),
                 ),
               ],
@@ -276,7 +277,7 @@ class _AddProgressScreenState extends ConsumerState<AddProgressScreen> {
                   child: TextFormField(
                     controller: _thighCtrl,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: 'Bacak'),
+                    decoration: InputDecoration(labelText: context.l10n.leg),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -285,7 +286,7 @@ class _AddProgressScreenState extends ConsumerState<AddProgressScreen> {
                     controller: _bodyFatCtrl,
                     keyboardType: TextInputType.number,
                     decoration:
-                        const InputDecoration(labelText: 'Yağ Oranı (%)'),
+                        InputDecoration(labelText: context.l10n.bodyFat),
                   ),
                 ),
               ],
@@ -295,8 +296,8 @@ class _AddProgressScreenState extends ConsumerState<AddProgressScreen> {
             TextFormField(
               controller: _notesCtrl,
               maxLines: 2,
-              decoration: const InputDecoration(
-                labelText: 'Notlar (İsteğe bağlı)',
+              decoration: InputDecoration(
+                labelText: context.l10n.notesOptional,
                 alignLabelWithHint: true,
               ),
             ),
@@ -304,7 +305,7 @@ class _AddProgressScreenState extends ConsumerState<AddProgressScreen> {
 
             ElevatedButton(
               onPressed: _save,
-              child: const Text('Kaydet'),
+              child: Text(context.l10n.save),
             ),
           ],
         ),

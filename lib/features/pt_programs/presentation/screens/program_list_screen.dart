@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/l10n/extensions.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../../features/auth/providers/auth_provider.dart';
@@ -39,7 +40,7 @@ class _ProgramListContent extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Programlar'),
+        title: Text(context.l10n.programListTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -56,13 +57,13 @@ class _ProgramListContent extends ConsumerWidget {
         data: (programs) {
           if (programs.isEmpty) {
             return AppEmpty(
-              message: 'Henüz program oluşturmadınız',
-              subMessage: 'Üyeleriniz için antrenman programı oluşturun',
+              message: context.l10n.noProgramsYet,
+              subMessage: context.l10n.noProgramsYetSub,
               icon: Icons.fitness_center_outlined,
               action: ElevatedButton.icon(
                 onPressed: () => context.push(AppRoutes.createProgram),
                 icon: const Icon(Icons.add),
-                label: const Text('Program Oluştur'),
+                label: Text(context.l10n.createProgram),
               ),
             );
           }
@@ -117,7 +118,7 @@ class _ProgramListContent extends ConsumerWidget {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            p.isActive ? 'Aktif' : 'Pasif',
+                            p.isActive ? context.l10n.active : context.l10n.passive,
                             style: TextStyle(
                               fontSize: 11,
                               color: p.isActive ? Colors.green : Colors.grey,

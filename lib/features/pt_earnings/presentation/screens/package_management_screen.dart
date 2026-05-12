@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/l10n/extensions.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../features/auth/providers/auth_provider.dart';
@@ -39,20 +40,20 @@ class _PackageContent extends ConsumerWidget {
     final packagesAsync = ref.watch(allPtPackagesProvider(ptId));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Paket Yönetimi')),
+      appBar: AppBar(title: Text(context.l10n.packageManagement)),
       body: packagesAsync.when(
         loading: () => const AppLoading(),
         error: (e, _) => Center(child: Text(e.toString())),
         data: (packages) {
           if (packages.isEmpty) {
             return AppEmpty(
-              message: 'Henüz paket oluşturmadınız',
-              subMessage: 'Üyeleriniz için seans paketi oluşturun',
+              message: context.l10n.noPackagesYet,
+              subMessage: context.l10n.noPackagesYetSub,
               icon: Icons.inventory_2_outlined,
               action: ElevatedButton.icon(
                 onPressed: () => _showAddPackageSheet(context, ref, ptId),
                 icon: const Icon(Icons.add),
-                label: const Text('Paket Ekle'),
+                label: Text(context.l10n.addPackage),
               ),
             );
           }
@@ -137,7 +138,7 @@ class _PackageTile extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  'Özel',
+                  context.l10n.special,
                   style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
@@ -163,14 +164,14 @@ class _PackageTile extends ConsumerWidget {
         isThreeLine: package.isForSpecificMember && package.forMemberName != null,
         trailing: PopupMenuButton(
           itemBuilder: (_) => [
-            const PopupMenuItem(value: 'edit', child: Text('Düzenle')),
+            PopupMenuItem(value: 'edit', child: Text(context.l10n.edit)),
             PopupMenuItem(
               value: 'toggle',
-              child: Text(package.isActive ? 'Pasife Al' : 'Aktive Et'),
+              child: Text(package.isActive ? context.l10n.deactivate : context.l10n.activate),
             ),
-            const PopupMenuItem(
+            PopupMenuItem(
               value: 'delete',
-              child: Text('Sil', style: TextStyle(color: Colors.red)),
+              child: Text(context.l10n.delete, style: const TextStyle(color: Colors.red)),
             ),
           ],
           onSelected: (value) async {
@@ -190,18 +191,18 @@ class _PackageTile extends ConsumerWidget {
                 context: context,
                 useRootNavigator: false,
                 builder: (dialogContext) => AlertDialog(
-                  title: const Text('Paketi Sil'),
-                  content: const Text('Bu paketi silmek istiyor musunuz?'),
+                  title: Text(context.l10n.deletePackageTitle),
+                  content: Text(context.l10n.deletePackageConfirm),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(dialogContext, false),
-                      child: const Text('İptal'),
+                      child: Text(context.l10n.cancel),
                     ),
                     ElevatedButton(
                       onPressed: () => Navigator.pop(dialogContext, true),
                       style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.red),
-                      child: const Text('Sil'),
+                      child: Text(context.l10n.delete),
                     ),
                   ],
                 ),
@@ -209,13 +210,13 @@ class _PackageTile extends ConsumerWidget {
               if (confirm == true) {
                 try {
                   await repo.deletePackage(ptId, package.id);
-                  messenger.showSnackBar(const SnackBar(
-                    content: Text('Paket silindi'),
+                  messenger.showSnackBar(SnackBar(
+                    content: Text(context.l10n.packageDeleted),
                     behavior: SnackBarBehavior.floating,
                   ));
                 } catch (e) {
                   messenger.showSnackBar(SnackBar(
-                    content: Text('Silinemedi: $e'),
+                    content: Text(context.l10n.deleteFailed('$e')),
                     backgroundColor: Colors.red,
                     behavior: SnackBarBehavior.floating,
                   ));
@@ -256,13 +257,13 @@ class _SessionCountField extends StatelessWidget {
         TextFormField(
           controller: controller,
           keyboardType: TextInputType.number,
-          decoration: const InputDecoration(
-            labelText: 'Seans Sayısı',
-            prefixIcon: Icon(Icons.format_list_numbered),
+          decoration: InputDecoration(
+            labelText: context.l10n.sessionCountLabel,
+            prefixIcon: const Icon(Icons.format_list_numbered),
           ),
           validator: (v) {
             final n = int.tryParse(v?.trim() ?? '');
-            if (n == null || n < 1) return 'Geçerli bir sayı girin';
+            if (n == null || n < 1) return context.l10n.enterValidNumber;
             return null;
           },
         ),
@@ -296,7 +297,7 @@ class _SessionDurationField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Seans Süresi',
+        Text(context.l10n.sessionDuration,
             style: Theme.of(context)
                 .textTheme
                 .bodyMedium
@@ -352,7 +353,7 @@ class _MemberSelector extends StatelessWidget {
                 size: 18, color: theme.colorScheme.onSurfaceVariant),
             const SizedBox(width: 8),
             Expanded(
-              child: Text('Üyeye özel paket',
+              child: Text(context.l10n.memberSpecificPackage,
                   style: theme.textTheme.bodyMedium
                       ?.copyWith(fontWeight: FontWeight.w500)),
             ),
@@ -365,13 +366,13 @@ class _MemberSelector extends StatelessWidget {
         if (isEnabled) ...[
           const SizedBox(height: 8),
           members.isEmpty
-              ? Text('Henüz üye yok',
+              ? Text(context.l10n.noMembersYet,
                   style: TextStyle(
                       color: theme.colorScheme.onSurfaceVariant,
                       fontSize: 13))
               : DropdownButtonFormField<String>(
                   value: selectedMemberId,
-                  hint: const Text('Üye seç'),
+                  hint: Text(context.l10n.selectMemberHint),
                   isExpanded: true,
                   items: members
                       .map((m) => DropdownMenuItem<String>(
@@ -382,7 +383,7 @@ class _MemberSelector extends StatelessWidget {
                       .toList(),
                   onChanged: onMemberChanged,
                   validator: isEnabled
-                      ? (v) => v == null ? 'Üye seçin' : null
+                      ? (v) => v == null ? context.l10n.selectMemberRequired : null
                       : null,
                   decoration: const InputDecoration(
                     prefixIcon: Icon(Icons.person_outline),
@@ -510,7 +511,7 @@ class _EditPackageSheetState extends ConsumerState<_EditPackageSheet> {
             children: [
               Row(
                 children: [
-                  Text('Paketi Düzenle',
+                  Text(context.l10n.editPackage,
                       style: Theme.of(context)
                           .textTheme
                           .titleMedium
@@ -524,8 +525,8 @@ class _EditPackageSheetState extends ConsumerState<_EditPackageSheet> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _nameCtrl,
-                validator: (v) => Validators.required(v, 'Paket adı'),
-                decoration: const InputDecoration(labelText: 'Paket Adı'),
+                validator: (v) => Validators.required(v, context.l10n.packageName),
+                decoration: InputDecoration(labelText: context.l10n.packageName),
               ),
               const SizedBox(height: 12),
               _SessionCountField(
@@ -547,8 +548,8 @@ class _EditPackageSheetState extends ConsumerState<_EditPackageSheet> {
                 controller: _priceCtrl,
                 keyboardType: TextInputType.number,
                 validator: Validators.positiveNumber,
-                decoration: const InputDecoration(
-                  labelText: 'Fiyat (TRY)',
+                decoration: InputDecoration(
+                  labelText: context.l10n.priceTry,
                   prefixText: '₺ ',
                 ),
               ),
@@ -556,8 +557,8 @@ class _EditPackageSheetState extends ConsumerState<_EditPackageSheet> {
               TextFormField(
                 controller: _descCtrl,
                 maxLines: 2,
-                decoration: const InputDecoration(
-                  labelText: 'Açıklama (İsteğe bağlı)',
+                decoration: InputDecoration(
+                  labelText: context.l10n.descriptionOptional,
                   alignLabelWithHint: true,
                 ),
               ),
@@ -591,7 +592,7 @@ class _EditPackageSheetState extends ConsumerState<_EditPackageSheet> {
                         height: 20,
                         width: 20,
                         child: CircularProgressIndicator(strokeWidth: 2))
-                    : const Text('Kaydet'),
+                    : Text(context.l10n.save),
               ),
             ],
           ),
@@ -695,7 +696,7 @@ class _AddPackageSheetState extends ConsumerState<_AddPackageSheet> {
             children: [
               Row(
                 children: [
-                  Text('Yeni Paket',
+                  Text(context.l10n.newPackage,
                       style: Theme.of(context)
                           .textTheme
                           .titleMedium
@@ -709,8 +710,8 @@ class _AddPackageSheetState extends ConsumerState<_AddPackageSheet> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _nameCtrl,
-                validator: (v) => Validators.required(v, 'Paket adı'),
-                decoration: const InputDecoration(labelText: 'Paket Adı'),
+                validator: (v) => Validators.required(v, context.l10n.packageName),
+                decoration: InputDecoration(labelText: context.l10n.packageName),
               ),
               const SizedBox(height: 12),
               _SessionCountField(
@@ -732,8 +733,8 @@ class _AddPackageSheetState extends ConsumerState<_AddPackageSheet> {
                 controller: _priceCtrl,
                 keyboardType: TextInputType.number,
                 validator: Validators.positiveNumber,
-                decoration: const InputDecoration(
-                  labelText: 'Fiyat (TRY)',
+                decoration: InputDecoration(
+                  labelText: context.l10n.priceTry,
                   prefixText: '₺ ',
                 ),
               ),
@@ -741,8 +742,8 @@ class _AddPackageSheetState extends ConsumerState<_AddPackageSheet> {
               TextFormField(
                 controller: _descCtrl,
                 maxLines: 2,
-                decoration: const InputDecoration(
-                  labelText: 'Açıklama (İsteğe bağlı)',
+                decoration: InputDecoration(
+                  labelText: context.l10n.descriptionOptional,
                   alignLabelWithHint: true,
                 ),
               ),
@@ -777,7 +778,7 @@ class _AddPackageSheetState extends ConsumerState<_AddPackageSheet> {
                         height: 20,
                         width: 20,
                         child: CircularProgressIndicator(strokeWidth: 2))
-                    : const Text('Paketi Oluştur'),
+                    : Text(context.l10n.createPackage),
               ),
             ],
           ),

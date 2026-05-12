@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 
+import '../../../../core/l10n/extensions.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../features/auth/providers/auth_provider.dart';
 import '../../../../features/pt_calendar/providers/pt_calendar_provider.dart';
@@ -81,8 +82,8 @@ class _CalendarContent extends ConsumerWidget {
           children: [
             ListTile(
               leading: const Icon(Icons.sports_gymnastics),
-              title: const Text('Randevu Talebi'),
-              subtitle: const Text('Eğitmeninizden randevu isteyin'),
+              title: Text(context.l10n.appointmentRequest),
+              subtitle: Text(context.l10n.appointmentRequestSub),
               onTap: () {
                 Navigator.of(ctx).pop();
                 context.push(AppRoutes.booking);
@@ -90,8 +91,8 @@ class _CalendarContent extends ConsumerWidget {
             ),
             ListTile(
               leading: const Icon(Icons.event_note_outlined),
-              title: const Text('Kişisel Etkinlik'),
-              subtitle: const Text('Antrenman, not veya hatırlatıcı ekleyin'),
+              title: Text(context.l10n.personalEvent),
+              subtitle: Text(context.l10n.addPersonalEventSubtitleMember),
               onTap: () {
                 Navigator.of(ctx).pop();
                 final sessions =
@@ -137,11 +138,11 @@ class _CalendarContent extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Takvimim'),
+        title: Text(context.l10n.memberCalendarTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
-            tooltip: 'Ekle',
+            tooltip: context.l10n.add,
             onPressed: () => _showAddOptions(context, ref),
           ),
         ],
@@ -211,7 +212,7 @@ class _CalendarContent extends ConsumerWidget {
             child: (dayPersonalEvents.isEmpty && daySessions.isEmpty)
                 ? AppEmpty(
                     message: DateFormat('d MMMM', 'tr').format(selectedDay),
-                    subMessage: 'Bu gün için etkinlik yok',
+                    subMessage: context.l10n.noEventForDay,
                     icon: Icons.event_note_outlined,
                   )
                 : ListView(
@@ -245,9 +246,9 @@ class _SessionTile extends StatelessWidget {
       _ => Colors.grey,
     };
     final statusLabel = switch (session.status) {
-      SessionStatus.confirmed => 'Onaylandı',
-      SessionStatus.pending => 'Bekliyor',
-      SessionStatus.completed => 'Tamamlandı',
+      SessionStatus.confirmed => context.l10n.statusConfirmed,
+      SessionStatus.pending => context.l10n.statusPending,
+      SessionStatus.completed => context.l10n.statusCompleted,
       _ => '',
     };
 
@@ -265,7 +266,7 @@ class _SessionTile extends StatelessWidget {
               color: Colors.green, size: 20),
         ),
         title: Text(
-          'PT Randevusu',
+          context.l10n.ptAppointment,
           style: const TextStyle(fontWeight: FontWeight.w600),
         ),
         subtitle: Text(
@@ -345,17 +346,17 @@ class _PersonalEventTile extends ConsumerWidget {
       context: context,
       useRootNavigator: false,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Etkinliği Sil'),
-        content: Text('"${event.title}" etkinliğini silmek istiyor musunuz?'),
+        title: Text(context.l10n.deleteEventTitle),
+        content: Text(context.l10n.deleteEventConfirm(event.title)),
         actions: [
           TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('İptal')),
+              child: Text(context.l10n.cancel)),
           TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(true),
               style: TextButton.styleFrom(
                   foregroundColor: Theme.of(context).colorScheme.error),
-              child: const Text('Sil')),
+              child: Text(context.l10n.delete)),
         ],
       ),
     );

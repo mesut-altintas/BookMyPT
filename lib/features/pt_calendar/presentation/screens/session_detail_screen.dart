@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/l10n/extensions.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../../shared/models/session_model.dart';
 import '../../../../shared/widgets/app_loading.dart';
@@ -52,35 +53,36 @@ class _SessionDetailContent extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Seans Detayı'),
+        title: Text(context.l10n.sessionDetailTitle),
         actions: [
           PopupMenuButton(
             itemBuilder: (_) => [
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'delete',
-                child: Text('Sil', style: TextStyle(color: Colors.red)),
+                child: Text(context.l10n.delete, style: const TextStyle(color: Colors.red)),
               ),
             ],
             onSelected: (value) async {
               if (value == 'delete') {
+                final l10n = context.l10n;
                 final confirm = await showDialog<bool>(
                   context: context,
                   useRootNavigator: false,
                   builder: (dialogContext) => AlertDialog(
-                    title: const Text('Seansı Sil'),
-                    content: const Text('Bu seansı silmek istiyor musunuz?'),
+                    title: Text(l10n.deleteSession),
+                    content: Text(l10n.deleteSessionConfirm),
                     actions: [
                       TextButton(
                         onPressed: () =>
                             Navigator.pop(dialogContext, false),
-                        child: const Text('İptal'),
+                        child: Text(l10n.cancel),
                       ),
                       ElevatedButton(
                         onPressed: () =>
                             Navigator.pop(dialogContext, true),
                         style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.red),
-                        child: const Text('Sil'),
+                        child: Text(l10n.delete),
                       ),
                     ],
                   ),
@@ -90,15 +92,16 @@ class _SessionDetailContent extends ConsumerWidget {
                     await repo.deleteSession(session.id);
                   } catch (e) {
                     if (context.mounted) {
+                      final l10n = context.l10n;
                       showDialog(
                         context: context,
                         builder: (_) => AlertDialog(
-                          title: const Text('Silme Hatası'),
+                          title: Text(l10n.deleteError),
                           content: Text(e.toString()),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.pop(context),
-                              child: const Text('Tamam'),
+                              child: Text(l10n.close),
                             ),
                           ],
                         ),
@@ -163,7 +166,7 @@ class _SessionDetailContent extends ConsumerWidget {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        '${session.durationMinutes} dakika',
+                        context.l10n.durationMinutesValue(session.durationMinutes),
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onPrimaryContainer,
                         ),
@@ -178,9 +181,9 @@ class _SessionDetailContent extends ConsumerWidget {
             // Status
             Row(
               children: [
-                const Text(
-                  'Durum',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+                Text(
+                  context.l10n.statusLabel,
+                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
                 ),
                 const Spacer(),
                 StatusBadge.session(session.status),
@@ -199,7 +202,7 @@ class _SessionDetailContent extends ConsumerWidget {
                             session.id, SessionStatus.cancelled);
                       },
                       icon: const Icon(Icons.cancel_outlined),
-                      label: const Text('İptal Et'),
+                      label: Text(context.l10n.cancelSession),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.error,
                         side: const BorderSide(color: AppColors.error),
@@ -214,7 +217,7 @@ class _SessionDetailContent extends ConsumerWidget {
                             session.id, SessionStatus.confirmed);
                       },
                       icon: const Icon(Icons.check),
-                      label: const Text('Onayla'),
+                      label: Text(context.l10n.confirm),
                     ),
                   ),
                 ],
@@ -237,16 +240,16 @@ class _SessionDetailContent extends ConsumerWidget {
                       );
                 },
                 icon: const Icon(Icons.done_all),
-                label: const Text('Tamamlandı Olarak İşaretle'),
+                label: Text(context.l10n.markAsCompleted),
               ),
               const SizedBox(height: 16),
             ],
 
             // Notes
             if (session.notes != null && session.notes!.isNotEmpty) ...[
-              const Text(
-                'Notlar',
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+              Text(
+                context.l10n.notes,
+                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
               ),
               const SizedBox(height: 8),
               Container(

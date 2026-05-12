@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
+import '../../../../core/l10n/extensions.dart';
 import '../../../../features/auth/providers/auth_provider.dart';
 import '../../../../features/m_chat/providers/chat_provider.dart';
 import '../../../../shared/widgets/app_loading.dart';
@@ -49,15 +50,15 @@ class _ChatListContent extends ConsumerWidget {
     final chatsAsync = ref.watch(chatRoomsProvider(userId));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Mesajlar')),
+      appBar: AppBar(title: Text(context.l10n.messagesTitle)),
       body: chatsAsync.when(
         loading: () => const AppLoading(),
         error: (e, _) => Center(child: Text(e.toString())),
         data: (rooms) {
           if (rooms.isEmpty) {
-            return const AppEmpty(
-              message: 'Henüz mesajınız yok',
-              subMessage: 'PT\'niz veya üyeniz ile mesajlaşmaya başlayın',
+            return AppEmpty(
+              message: context.l10n.noMessagesYet,
+              subMessage: context.l10n.startMessaging,
               icon: Icons.chat_bubble_outline,
             );
           }

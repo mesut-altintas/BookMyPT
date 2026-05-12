@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/router/app_router.dart';
+import '../../../../core/l10n/extensions.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../../features/auth/providers/auth_provider.dart';
 import '../../../../features/m_calendar/providers/invitation_provider.dart';
@@ -60,6 +61,7 @@ class _MemberDashboardContent extends ConsumerWidget {
     final progressAsync = ref.watch(latestProgressProvider(memberId));
     final pendingCount = ref.watch(pendingInvitationsCountProvider);
     final theme = Theme.of(context);
+    final l10n = context.l10n;
 
     return Scaffold(
       body: RefreshIndicator(
@@ -84,7 +86,7 @@ class _MemberDashboardContent extends ConsumerWidget {
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
                             Text(
-                              'Merhaba, ${memberName.split(' ').first}!',
+                              l10n.helloName(memberName.split(' ').first),
                               style: theme.textTheme.headlineSmall?.copyWith(
                                 fontWeight: FontWeight.w700,
                               ),
@@ -147,19 +149,19 @@ class _MemberDashboardContent extends ConsumerWidget {
 
                   // Upcoming Sessions
                   _SectionHeader(
-                    title: 'Yaklasan Randevular',
+                    title: l10n.upcomingAppointments,
                     onSeeAll: () => context.go(AppRoutes.memberCalendar),
                   ),
                   const SizedBox(height: 12),
                   sessionsAsync.when(
                     loading: () => const AppLoading(size: 32),
-                    error: (e, _) => Text('Hata: $e'),
+                    error: (e, _) => Text(e.toString()),
                     data: (sessions) {
                       if (sessions.isEmpty) {
                         return _EmptyCard(
                           icon: Icons.calendar_today_outlined,
-                          message: 'Yaklasan randevu yok',
-                          actionLabel: 'Randevu Al',
+                          message: l10n.noUpcomingAppointments,
+                          actionLabel: l10n.bookAppointment,
                           onAction: () => context.push(AppRoutes.booking),
                         );
                       }
@@ -175,19 +177,19 @@ class _MemberDashboardContent extends ConsumerWidget {
 
                   // Progress
                   _SectionHeader(
-                    title: 'Son Ilerleme',
+                    title: l10n.latestProgress,
                     onSeeAll: () => context.go(AppRoutes.progress),
                   ),
                   const SizedBox(height: 12),
                   progressAsync.when(
                     loading: () => const AppLoading(size: 32),
-                    error: (e, _) => Text('Hata: $e'),
+                    error: (e, _) => Text(e.toString()),
                     data: (progress) {
                       if (progress == null) {
                         return _EmptyCard(
                           icon: Icons.trending_up_outlined,
-                          message: 'Ilerleme kaydi yok',
-                          actionLabel: 'Kaydet',
+                          message: l10n.noProgressRecord,
+                          actionLabel: l10n.recordProgress,
                           onAction: () => context.go(AppRoutes.addProgress),
                         );
                       }
@@ -226,11 +228,11 @@ class _PtInfoCard extends ConsumerWidget {
       ),
       child: ptAsync.when(
         loading: () => const SizedBox(height: 40, child: AppLoading(size: 24)),
-        error: (_, __) => Text('Eğitmen yüklenemedi',
+        error: (_, __) => Text(context.l10n.trainerNotLoaded,
             style: TextStyle(color: theme.colorScheme.onPrimaryContainer)),
         data: (pt) {
           if (pt == null) {
-            return Text('Eğitmen bilgisi bulunamadı',
+            return Text(context.l10n.trainerInfoNotFound,
                 style: TextStyle(color: theme.colorScheme.onPrimaryContainer));
           }
           final remainingSessions =
@@ -245,7 +247,7 @@ class _PtInfoCard extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Eğitmeniniz',
+                        Text(context.l10n.myTrainer,
                             style: TextStyle(
                                 fontSize: 11,
                                 color: theme.colorScheme.onPrimaryContainer
@@ -274,7 +276,7 @@ class _PtInfoCard extends ConsumerWidget {
                       size: 15,
                       color: theme.colorScheme.error.withOpacity(0.85)),
                   label: Text(
-                    'Üyeliği Bırak',
+                    context.l10n.leaveTrainer,
                     style: TextStyle(
                         fontSize: 12,
                         color: theme.colorScheme.error.withOpacity(0.85)),
@@ -301,12 +303,12 @@ class _PtInfoCard extends ConsumerWidget {
       context: context,
       useRootNavigator: false,
       builder: (ctx) => AlertDialog(
-        title: const Text('Üyeliği Bırak'),
+        title: Text(context.l10n.leaveTrainerTitle),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('$ptName ile üyeliğinizi sonlandırmak istiyor musunuz?'),
+            Text(context.l10n.leaveTrainerConfirm(ptName)),
             if (remainingSessions > 0) ...[
               const SizedBox(height: 12),
               Container(
@@ -324,7 +326,7 @@ class _PtInfoCard extends ConsumerWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        '$remainingSessions kalan seansınız bulunuyor.',
+                        context.l10n.remainingSessionsWarning(remainingSessions),
                         style: TextStyle(
                             fontSize: 13,
                             color: theme.colorScheme.onErrorContainer,
@@ -340,13 +342,13 @@ class _PtInfoCard extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Hayır'),
+            child: Text(context.l10n.no),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
             style: TextButton.styleFrom(
                 foregroundColor: theme.colorScheme.error),
-            child: const Text('Evet, Bırak'),
+            child: Text(context.l10n.yesLeave),
           ),
         ],
       ),
@@ -390,7 +392,7 @@ class _FindPtBanner extends StatelessWidget {
                   color: theme.colorScheme.onSecondaryContainer, size: 22),
               const SizedBox(width: 8),
               Text(
-                'PT atanmamis',
+                context.l10n.noPtAssigned,
                 style: TextStyle(
                     fontWeight: FontWeight.w700,
                     color: theme.colorScheme.onSecondaryContainer),
@@ -399,7 +401,7 @@ class _FindPtBanner extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'PT bularak antrenmanlariniza baslayabilirsiniz',
+            context.l10n.findPtBannerSub,
             style: TextStyle(
                 fontSize: 12,
                 color: theme.colorScheme.onSecondaryContainer),
@@ -409,7 +411,7 @@ class _FindPtBanner extends StatelessWidget {
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () => context.push(AppRoutes.findPt),
-              child: const Text('PT Bul'),
+              child: Text(context.l10n.findPt),
             ),
           ),
         ],
@@ -429,25 +431,25 @@ class _QuickActions extends StatelessWidget {
       children: [
         _QuickActionButton(
           icon: Icons.calendar_month,
-          label: 'Randevu Al',
+          label: context.l10n.bookAppointment,
           onTap: () => context.push(AppRoutes.booking),
         ),
         const SizedBox(width: 12),
         _QuickActionButton(
           icon: Icons.fitness_center,
-          label: 'Programim',
+          label: context.l10n.myPrograms,
           onTap: () => context.go(AppRoutes.memberPrograms),
         ),
         const SizedBox(width: 12),
         _QuickActionButton(
           icon: Icons.trending_up,
-          label: 'Ilerleme',
+          label: context.l10n.navProgress,
           onTap: () => context.go(AppRoutes.progress),
         ),
         const SizedBox(width: 12),
         _QuickActionButton(
           icon: Icons.chat_outlined,
-          label: 'Mesaj',
+          label: context.l10n.navChat,
           onTap: () => context.go(AppRoutes.chatList),
         ),
       ],
@@ -521,7 +523,7 @@ class _SectionHeader extends StatelessWidget {
         ),
         const Spacer(),
         if (onSeeAll != null)
-          TextButton(onPressed: onSeeAll, child: const Text('Tumu')),
+          TextButton(onPressed: onSeeAll, child: Text(context.l10n.seeAll)),
       ],
     );
   }
@@ -612,7 +614,7 @@ class _ProgressCard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    'Son kilo',
+                    context.l10n.lastWeight,
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],

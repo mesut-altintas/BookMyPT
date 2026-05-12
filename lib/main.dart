@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'l10n/app_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 import 'core/constants/app_constants.dart';
@@ -86,6 +87,7 @@ class FitCoachApp extends ConsumerWidget {
       darkTheme: isPt ? AppTheme.ptDarkTheme : AppTheme.memberDarkTheme,
       routerConfig: router,
       localizationsDelegates: const [
+        AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,

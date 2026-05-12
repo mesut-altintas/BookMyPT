@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 
+import '../../../../core/l10n/extensions.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../../features/auth/providers/auth_provider.dart';
 import '../../../../features/m_calendar/presentation/screens/add_personal_event_screen.dart';
@@ -69,11 +70,11 @@ class _PtCalendarScreenState extends ConsumerState<PtCalendarScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Takvim'),
+        title: Text(context.l10n.calendarTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
-            tooltip: 'Ekle',
+            tooltip: context.l10n.add,
             onPressed: () => _showAddOptions(context, ptId),
           ),
         ],
@@ -156,7 +157,7 @@ class _PtCalendarScreenState extends ConsumerState<PtCalendarScreen> {
                 const Spacer(),
                 if (selectedSessions.isNotEmpty)
                   Text(
-                    '${selectedSessions.length} seans',
+                    context.l10n.sessionsCount(selectedSessions.length),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
@@ -166,7 +167,7 @@ class _PtCalendarScreenState extends ConsumerState<PtCalendarScreen> {
                   const Text(' · '),
                 if (selectedPersonalEvents.isNotEmpty)
                   Text(
-                    '${selectedPersonalEvents.length} etkinlik',
+                    context.l10n.eventsCount(selectedPersonalEvents.length),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
@@ -177,12 +178,12 @@ class _PtCalendarScreenState extends ConsumerState<PtCalendarScreen> {
           Expanded(
             child: (selectedSessions.isEmpty && selectedPersonalEvents.isEmpty)
                 ? AppEmpty(
-                    message: 'Bu gün etkinlik yok',
+                    message: context.l10n.noEventToday,
                     icon: Icons.event_available_outlined,
                     action: TextButton.icon(
                       onPressed: () => _showAddOptions(context, ptId),
                       icon: const Icon(Icons.add),
-                      label: const Text('Ekle'),
+                      label: Text(context.l10n.add),
                     ),
                   )
                 : ListView(
@@ -219,8 +220,8 @@ class _PtCalendarScreenState extends ConsumerState<PtCalendarScreen> {
           children: [
             ListTile(
               leading: const Icon(Icons.sports_gymnastics),
-              title: const Text('Seans Ekle'),
-              subtitle: const Text('Üye ile antrenman seansı planla'),
+              title: Text(context.l10n.addSession),
+              subtitle: Text(context.l10n.addSessionSubtitle),
               onTap: () {
                 Navigator.of(ctx).pop();
                 _showAddSessionSheet(context, ptId);
@@ -228,8 +229,8 @@ class _PtCalendarScreenState extends ConsumerState<PtCalendarScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.event_note_outlined),
-              title: const Text('Kişisel Etkinlik'),
-              subtitle: const Text('Antrenman, not veya hatırlatıcı ekle'),
+              title: Text(context.l10n.personalEvent),
+              subtitle: Text(context.l10n.addPersonalEventSubtitle),
               onTap: () {
                 Navigator.of(ctx).pop();
                 final sessions =
@@ -307,7 +308,7 @@ class _SessionTile extends StatelessWidget {
           ),
         ),
         title: Text(
-          session.memberName.isNotEmpty ? session.memberName : 'İsimsiz Üye',
+          session.memberName.isNotEmpty ? session.memberName : context.l10n.anonymousMember,
           style: const TextStyle(fontWeight: FontWeight.w600),
         ),
         subtitle: Text(
@@ -375,19 +376,19 @@ class _PersonalEventTile extends ConsumerWidget {
       context: context,
       useRootNavigator: false,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Etkinliği Sil'),
+        title: Text(context.l10n.deleteEventTitle),
         content:
-            Text('"${event.title}" etkinliğini silmek istiyor musunuz?'),
+            Text(context.l10n.deleteEventConfirm(event.title)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('İptal'),
+            child: Text(context.l10n.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
             style: TextButton.styleFrom(
                 foregroundColor: Theme.of(context).colorScheme.error),
-            child: const Text('Sil'),
+            child: Text(context.l10n.delete),
           ),
         ],
       ),
@@ -511,7 +512,7 @@ class _AddSessionSheetState extends State<_AddSessionSheet> {
           Row(
             children: [
               Text(
-                'Seans Ekle',
+                context.l10n.addSession,
                 style: Theme.of(context)
                     .textTheme
                     .titleMedium
@@ -526,10 +527,10 @@ class _AddSessionSheetState extends State<_AddSessionSheet> {
           ),
           const SizedBox(height: 16),
           members.isEmpty
-              ? const Text('Henüz üye yok')
+              ? Text(context.l10n.noMembersYet)
               : DropdownButtonFormField<String>(
                   value: _selectedMemberId,
-                  hint: const Text('Üye Seç'),
+                  hint: Text(context.l10n.selectMember),
                   items: members
                       .map((m) => DropdownMenuItem<String>(
                             value: m.memberId,
@@ -539,16 +540,16 @@ class _AddSessionSheetState extends State<_AddSessionSheet> {
                           ))
                       .toList(),
                   onChanged: (v) => setState(() => _selectedMemberId = v),
-                  decoration: const InputDecoration(labelText: 'Üye'),
+                  decoration: InputDecoration(labelText: context.l10n.member),
                 ),
           const SizedBox(height: 12),
           InkWell(
             onTap: _pickTime,
             child: InputDecorator(
               decoration: InputDecoration(
-                labelText: 'Saat',
+                labelText: context.l10n.time,
                 prefixIcon: const Icon(Icons.access_time),
-                errorText: _hasConflict ? 'Bu saatte çakışan etkinlik var' : null,
+                errorText: _hasConflict ? context.l10n.eventConflict : null,
               ),
               child: Text(
                 '${_selectedDateTime.formattedDate} ${_selectedDateTime.formattedTime}',
@@ -556,8 +557,8 @@ class _AddSessionSheetState extends State<_AddSessionSheet> {
             ),
           ),
           const SizedBox(height: 12),
-          const Text('Süre (dk):',
-              style: TextStyle(fontWeight: FontWeight.w500)),
+          Text(context.l10n.durationLabel,
+              style: const TextStyle(fontWeight: FontWeight.w500)),
           const SizedBox(height: 8),
           Wrap(
             spacing: 6,
@@ -583,7 +584,7 @@ class _AddSessionSheetState extends State<_AddSessionSheet> {
                     width: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text('Seans Oluştur'),
+                : Text(context.l10n.createSession),
           ),
         ],
       ),

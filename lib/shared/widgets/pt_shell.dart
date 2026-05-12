@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/l10n/extensions.dart';
 import '../../core/router/app_router.dart';
 
 class PtShell extends StatelessWidget {
@@ -20,6 +21,7 @@ class PtShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final selectedIndex = _getSelectedIndex(context);
+    final l10n = context.l10n;
 
     return Scaffold(
       body: child,
@@ -36,36 +38,36 @@ class PtShell extends StatelessWidget {
             case 5: context.go(AppRoutes.ptChatList); break;
           }
         },
-        destinations: const [
+        destinations: [
           NavigationDestination(
-            icon: Icon(Icons.dashboard_outlined, size: 20),
-            selectedIcon: Icon(Icons.dashboard, size: 20),
-            label: 'Panel',
+            icon: const Icon(Icons.dashboard_outlined, size: 20),
+            selectedIcon: const Icon(Icons.dashboard, size: 20),
+            label: l10n.navDashboard,
           ),
           NavigationDestination(
-            icon: Icon(Icons.people_outline, size: 20),
-            selectedIcon: Icon(Icons.people, size: 20),
-            label: 'Üyeler',
+            icon: const Icon(Icons.people_outline, size: 20),
+            selectedIcon: const Icon(Icons.people, size: 20),
+            label: l10n.navMembers,
           ),
           NavigationDestination(
-            icon: Icon(Icons.fitness_center_outlined, size: 20),
-            selectedIcon: Icon(Icons.fitness_center, size: 20),
-            label: 'Program',
+            icon: const Icon(Icons.fitness_center_outlined, size: 20),
+            selectedIcon: const Icon(Icons.fitness_center, size: 20),
+            label: l10n.navPrograms,
           ),
           NavigationDestination(
-            icon: Icon(Icons.calendar_today_outlined, size: 20),
-            selectedIcon: Icon(Icons.calendar_today, size: 20),
-            label: 'Takvim',
+            icon: const Icon(Icons.calendar_today_outlined, size: 20),
+            selectedIcon: const Icon(Icons.calendar_today, size: 20),
+            label: l10n.navCalendar,
           ),
           NavigationDestination(
-            icon: Icon(Icons.account_balance_wallet_outlined, size: 20),
-            selectedIcon: Icon(Icons.account_balance_wallet, size: 20),
-            label: 'Gelir',
+            icon: const Icon(Icons.account_balance_wallet_outlined, size: 20),
+            selectedIcon: const Icon(Icons.account_balance_wallet, size: 20),
+            label: l10n.navEarnings,
           ),
           NavigationDestination(
-            icon: Icon(Icons.chat_outlined, size: 20),
-            selectedIcon: Icon(Icons.chat, size: 20),
-            label: 'Mesaj',
+            icon: const Icon(Icons.chat_outlined, size: 20),
+            selectedIcon: const Icon(Icons.chat, size: 20),
+            label: l10n.navChat,
           ),
         ],
       ),

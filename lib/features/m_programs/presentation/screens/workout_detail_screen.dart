@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/l10n/extensions.dart';
 import '../../../../features/pt_programs/providers/pt_programs_provider.dart';
 import '../../../../shared/widgets/app_loading.dart';
 import '../../../../shared/widgets/app_error.dart';
@@ -19,8 +20,8 @@ class WorkoutDetailScreen extends ConsumerWidget {
       error: (e, _) => Scaffold(body: AppError(message: e.toString())),
       data: (program) {
         if (program == null) {
-          return const Scaffold(
-              body: Center(child: Text('Program bulunamadı')));
+          return Scaffold(
+              body: Center(child: Text(context.l10n.programNotFound)));
         }
 
         return DefaultTabController(
@@ -32,7 +33,7 @@ class WorkoutDetailScreen extends ConsumerWidget {
                 isScrollable: true,
                 tabs: List.generate(
                   program.weeks.length,
-                  (i) => Tab(text: 'Hafta ${i + 1}'),
+                  (i) => Tab(text: '${context.l10n.weekLabel} ${i + 1}'),
                 ),
               ),
             ),
@@ -101,7 +102,7 @@ class _DayCard extends StatelessWidget {
                 if (!day.isRestDay) ...[
                   const Spacer(),
                   Text(
-                    '${day.exercises.length} egzersiz',
+                    context.l10n.exercisesCount(day.exercises.length),
                     style: TextStyle(
                       fontSize: 12,
                       color: theme.colorScheme.onPrimaryContainer,
@@ -112,9 +113,9 @@ class _DayCard extends StatelessWidget {
             ),
           ),
           if (day.isRestDay)
-            const Padding(
-              padding: EdgeInsets.all(16),
-              child: Text('Bugün dinlenme günü 🛌 İyi dinlenmeler!'),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(context.l10n.restDayMessage),
             )
           else
             Padding(

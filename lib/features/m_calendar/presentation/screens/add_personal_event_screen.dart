@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/l10n/extensions.dart';
 import '../../../../shared/models/personal_event_model.dart';
 import '../../../../shared/models/session_model.dart';
 import '../../providers/personal_event_provider.dart';
@@ -141,7 +142,7 @@ class _AddPersonalEventScreenState
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('Hata: $e'),
+              content: Text(context.l10n.error('$e')),
               backgroundColor: Colors.red,
               behavior: SnackBarBehavior.floating),
         );
@@ -160,11 +161,11 @@ class _AddPersonalEventScreenState
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isEditing ? 'Etkinliği Düzenle' : 'Etkinlik Ekle'),
+        title: Text(_isEditing ? context.l10n.editEvent : context.l10n.addEvent),
         actions: [
           TextButton(
             onPressed: (_loading || _hasConflict) ? null : _save,
-            child: const Text('Kaydet'),
+            child: Text(context.l10n.save),
           ),
         ],
       ),
@@ -180,15 +181,15 @@ class _AddPersonalEventScreenState
                     TextFormField(
                       controller: _titleCtrl,
                       validator: (v) =>
-                          (v == null || v.trim().isEmpty) ? 'Başlık gerekli' : null,
-                      decoration: const InputDecoration(
-                        labelText: 'Başlık',
-                        hintText: 'Antrenman, Koşu...',
-                        prefixIcon: Icon(Icons.title),
+                          (v == null || v.trim().isEmpty) ? context.l10n.titleRequired : null,
+                      decoration: InputDecoration(
+                        labelText: context.l10n.eventTitle,
+                        hintText: context.l10n.eventTitleHint,
+                        prefixIcon: const Icon(Icons.title),
                       ),
                     ),
                     const SizedBox(height: 20),
-                    Text('Tarih ve Saat',
+                    Text(context.l10n.dateAndTime,
                         style: theme.textTheme.titleSmall
                             ?.copyWith(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 8),
@@ -224,7 +225,7 @@ class _AddPersonalEventScreenState
                     if (_hasConflict) ...[
                       const SizedBox(height: 6),
                       Text(
-                        'Bu saatte çakışan seans var',
+                        context.l10n.sessionConflict,
                         style: TextStyle(
                           color: Theme.of(context).colorScheme.error,
                           fontSize: 12,
@@ -232,7 +233,7 @@ class _AddPersonalEventScreenState
                       ),
                     ],
                     const SizedBox(height: 20),
-                    Text('Süre',
+                    Text(context.l10n.duration,
                         style: theme.textTheme.titleSmall
                             ?.copyWith(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 8),
@@ -253,9 +254,9 @@ class _AddPersonalEventScreenState
                     TextFormField(
                       controller: _notesCtrl,
                       maxLines: 3,
-                      decoration: const InputDecoration(
-                        labelText: 'Notlar (İsteğe bağlı)',
-                        prefixIcon: Icon(Icons.notes_outlined),
+                      decoration: InputDecoration(
+                        labelText: context.l10n.notesOptional,
+                        prefixIcon: const Icon(Icons.notes_outlined),
                         alignLabelWithHint: true,
                       ),
                     ),

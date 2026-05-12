@@ -5,6 +5,7 @@ import 'package:fl_chart/fl_chart.dart';
 
 import '../../../../core/router/app_router.dart';
 import '../../../../core/utils/extensions.dart';
+import '../../../../core/l10n/extensions.dart';
 import '../../../../features/auth/providers/auth_provider.dart';
 import '../../../pt_members/providers/pt_members_provider.dart';
 import '../../../../shared/models/payment_model.dart';
@@ -48,12 +49,12 @@ class _EarningsContent extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Gelir Takibi'),
+        title: Text(context.l10n.earningsTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.inventory_2_outlined),
             onPressed: () => context.push(AppRoutes.packageManagement),
-            tooltip: 'Paket Yönetimi',
+            tooltip: context.l10n.packageManagement,
           ),
         ],
       ),
@@ -95,7 +96,7 @@ class _EarningsContent extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Toplam Gelir',
+                              context.l10n.totalEarnings,
                               style: theme.textTheme.bodyMedium?.copyWith(
                                 color: theme.colorScheme.onPrimary
                                     .withOpacity(0.8),
@@ -113,12 +114,12 @@ class _EarningsContent extends ConsumerWidget {
                             Row(
                               children: [
                                 _StatChip(
-                                  label: '${completedPayments.length} Ödeme',
+                                  label: context.l10n.completedPaymentsCount(completedPayments.length),
                                   icon: Icons.check_circle_outline,
                                 ),
                                 const SizedBox(width: 8),
                                 _StatChip(
-                                  label: '${pendingPayments.length} Bekleyen',
+                                  label: context.l10n.pendingPaymentsCount(pendingPayments.length),
                                   icon: Icons.schedule,
                                 ),
                               ],
@@ -150,7 +151,7 @@ class _EarningsContent extends ConsumerWidget {
                             size: 16, color: Colors.orange),
                         const SizedBox(width: 6),
                         Text(
-                          'Onay Bekleyen (${pendingPayments.length})',
+                          context.l10n.pendingApprovalCount(pendingPayments.length),
                           style: theme.textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.w700,
                             color: Colors.orange,
@@ -178,15 +179,14 @@ class _EarningsContent extends ConsumerWidget {
               if (payments.isEmpty)
                 SliverFillRemaining(
                   child: AppEmpty(
-                    message: 'Henüz ödeme yok',
-                    subMessage:
-                        'Üyeleriniz paket satın aldığında burada görünür',
+                    message: context.l10n.noPaymentsYet,
+                    subMessage: context.l10n.noPaymentsYetSub,
                     icon: Icons.account_balance_wallet_outlined,
                     action: ElevatedButton.icon(
                       onPressed: () =>
                           context.push(AppRoutes.packageManagement),
                       icon: const Icon(Icons.add),
-                      label: const Text('Paket Oluştur'),
+                      label: Text(context.l10n.createPackage),
                     ),
                   ),
                 )
@@ -196,7 +196,7 @@ class _EarningsContent extends ConsumerWidget {
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
                     child: Text(
-                      'İşlem Geçmişi',
+                      context.l10n.transactionHistory,
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w700,
                         color: theme.colorScheme.onSurfaceVariant,
@@ -371,7 +371,7 @@ class _PendingPaymentCardState extends ConsumerState<_PendingPaymentCard> {
             );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('$sessionCount seans üyeye yüklendi'),
+            content: Text(context.l10n.sessionsLoadedToMember(sessionCount)),
             behavior: SnackBarBehavior.floating,
           ));
         }
@@ -379,8 +379,8 @@ class _PendingPaymentCardState extends ConsumerState<_PendingPaymentCard> {
         await paymentRepo.updatePaymentStatus(
             widget.payment.id, PaymentStatus.failed, null);
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Ödeme talebi reddedildi'),
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(context.l10n.paymentRequestRejected),
             behavior: SnackBarBehavior.floating,
           ));
         }
@@ -388,7 +388,7 @@ class _PendingPaymentCardState extends ConsumerState<_PendingPaymentCard> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Hata: $e'),
+          content: Text(context.l10n.error('$e')),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
         ));
@@ -440,7 +440,7 @@ class _PendingPaymentCardState extends ConsumerState<_PendingPaymentCard> {
                             fontSize: 13),
                       ),
                       Text(
-                        '${p.sessionCount} seans • ${p.amount.formattedCurrency}',
+                        '${context.l10n.sessionsCount(p.sessionCount)} • ${p.amount.formattedCurrency}',
                         style: TextStyle(
                             color: theme.colorScheme.onSurfaceVariant,
                             fontSize: 12),
@@ -455,8 +455,8 @@ class _PendingPaymentCardState extends ConsumerState<_PendingPaymentCard> {
                     color: Colors.orange.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: const Text('Onay Bekliyor',
-                      style: TextStyle(
+                  child: Text(context.l10n.pendingApproval,
+                      style: const TextStyle(
                           color: Colors.orange,
                           fontSize: 11,
                           fontWeight: FontWeight.w600)),
@@ -473,7 +473,7 @@ class _PendingPaymentCardState extends ConsumerState<_PendingPaymentCard> {
                           onPressed: () => _respond(false),
                           style: OutlinedButton.styleFrom(
                               foregroundColor: theme.colorScheme.error),
-                          child: const Text('Reddet'),
+                          child: Text(context.l10n.reject),
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -483,7 +483,7 @@ class _PendingPaymentCardState extends ConsumerState<_PendingPaymentCard> {
                           style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.green,
                               foregroundColor: Colors.white),
-                          child: const Text('Onayla'),
+                          child: Text(context.l10n.confirm),
                         ),
                       ),
                     ],

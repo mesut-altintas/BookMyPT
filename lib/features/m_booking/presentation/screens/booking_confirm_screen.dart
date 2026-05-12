@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/l10n/extensions.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/utils/extensions.dart';
 
@@ -15,7 +16,7 @@ class BookingConfirmScreen extends ConsumerWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Randevu Onayla')),
+      appBar: AppBar(title: Text(context.l10n.bookingConfirmTitle)),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -38,7 +39,7 @@ class BookingConfirmScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Randevu Detayları',
+                    context.l10n.appointmentDetails,
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                       color: theme.colorScheme.onPrimaryContainer,
@@ -56,14 +57,14 @@ class BookingConfirmScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 24),
-            const Text(
-              'Randevunuz PT\'niz tarafından onaylanmayı bekleyecektir.',
-              style: TextStyle(fontSize: 14),
+            Text(
+              context.l10n.waitingPtApproval,
+              style: const TextStyle(fontSize: 14),
             ),
             const Spacer(),
             ElevatedButton(
               onPressed: () => context.go(AppRoutes.booking),
-              child: const Text('Randevularıma Git'),
+              child: Text(context.l10n.goToMyAppointments),
             ),
           ],
         ),

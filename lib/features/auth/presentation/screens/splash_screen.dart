@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/router/app_router.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/l10n/extensions.dart';
 import '../../providers/auth_provider.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
@@ -132,7 +133,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Kişisel Antrenman Uygulaması',
+                  context.l10n.appSubtitle,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: Colors.white.withOpacity(0.8),
                       ),

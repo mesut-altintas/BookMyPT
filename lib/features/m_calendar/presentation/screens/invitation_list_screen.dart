@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/l10n/extensions.dart';
 import '../../../../shared/widgets/app_loading.dart';
 import '../../../../shared/widgets/app_empty.dart';
 import '../../providers/invitation_provider.dart';
@@ -16,15 +17,15 @@ class InvitationListScreen extends ConsumerWidget {
     final invitationsAsync = ref.watch(memberInvitationsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Davetler')),
+      appBar: AppBar(title: Text(context.l10n.invitationListTitle)),
       body: invitationsAsync.when(
         loading: () => const AppLoading(),
         error: (e, _) => Center(child: Text(e.toString())),
         data: (invitations) {
           if (invitations.isEmpty) {
-            return const AppEmpty(
-              message: 'Bekleyen davet yok',
-              subMessage: 'PT\'niz sizi davet ettiğinde burada görünür',
+            return AppEmpty(
+              message: context.l10n.noPendingInvitations,
+              subMessage: context.l10n.noInvitationsYetSub,
               icon: Icons.mail_outline,
             );
           }
@@ -66,8 +67,7 @@ class _InvitationCardState extends ConsumerState<_InvitationCard> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(
-                  '${widget.invitation.ptName} ile bağlantı kuruldu'),
+              content: Text(context.l10n.ptConnected(widget.invitation.ptName)),
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -76,8 +76,8 @@ class _InvitationCardState extends ConsumerState<_InvitationCard> {
         await invRepo.rejectInvitation(widget.invitation.id);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Davet reddedildi'),
+            SnackBar(
+              content: Text(context.l10n.invitationRejected),
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -126,7 +126,7 @@ class _InvitationCardState extends ConsumerState<_InvitationCard> {
                       Text(inv.ptName,
                           style: const TextStyle(
                               fontWeight: FontWeight.w700, fontSize: 16)),
-                      Text('Davet: $dateStr',
+                      Text(context.l10n.invitationDate(dateStr),
                           style: TextStyle(
                               color: theme.colorScheme.onSurfaceVariant,
                               fontSize: 12)),
@@ -138,12 +138,12 @@ class _InvitationCardState extends ConsumerState<_InvitationCard> {
             if (inv.goal != null && inv.goal!.isNotEmpty) ...[
               const SizedBox(height: 10),
               _InfoRow(
-                  icon: Icons.flag_outlined, label: 'Hedef', value: inv.goal!),
+                  icon: Icons.flag_outlined, label: context.l10n.goal, value: inv.goal!),
             ],
             if (inv.notes != null && inv.notes!.isNotEmpty) ...[
               const SizedBox(height: 6),
               _InfoRow(
-                  icon: Icons.notes_outlined, label: 'Not', value: inv.notes!),
+                  icon: Icons.notes_outlined, label: context.l10n.noteLabel, value: inv.notes!),
             ],
             const SizedBox(height: 16),
             _loading
@@ -155,14 +155,14 @@ class _InvitationCardState extends ConsumerState<_InvitationCard> {
                           onPressed: () => _respond(false),
                           style: OutlinedButton.styleFrom(
                               foregroundColor: theme.colorScheme.error),
-                          child: const Text('Reddet'),
+                          child: Text(context.l10n.reject),
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: ElevatedButton(
                           onPressed: () => _respond(true),
-                          child: const Text('Kabul Et'),
+                          child: Text(context.l10n.accept),
                         ),
                       ),
                     ],

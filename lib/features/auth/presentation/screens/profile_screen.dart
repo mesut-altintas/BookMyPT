@@ -10,7 +10,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'dart:io';
 
 import '../../../../core/constants/app_constants.dart';
-import '../../../../core/l10n/app_strings.dart';
+import '../../../../core/l10n/extensions.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../providers/auth_provider.dart';
@@ -30,8 +30,17 @@ class ProfileScreen extends ConsumerStatefulWidget {
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   bool _isUploadingPhoto = false;
 
+  String _themeModeLabel(BuildContext context, ThemeMode mode) {
+    final l10n = context.l10n;
+    return switch (mode) {
+      ThemeMode.light  => l10n.themeLabelLight,
+      ThemeMode.dark   => l10n.themeLabelDark,
+      ThemeMode.system => l10n.themeLabelSystem,
+    };
+  }
+
   Future<void> _pickAndUploadPhoto() async {
-    final s = ref.read(appStringsProvider);
+    final l10n = context.l10n;
     final picker = ImagePicker();
     final picked = await picker.pickImage(
       source: ImageSource.gallery,
@@ -63,7 +72,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(s.photoUpdated),
+            content: Text(l10n.photoUpdated),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -72,7 +81,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${s.photoFailed}: $e'),
+            content: Text('${l10n.photoFailed}: $e'),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
           ),
@@ -84,14 +93,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Future<void> _editName(String currentName) async {
-    final s = ref.read(appStringsProvider);
     String? result;
     await showDialog<void>(
       context: context,
       builder: (_) => _EditNameDialog(
         initialName: currentName,
         onSave: (name) => result = name,
-        strings: s,
       ),
     );
 
@@ -111,7 +118,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${s.updateFailed}: $e'),
+            content: Text('${context.l10n.updateFailed}: $e'),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
           ),
@@ -134,7 +141,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(s.nameUpdated),
+          content: Text(context.l10n.nameUpdated),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -148,7 +155,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         settings.authorizationStatus == AuthorizationStatus.provisional;
 
     if (!mounted) return;
-    final s = ref.read(appStringsProvider);
 
     showModalBottomSheet(
       context: context,
@@ -158,6 +164,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       ),
       builder: (ctx) {
         final theme = Theme.of(ctx);
+        final l10n = ctx.l10n;
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
@@ -167,7 +174,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               children: [
                 Center(child: _sheetHandle(theme)),
                 const SizedBox(height: 20),
-                Text(s.notifSettings,
+                Text(l10n.notifSettings,
                     style: theme.textTheme.titleMedium
                         ?.copyWith(fontWeight: FontWeight.w700)),
                 const SizedBox(height: 16),
@@ -198,7 +205,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              isGranted ? s.notifOn : s.notifOff,
+                              isGranted ? l10n.notifOn : l10n.notifOff,
                               style: TextStyle(
                                 fontWeight: FontWeight.w600,
                                 color: isGranted ? Colors.green : theme.colorScheme.error,
@@ -206,7 +213,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              isGranted ? s.notifOnSub : s.notifOffSub,
+                              isGranted ? l10n.notifOnSub : l10n.notifOffSub,
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: theme.colorScheme.onSurfaceVariant,
                               ),
@@ -222,7 +229,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   width: double.infinity,
                   child: ElevatedButton.icon(
                     icon: const Icon(Icons.settings_outlined),
-                    label: Text(s.openSystemSettings),
+                    label: Text(l10n.openSystemSettings),
                     onPressed: () {
                       Navigator.of(ctx).pop();
                       openAppSettings();
@@ -235,7 +242,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     width: double.infinity,
                     child: OutlinedButton.icon(
                       icon: const Icon(Icons.notifications_outlined),
-                      label: Text(s.requestPermission),
+                      label: Text(l10n.requestPermission),
                       onPressed: () async {
                         Navigator.of(ctx).pop();
                         await FirebaseMessaging.instance.requestPermission();
@@ -258,12 +265,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      // Consumer burada: provider'ı dinler, seçim her zaman doğru gösterilir
       builder: (ctx) => Consumer(
         builder: (ctx, r, _) {
           final current = r.watch(themeModeProvider);
-          final s = r.watch(appStringsProvider);
           final theme = Theme.of(ctx);
+          final l10n = ctx.l10n;
 
           return SafeArea(
             child: Padding(
@@ -274,14 +280,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 children: [
                   Center(child: _sheetHandle(theme)),
                   const SizedBox(height: 20),
-                  Text(s.appearanceTitle,
+                  Text(l10n.appearanceTitle,
                       style: theme.textTheme.titleMedium
                           ?.copyWith(fontWeight: FontWeight.w700)),
                   const SizedBox(height: 12),
                   _ThemeOption(
                     icon: Icons.brightness_auto_outlined,
-                    label: s.themeSystem,
-                    subtitle: s.themeSystemSub,
+                    label: l10n.themeSystem,
+                    subtitle: l10n.themeSystemSub,
                     value: ThemeMode.system,
                     groupValue: current,
                     onChanged: (v) =>
@@ -289,8 +295,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ),
                   _ThemeOption(
                     icon: Icons.light_mode_outlined,
-                    label: s.themeLight,
-                    subtitle: s.themeLightSub,
+                    label: l10n.themeLight,
+                    subtitle: l10n.themeLightSub,
                     value: ThemeMode.light,
                     groupValue: current,
                     onChanged: (v) =>
@@ -298,8 +304,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ),
                   _ThemeOption(
                     icon: Icons.dark_mode_outlined,
-                    label: s.themeDark,
-                    subtitle: s.themeDarkSub,
+                    label: l10n.themeDark,
+                    subtitle: l10n.themeDarkSub,
                     value: ThemeMode.dark,
                     groupValue: current,
                     onChanged: (v) =>
@@ -324,8 +330,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       builder: (ctx) => Consumer(
         builder: (ctx, r, _) {
           final current = r.watch(localeProvider);
-          final s = r.watch(appStringsProvider);
           final theme = Theme.of(ctx);
+          final l10n = ctx.l10n;
 
           return SafeArea(
             child: Padding(
@@ -336,7 +342,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 children: [
                   Center(child: _sheetHandle(theme)),
                   const SizedBox(height: 20),
-                  Text(s.languageTitle,
+                  Text(l10n.languageTitle,
                       style: theme.textTheme.titleMedium
                           ?.copyWith(fontWeight: FontWeight.w700)),
                   const SizedBox(height: 12),
@@ -370,21 +376,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Future<void> _signOut() async {
-    final s = ref.read(appStringsProvider);
+    final l10n = context.l10n;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text(s.signOutTitle),
-        content: Text(s.signOutConfirm),
+        title: Text(l10n.signOutTitle),
+        content: Text(l10n.signOutConfirm),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: Text(s.cancel),
+            child: Text(l10n.cancel),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-            child: Text(s.signOut),
+            child: Text(l10n.signOut),
           ),
         ],
       ),
@@ -408,10 +414,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Widget build(BuildContext context) {
     final userAsync = ref.watch(currentUserProvider);
     final theme = Theme.of(context);
-    final s = ref.watch(appStringsProvider);
+    final l10n = context.l10n;
 
     return Scaffold(
-      appBar: AppBar(title: Text(s.profileTitle)),
+      appBar: AppBar(title: Text(l10n.profileTitle)),
       body: userAsync.when(
         loading: () => const AppLoading(),
         error: (e, _) => Center(child: Text('Hata: $e')),
@@ -458,7 +464,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      user.name.isNotEmpty ? user.name : s.noName,
+                      user.name.isNotEmpty ? user.name : l10n.noName,
                       style: theme.textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.w700,
                         color: user.name.isEmpty
@@ -495,7 +501,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    user.isPt ? s.rolePt : s.roleMember,
+                    user.isPt ? l10n.rolePt : l10n.roleMember,
                     style: TextStyle(
                       color: theme.colorScheme.onPrimaryContainer,
                       fontWeight: FontWeight.w600,
@@ -507,13 +513,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 const Divider(),
                 ListTile(
                   leading: const Icon(Icons.notifications_outlined),
-                  title: Text(s.notifications),
+                  title: Text(l10n.notifications),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: _showNotificationSettings,
                 ),
                 ListTile(
                   leading: const Icon(Icons.language),
-                  title: Text(s.language),
+                  title: Text(l10n.language),
                   trailing: Consumer(builder: (_, r, __) {
                     final locale = r.watch(localeProvider);
                     return Text(
@@ -527,11 +533,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
                 ListTile(
                   leading: const Icon(Icons.dark_mode_outlined),
-                  title: Text(s.appearance),
+                  title: Text(l10n.appearance),
                   trailing: Consumer(builder: (_, r, __) {
                     final mode = r.watch(themeModeProvider);
                     return Text(
-                      s.themeModeLabel(mode.name),
+                      _themeModeLabel(context, mode),
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -541,7 +547,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
                 ListTile(
                   leading: const Icon(Icons.menu_book_outlined),
-                  title: Text(s.helpGuide),
+                  title: Text(l10n.helpGuide),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute(
@@ -553,7 +559,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ListTile(
                   leading: Icon(Icons.logout, color: AppColors.error),
                   title: Text(
-                    s.signOut,
+                    l10n.signOut,
                     style: TextStyle(color: AppColors.error),
                   ),
                   onTap: _signOut,
@@ -566,8 +572,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 }
-
-// ── Sheet handle ──────────────────────────────────────────────────────────────
 
 // ── Theme option row ──────────────────────────────────────────────────────────
 class _ThemeOption extends StatelessWidget {
@@ -718,12 +722,10 @@ class _LocaleOption extends StatelessWidget {
 class _EditNameDialog extends StatefulWidget {
   final String initialName;
   final void Function(String) onSave;
-  final AppStrings strings;
 
   const _EditNameDialog({
     required this.initialName,
     required this.onSave,
-    required this.strings,
   });
 
   @override
@@ -747,15 +749,15 @@ class _EditNameDialogState extends State<_EditNameDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final s = widget.strings;
+    final l10n = context.l10n;
     return AlertDialog(
-      title: Text(s.editName),
+      title: Text(l10n.editName),
       content: TextField(
         controller: _ctrl,
         autofocus: true,
         textCapitalization: TextCapitalization.words,
         decoration: InputDecoration(
-          labelText: s.fullName,
+          labelText: l10n.fullName,
           border: const OutlineInputBorder(),
         ),
         onSubmitted: (v) {
@@ -766,14 +768,14 @@ class _EditNameDialogState extends State<_EditNameDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(s.cancel),
+          child: Text(l10n.cancel),
         ),
         ElevatedButton(
           onPressed: () {
             widget.onSave(_ctrl.text.trim());
             Navigator.of(context).pop();
           },
-          child: Text(s.save),
+          child: Text(l10n.save),
         ),
       ],
     );

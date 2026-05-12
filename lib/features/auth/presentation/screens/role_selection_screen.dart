@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../../../../core/l10n/extensions.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -53,6 +54,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
 
     return Scaffold(
       body: SafeArea(
@@ -63,23 +65,22 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
             children: [
               const SizedBox(height: 32),
               Text(
-                'Rolünüzü Seçin',
+                l10n.selectRole,
                 style: theme.textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
-                'Uygulamayı nasıl kullanacaksınız?',
+                l10n.howToUseApp,
                 style: theme.textTheme.bodyLarge?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
               const SizedBox(height: 48),
               _RoleCard(
-                title: 'Personal Trainer',
-                subtitle:
-                    'Üyelerinizi yönetin, program oluşturun ve takvim tutun',
+                title: l10n.rolePtTitle,
+                subtitle: l10n.rolePtSubtitle,
                 icon: Icons.sports,
                 color: AppColors.ptPrimary,
                 isSelected: _selectedRole == AppConstants.roleTrainer,
@@ -88,9 +89,8 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
               ),
               const SizedBox(height: 16),
               _RoleCard(
-                title: 'Üye',
-                subtitle:
-                    'PT\'nizin programını görün, randevu alın ve ilerlemenizi takip edin',
+                title: l10n.roleMemberTitle,
+                subtitle: l10n.roleMemberSubtitle,
                 icon: Icons.person,
                 color: AppColors.memberPrimary,
                 isSelected: _selectedRole == AppConstants.roleMember,
@@ -107,7 +107,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
                         width: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('Devam Et'),
+                    : Text(l10n.continueText),
               ),
               const SizedBox(height: 16),
             ],

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/l10n/extensions.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../features/auth/providers/auth_provider.dart';
 import '../../../../shared/models/program_model.dart';
@@ -91,7 +92,7 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedMemberId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Lütfen bir üye seçin')),
+        SnackBar(content: Text(context.l10n.selectMemberSnack)),
       );
       return;
     }
@@ -121,7 +122,7 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
         await repo.updateProgram(widget.initialProgram!.id, data);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Program güncellendi')),
+            SnackBar(content: Text(context.l10n.programUpdated)),
           );
           context.pop();
         }
@@ -129,7 +130,7 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
         await repo.createProgram(program);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Program oluşturuldu')),
+            SnackBar(content: Text(context.l10n.programCreated)),
           );
           context.pop();
         }
@@ -137,7 +138,7 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Hata: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text(context.l10n.error('$e')), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -171,7 +172,7 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) return const Scaffold(body: AppLoading(message: 'Kaydediliyor...'));
+    if (_isLoading) return Scaffold(body: AppLoading(message: context.l10n.saving));
 
     final userAsync = ref.watch(currentUserProvider);
     return userAsync.when(
@@ -183,9 +184,9 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
 
         return Scaffold(
           appBar: AppBar(
-            title: Text(_isEditing ? 'Programı Düzenle' : 'Program Oluştur'),
+            title: Text(_isEditing ? context.l10n.editProgram : context.l10n.createProgram),
             actions: [
-              TextButton(onPressed: _save, child: const Text('Kaydet')),
+              TextButton(onPressed: _save, child: Text(context.l10n.save)),
             ],
           ),
           body: Form(
@@ -195,29 +196,29 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
               children: [
                 TextFormField(
                   controller: _titleCtrl,
-                  validator: (v) => Validators.required(v, 'Program adı'),
-                  decoration: const InputDecoration(
-                    labelText: 'Program Adı',
-                    hintText: 'Başlangıç Programı',
+                  validator: (v) => Validators.required(v, context.l10n.programName),
+                  decoration: InputDecoration(
+                    labelText: context.l10n.programName,
+                    hintText: context.l10n.programNameHint,
                   ),
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _descCtrl,
                   maxLines: 2,
-                  decoration: const InputDecoration(
-                    labelText: 'Açıklama (İsteğe bağlı)',
-                    hintText: 'Program hakkında kısa bilgi',
+                  decoration: InputDecoration(
+                    labelText: context.l10n.descriptionOptional,
+                    hintText: context.l10n.programDescriptionHint,
                     alignLabelWithHint: true,
                   ),
                 ),
                 const SizedBox(height: 16),
                 membersAsync.when(
                   loading: () => const AppLoading(size: 24),
-                  error: (_, __) => const Text('Üyeler yüklenemedi'),
+                  error: (_, __) => Text(context.l10n.membersLoadFailed),
                   data: (members) => DropdownButtonFormField<String>(
                     value: _selectedMemberId,
-                    hint: const Text('Üye Seç'),
+                    hint: Text(context.l10n.selectMember),
                     items: members
                         .map((m) => DropdownMenuItem(
                               value: m.memberId,
@@ -226,17 +227,17 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
                             ))
                         .toList(),
                     onChanged: (v) => setState(() => _selectedMemberId = v),
-                    decoration: const InputDecoration(
-                      labelText: 'Üye',
-                      prefixIcon: Icon(Icons.person_outlined),
+                    decoration: InputDecoration(
+                      labelText: context.l10n.member,
+                      prefixIcon: const Icon(Icons.person_outlined),
                     ),
                   ),
                 ),
                 const SizedBox(height: 16),
                 Row(
                   children: [
-                    const Text('Hafta Sayısı:',
-                        style: TextStyle(fontWeight: FontWeight.w500)),
+                    Text(context.l10n.weekCountLabel,
+                        style: const TextStyle(fontWeight: FontWeight.w500)),
                     const Spacer(),
                     IconButton(
                       onPressed: () {
@@ -335,7 +336,7 @@ class _WeekSection extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
           ),
           child: Text(
-            'Hafta ${week.weekNumber}',
+            '${context.l10n.weekLabel} ${week.weekNumber}',
             style: TextStyle(
               fontWeight: FontWeight.w700,
               color: Theme.of(context).colorScheme.onPrimaryContainer,
@@ -386,7 +387,7 @@ class _DaySection extends StatelessWidget {
             TextButton(
               onPressed: onToggleRest,
               child: Text(
-                day.isRestDay ? 'Antrenman Ekle' : 'Dinlenme Günü',
+                day.isRestDay ? context.l10n.addWorkout : context.l10n.restDayLabel,
                 style: const TextStyle(fontSize: 12),
               ),
             ),
@@ -407,9 +408,9 @@ class _DaySection extends StatelessWidget {
               color: Theme.of(context).colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Text('Dinlenme Günü 🛌',
+            child: Text(context.l10n.restDayFull,
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 13)),
+                style: const TextStyle(fontSize: 13)),
           )
         else
           ...List.generate(day.exercises.length, (ei) {
@@ -473,7 +474,7 @@ class _DaySection extends StatelessWidget {
                       color: Theme.of(context).colorScheme.primary),
                   const SizedBox(width: 4),
                   Text(
-                    'Egzersiz Ekle',
+                    context.l10n.addExercise,
                     style: TextStyle(
                       fontSize: 12,
                       color: Theme.of(context).colorScheme.primary,
@@ -533,7 +534,7 @@ class _AddExerciseSheetState extends State<_AddExerciseSheet> {
             Row(
               children: [
                 Text(
-                  'Egzersiz Ekle',
+                  context.l10n.addExercise,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
@@ -548,7 +549,7 @@ class _AddExerciseSheetState extends State<_AddExerciseSheet> {
             const SizedBox(height: 16),
             TextFormField(
               controller: _nameCtrl,
-              decoration: const InputDecoration(labelText: 'Egzersiz Adı'),
+              decoration: InputDecoration(labelText: context.l10n.exerciseName),
             ),
             const SizedBox(height: 12),
             Row(
@@ -557,7 +558,7 @@ class _AddExerciseSheetState extends State<_AddExerciseSheet> {
                   child: TextFormField(
                     controller: _setsCtrl,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: 'Set'),
+                    decoration: InputDecoration(labelText: context.l10n.sets),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -565,7 +566,7 @@ class _AddExerciseSheetState extends State<_AddExerciseSheet> {
                   child: TextFormField(
                     controller: _repsCtrl,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: 'Tekrar'),
+                    decoration: InputDecoration(labelText: context.l10n.reps),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -573,7 +574,7 @@ class _AddExerciseSheetState extends State<_AddExerciseSheet> {
                   child: TextFormField(
                     controller: _weightCtrl,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: 'Ağırlık (kg)'),
+                    decoration: InputDecoration(labelText: context.l10n.weightKg),
                   ),
                 ),
               ],
@@ -586,14 +587,14 @@ class _AddExerciseSheetState extends State<_AddExerciseSheet> {
                     controller: _restCtrl,
                     keyboardType: TextInputType.number,
                     decoration:
-                        const InputDecoration(labelText: 'Dinlenme (sn)'),
+                        InputDecoration(labelText: context.l10n.restSeconds),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: TextFormField(
                     controller: _notesCtrl,
-                    decoration: const InputDecoration(labelText: 'Not'),
+                    decoration: InputDecoration(labelText: context.l10n.noteLabel),
                   ),
                 ),
               ],
@@ -612,7 +613,7 @@ class _AddExerciseSheetState extends State<_AddExerciseSheet> {
                 ));
                 Navigator.pop(context);
               },
-              child: const Text('Egzersiz Ekle'),
+              child: Text(context.l10n.addExercise),
             ),
           ],
         ),

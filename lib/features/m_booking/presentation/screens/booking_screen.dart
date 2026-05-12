@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 
+import '../../../../core/l10n/extensions.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../../features/auth/providers/auth_provider.dart';
 import '../../../../features/m_calendar/providers/invitation_provider.dart';
@@ -71,11 +72,11 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Randevularım'),
+        title: Text(context.l10n.myAppointments),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
-            tooltip: 'Randevu Talep Et',
+            tooltip: context.l10n.requestAppointment,
             onPressed: () {
               final user = ref.read(currentUserProvider).valueOrNull;
               final sessions =
@@ -87,9 +88,9 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
         ],
         bottom: TabBar(
           controller: _tabController,
-          tabs: const [
-            Tab(icon: Icon(Icons.calendar_month_outlined), text: 'Takvim'),
-            Tab(icon: Icon(Icons.history_outlined), text: 'Geçmişim'),
+          tabs: [
+            Tab(icon: const Icon(Icons.calendar_month_outlined), text: context.l10n.tabCalendar),
+            Tab(icon: const Icon(Icons.history_outlined), text: context.l10n.tabHistory),
           ],
         ),
       ),
@@ -240,7 +241,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
                     ),
                     const Spacer(),
                     Text(
-                      '${selectedOwn.length} randevum',
+                      context.l10n.appointmentsCount(selectedOwn.length),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
@@ -251,13 +252,13 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
               Expanded(
                 child: allSelected.isEmpty
                     ? AppEmpty(
-                        message: 'Bu gün randevu yok',
+                        message: context.l10n.noDayAppointment,
                         icon: Icons.event_available_outlined,
                         action: TextButton.icon(
                           onPressed: () => _openSheet(context, ref, memberId,
                               memberName, ptId, sessions, sessionDurationMinutes),
                           icon: const Icon(Icons.add),
-                          label: const Text('Randevu Talep Et'),
+                          label: Text(context.l10n.requestAppointment),
                         ),
                       )
                     : ListView.separated(
@@ -379,17 +380,16 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
       context: context,
       useRootNavigator: false,
       builder: (ctx) => AlertDialog(
-        title: const Text('Pasif Üye'),
-        content: const Text(
-            'Randevu alabilmek için aktif olmanız gerekiyor. Eğitmeninize aktivasyon isteği göndermek ister misiniz?'),
+        title: Text(context.l10n.passiveMemberTitle),
+        content: Text(context.l10n.passiveMemberContent),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('İptal'),
+            child: Text(context.l10n.cancel),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('İstek Gönder'),
+            child: Text(context.l10n.sendRequest),
           ),
         ],
       ),
@@ -411,8 +411,8 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
             memberEmail: user?.email ?? '',
           );
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Aktivasyon isteği gönderildi'),
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(context.l10n.activationRequestSent),
           behavior: SnackBarBehavior.floating,
         ));
       }
@@ -471,7 +471,7 @@ class _SessionCard extends StatelessWidget {
           session.dateTime.formattedDayMonth,
           style: const TextStyle(fontWeight: FontWeight.w600),
         ),
-        subtitle: Text('${session.durationMinutes} dk seans'),
+        subtitle: Text(context.l10n.sessionDurationMin(session.durationMinutes)),
         trailing: onTap != null
             ? Row(
                 mainAxisSize: MainAxisSize.min,
@@ -530,7 +530,7 @@ class _PtBusyCard extends StatelessWidget {
           ),
         ),
         subtitle: Text(
-          '${session.durationMinutes} dk — PT dolu',
+          '${session.durationMinutes} ${context.l10n.minuteShort} — ${context.l10n.ptBusy}',
           style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
         trailing: Icon(Icons.lock_outline,
@@ -581,7 +581,7 @@ class _PtBusyPersonalCard extends StatelessWidget {
           ),
         ),
         subtitle: Text(
-          '${event.durationMinutes} dk — PT meşgul',
+          '${event.durationMinutes} ${context.l10n.minuteShort} — ${context.l10n.ptBusyPersonal}',
           style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
         trailing: Icon(Icons.lock_outline,
@@ -630,7 +630,7 @@ class _PersonalEventCard extends StatelessWidget {
         ),
         title: Text(event.title,
             style: const TextStyle(fontWeight: FontWeight.w600)),
-        subtitle: Text('$durStr • Kişisel etkinlik'),
+        subtitle: Text('$durStr • ${context.l10n.personalActivity}'),
         trailing: Icon(Icons.fitness_center,
             size: 18, color: theme.colorScheme.secondary),
       ),
@@ -748,8 +748,8 @@ class _RequestSessionSheetState extends State<_RequestSessionSheet> {
         if (mounted) {
           setState(() => _loadingPt = false);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Bu e-posta ile kayıtlı PT bulunamadı'),
+            SnackBar(
+              content: Text(context.l10n.ptNotFoundByEmail),
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -895,7 +895,7 @@ class _RequestSessionSheetState extends State<_RequestSessionSheet> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Randevu Talep Et',
+                    context.l10n.requestAppointment,
                     style: Theme.of(context)
                         .textTheme
                         .titleMedium
@@ -940,22 +940,22 @@ class _RequestSessionSheetState extends State<_RequestSessionSheet> {
             )
           else if (_needsPtLink) ...[
             Text(
-              'PT\'nizi bulmak için e-posta adresini girin',
+              context.l10n.findPtEnterEmail,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _ptEmailCtrl,
               keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(
-                labelText: 'PT E-posta',
-                prefixIcon: Icon(Icons.email_outlined),
+              decoration: InputDecoration(
+                labelText: context.l10n.ptEmail,
+                prefixIcon: const Icon(Icons.email_outlined),
               ),
             ),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () => _linkPt(_ptEmailCtrl.text),
-              child: const Text('PT\'yi Bağla'),
+              child: Text(context.l10n.linkPt),
             ),
           ] else ...[
             InkWell(
@@ -963,12 +963,12 @@ class _RequestSessionSheetState extends State<_RequestSessionSheet> {
               borderRadius: BorderRadius.circular(8),
               child: InputDecorator(
                 decoration: InputDecoration(
-                  labelText: 'Tarih ve Saat',
+                  labelText: context.l10n.dateAndTime,
                   prefixIcon: const Icon(Icons.access_time),
                   errorText: _memberConflict
-                      ? 'Bu saatte zaten randevunuz var'
+                      ? context.l10n.timeConflict
                       : (_ptConflict || _ptPersonalConflict)
-                          ? 'PT bu saatte müsait değil'
+                          ? context.l10n.ptNotAvailable
                           : null,
                 ),
                 child: Text(
@@ -991,7 +991,7 @@ class _RequestSessionSheetState extends State<_RequestSessionSheet> {
                         color: Theme.of(context).colorScheme.onSurfaceVariant),
                     const SizedBox(width: 8),
                     Text(
-                      'Seans süresi: ${widget.sessionDurationMinutes} dk',
+                      context.l10n.sessionDurationLabel(widget.sessionDurationMinutes!),
                       style: TextStyle(
                         fontWeight: FontWeight.w500,
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -1001,8 +1001,8 @@ class _RequestSessionSheetState extends State<_RequestSessionSheet> {
                 ),
               )
             else ...[
-              const Text('Süre (dk):',
-                  style: TextStyle(fontWeight: FontWeight.w500)),
+              Text(context.l10n.durationLabel,
+                  style: const TextStyle(fontWeight: FontWeight.w500)),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 6,
@@ -1025,7 +1025,7 @@ class _RequestSessionSheetState extends State<_RequestSessionSheet> {
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('Randevu Talep Et'),
+                  : Text(context.l10n.requestAppointment),
             ),
           ],
         ],
@@ -1153,14 +1153,14 @@ class _EditSessionSheetState extends State<_EditSessionSheet> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Randevu Düzenle',
+                    context.l10n.editAppointment,
                     style: Theme.of(context)
                         .textTheme
                         .titleMedium
                         ?.copyWith(fontWeight: FontWeight.w700),
                   ),
                   Text(
-                    'Sadece bekleyen talepler düzenlenebilir',
+                    context.l10n.onlyPendingCanEdit,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
@@ -1180,12 +1180,12 @@ class _EditSessionSheetState extends State<_EditSessionSheet> {
             borderRadius: BorderRadius.circular(8),
             child: InputDecorator(
               decoration: InputDecoration(
-                labelText: 'Tarih ve Saat',
+                labelText: context.l10n.dateAndTime,
                 prefixIcon: const Icon(Icons.access_time),
                 errorText: _memberConflict
-                    ? 'Bu saatte zaten randevunuz var'
+                    ? context.l10n.timeConflict
                     : (_ptConflict || _ptPersonalConflict)
-                        ? 'PT bu saatte müsait değil'
+                        ? context.l10n.ptNotAvailable
                         : null,
               ),
               child: Text(
@@ -1208,7 +1208,7 @@ class _EditSessionSheetState extends State<_EditSessionSheet> {
                       color: Theme.of(context).colorScheme.onSurfaceVariant),
                   const SizedBox(width: 8),
                   Text(
-                    'Seans süresi: ${widget.sessionDurationMinutes} dk',
+                    context.l10n.sessionDurationLabel(widget.sessionDurationMinutes!),
                     style: TextStyle(
                       fontWeight: FontWeight.w500,
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -1218,7 +1218,7 @@ class _EditSessionSheetState extends State<_EditSessionSheet> {
               ),
             )
           else ...[
-            const Text('Süre (dk):', style: TextStyle(fontWeight: FontWeight.w500)),
+            Text(context.l10n.durationLabel, style: const TextStyle(fontWeight: FontWeight.w500)),
             const SizedBox(height: 8),
             Wrap(
               spacing: 6,
@@ -1242,7 +1242,7 @@ class _EditSessionSheetState extends State<_EditSessionSheet> {
                       height: 20, width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('Güncelle'),
+                  : Text(context.l10n.update),
             ),
           ),
         ],
@@ -1286,9 +1286,9 @@ class _HistoryTab extends StatelessWidget {
         : '$totalMinutes dk';
 
     if (upcoming.isEmpty && completed.isEmpty) {
-      return const AppEmpty(
-        message: 'Henüz tamamlanan seans yok',
-        subMessage: 'Onaylanan seanslarınız tamamlandıkça burada görünecek',
+      return AppEmpty(
+        message: context.l10n.noCompletedSessions,
+        subMessage: context.l10n.noCompletedSessionsSub,
         icon: Icons.fitness_center_outlined,
       );
     }
@@ -1307,9 +1307,9 @@ class _HistoryTab extends StatelessWidget {
               children: [
                 Expanded(
                   child: _StatCell(
-                    label: 'Tamamlanan',
+                    label: context.l10n.completedCount,
                     value: '${completed.length}',
-                    unit: 'seans',
+                    unit: context.l10n.sessions,
                     color: theme.colorScheme.onPrimaryContainer,
                   ),
                 ),
@@ -1320,7 +1320,7 @@ class _HistoryTab extends StatelessWidget {
                 ),
                 Expanded(
                   child: _StatCell(
-                    label: 'Toplam süre',
+                    label: context.l10n.totalDuration,
                     value: durationStr,
                     unit: '',
                     color: theme.colorScheme.onPrimaryContainer,
@@ -1335,7 +1335,7 @@ class _HistoryTab extends StatelessWidget {
         if (upcoming.isNotEmpty) ...[
           const SizedBox(height: 20),
           _HistorySectionHeader(
-            title: 'Yaklaşan Seanslarım',
+            title: context.l10n.upcomingMySessions,
             icon: Icons.event_outlined,
             color: theme.colorScheme.primary,
           ),
@@ -1350,7 +1350,7 @@ class _HistoryTab extends StatelessWidget {
         if (completed.isNotEmpty) ...[
           const SizedBox(height: 20),
           _HistorySectionHeader(
-            title: 'Tamamlanan Seanslar',
+            title: context.l10n.completedSessions,
             icon: Icons.check_circle_outline,
             color: Colors.green,
           ),

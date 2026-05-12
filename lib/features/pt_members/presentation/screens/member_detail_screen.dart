@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/l10n/extensions.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../../features/auth/providers/auth_provider.dart';
 import '../../../../features/m_chat/providers/chat_provider.dart';
@@ -62,7 +63,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen>
       error: (e, _) => Scaffold(body: AppError(message: e.toString())),
       data: (member) {
         if (member == null) {
-          return const Scaffold(body: Center(child: Text('Üye bulunamadı')));
+          return Scaffold(body: Center(child: Text(context.l10n.memberNotFound)));
         }
 
         return Scaffold(
@@ -78,7 +79,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen>
                 actions: [
                   IconButton(
                     icon: const Icon(Icons.chat_outlined),
-                    tooltip: 'Mesaj Gönder',
+                    tooltip: context.l10n.sendMessage,
                     onPressed: () async {
                       final user = ref.read(currentUserProvider).valueOrNull;
                       if (user == null) return;
@@ -97,7 +98,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen>
                       } catch (e) {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                            content: Text('Mesaj açılamadı: $e'),
+                            content: Text(context.l10n.chatOpenError('$e')),
                             backgroundColor: Colors.red,
                           ));
                         }
@@ -117,19 +118,19 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen>
                               size: 20,
                             ),
                             const SizedBox(width: 8),
-                            Text(member.isActive ? 'Pasif Yap' : 'Aktif Yap'),
+                            Text(member.isActive ? context.l10n.setPassive : context.l10n.setActive),
                           ],
                         ),
                       ),
-                      const PopupMenuItem(
+                      PopupMenuItem(
                         value: 'remove',
                         child: Row(
                           children: [
-                            Icon(Icons.delete_outline,
+                            const Icon(Icons.delete_outline,
                                 size: 20, color: Colors.red),
-                            SizedBox(width: 8),
-                            Text('Sil',
-                                style: TextStyle(color: Colors.red)),
+                            const SizedBox(width: 8),
+                            Text(context.l10n.delete,
+                                style: const TextStyle(color: Colors.red)),
                           ],
                         ),
                       ),
@@ -147,8 +148,8 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen>
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(member.isActive
-                                  ? '${member.name} pasif yapıldı'
-                                  : '${member.name} aktif yapıldı'),
+                                  ? context.l10n.memberMadePassive(member.name)
+                                  : context.l10n.memberMadeActive(member.name)),
                               behavior: SnackBarBehavior.floating,
                             ),
                           );
@@ -158,14 +159,14 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen>
                           context: context,
                           useRootNavigator: false,
                           builder: (dialogCtx) => AlertDialog(
-                            title: const Text('Üyeyi Sil'),
+                            title: Text(context.l10n.removeMember),
                             content: Text(
-                                '${member.name} kalıcı olarak silinecek. Bu işlem geri alınamaz.'),
+                                context.l10n.memberDeleteConfirm(member.name)),
                             actions: [
                               TextButton(
                                 onPressed: () =>
                                     Navigator.pop(dialogCtx, false),
-                                child: const Text('İptal'),
+                                child: Text(context.l10n.cancel),
                               ),
                               ElevatedButton(
                                 onPressed: () =>
@@ -173,7 +174,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen>
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.red,
                                 ),
-                                child: const Text('Sil'),
+                                child: Text(context.l10n.delete),
                               ),
                             ],
                           ),
@@ -190,7 +191,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen>
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('Silme hatası: $e'),
+                                  content: Text(context.l10n.memberDeleteError('$e')),
                                   backgroundColor: Colors.red,
                                   behavior: SnackBarBehavior.floating,
                                 ),
@@ -204,10 +205,10 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen>
                 ],
                 bottom: TabBar(
                   controller: _tabController,
-                  tabs: const [
-                    Tab(text: 'Genel Bakış'),
-                    Tab(text: 'Programlar'),
-                    Tab(text: 'Seanslar'),
+                  tabs: [
+                    Tab(text: context.l10n.overview),
+                    Tab(text: context.l10n.programs),
+                    Tab(text: context.l10n.sessionsTab),
                   ],
                 ),
               ),
@@ -268,7 +269,7 @@ class _MemberHeader extends ConsumerWidget {
               ),
               const SizedBox(width: 6),
               Text(
-                '${member.remainingSessions} seans kaldı',
+                context.l10n.sessionsLeft(member.remainingSessions),
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -293,47 +294,47 @@ class _OverviewTab extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       children: [
         _InfoCard(
-          title: 'Hedef',
-          value: member.goal ?? 'Belirtilmemiş',
+          title: context.l10n.goal,
+          value: member.goal ?? context.l10n.notSpecified,
           icon: Icons.flag_outlined,
         ),
         const SizedBox(height: 12),
         _InfoCard(
-          title: 'E-posta',
+          title: context.l10n.email,
           value: member.email,
           icon: Icons.email_outlined,
         ),
         const SizedBox(height: 12),
         if (member.phone != null)
           _InfoCard(
-            title: 'Telefon',
+            title: context.l10n.phone,
             value: member.phone!,
             icon: Icons.phone_outlined,
           ),
         if (member.phone != null) const SizedBox(height: 12),
         if (member.height != null)
           _InfoCard(
-            title: 'Boy',
+            title: context.l10n.heightLabel,
             value: '${member.height} cm',
             icon: Icons.height,
           ),
         if (member.height != null) const SizedBox(height: 12),
         if (member.startingWeight != null)
           _InfoCard(
-            title: 'Başlangıç Kilosu',
+            title: context.l10n.startingWeightLabel,
             value: '${member.startingWeight} kg',
             icon: Icons.monitor_weight_outlined,
           ),
         if (member.startingWeight != null) const SizedBox(height: 12),
         _InfoCard(
-          title: 'Katılım Tarihi',
+          title: context.l10n.joinDate,
           value: member.joinedAt.formattedDate,
           icon: Icons.calendar_today_outlined,
         ),
         const SizedBox(height: 12),
         if (member.notes != null && member.notes!.isNotEmpty)
           _InfoCard(
-            title: 'Notlar',
+            title: context.l10n.notes,
             value: member.notes!,
             icon: Icons.notes_outlined,
           ),
@@ -406,8 +407,8 @@ class _ProgramsTab extends ConsumerWidget {
       error: (e, _) => AppError(message: e.toString()),
       data: (programs) {
         if (programs.isEmpty) {
-          return const AppEmpty(
-            message: 'Henüz program yok',
+          return AppEmpty(
+            message: context.l10n.noMemberPrograms,
             icon: Icons.fitness_center_outlined,
           );
         }
@@ -453,8 +454,8 @@ class _SessionsTab extends ConsumerWidget {
       error: (e, _) => AppError(message: e.toString()),
       data: (sessions) {
         if (sessions.isEmpty) {
-          return const AppEmpty(
-            message: 'Henüz seans yok',
+          return AppEmpty(
+            message: context.l10n.noMemberSessions,
             icon: Icons.calendar_today_outlined,
           );
         }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/l10n/extensions.dart';
 import '../../../../core/router/app_router.dart';
 
 import '../../../../shared/models/program_model.dart';
@@ -44,12 +45,12 @@ class ProgramDetailScreen extends ConsumerWidget {
               actions: [
                 PopupMenuButton(
                   itemBuilder: (_) => [
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: 'edit',
                       child: Row(children: [
-                        Icon(Icons.edit_outlined, size: 20),
-                        SizedBox(width: 8),
-                        Text('Düzenle'),
+                        const Icon(Icons.edit_outlined, size: 20),
+                        const SizedBox(width: 8),
+                        Text(context.l10n.edit),
                       ]),
                     ),
                     PopupMenuItem(
@@ -59,15 +60,15 @@ class ProgramDetailScreen extends ConsumerWidget {
                             ? Icons.pause_circle_outline
                             : Icons.play_circle_outline, size: 20),
                         const SizedBox(width: 8),
-                        Text(program.isActive ? 'Pasife Al' : 'Aktive Et'),
+                        Text(program.isActive ? context.l10n.deactivate : context.l10n.activate),
                       ]),
                     ),
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: 'delete',
                       child: Row(children: [
-                        Icon(Icons.delete_outline, size: 20, color: Colors.red),
-                        SizedBox(width: 8),
-                        Text('Sil', style: TextStyle(color: Colors.red)),
+                        const Icon(Icons.delete_outline, size: 20, color: Colors.red),
+                        const SizedBox(width: 8),
+                        Text(context.l10n.delete, style: const TextStyle(color: Colors.red)),
                       ]),
                     ),
                   ],
@@ -85,19 +86,18 @@ class ProgramDetailScreen extends ConsumerWidget {
                         useRootNavigator: false,
                         barrierDismissible: false,
                         builder: (dialogCtx) => AlertDialog(
-                          title: const Text('Programı Sil'),
-                          content: const Text(
-                              'Bu programı kalıcı olarak silmek istiyor musunuz?'),
+                          title: Text(context.l10n.deleteProgram),
+                          content: Text(context.l10n.deleteProgramConfirm),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.pop(dialogCtx, false),
-                              child: const Text('İptal'),
+                              child: Text(context.l10n.cancel),
                             ),
                             ElevatedButton(
                               onPressed: () => Navigator.pop(dialogCtx, true),
                               style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.red),
-                              child: const Text('Sil'),
+                              child: Text(context.l10n.delete),
                             ),
                           ],
                         ),
@@ -114,12 +114,12 @@ class ProgramDetailScreen extends ConsumerWidget {
                             showDialog(
                               context: context,
                               builder: (_) => AlertDialog(
-                                title: const Text('Silme Hatası'),
+                                title: Text(context.l10n.deleteError),
                                 content: Text(e.toString()),
                                 actions: [
                                   TextButton(
                                     onPressed: () => Navigator.pop(context),
-                                    child: const Text('Tamam'),
+                                    child: Text(context.l10n.ok),
                                   ),
                                 ],
                               ),
@@ -135,7 +135,7 @@ class ProgramDetailScreen extends ConsumerWidget {
                 isScrollable: true,
                 tabs: List.generate(
                   program.weeks.length,
-                  (i) => Tab(text: 'Hafta ${i + 1}'),
+                  (i) => Tab(text: '${context.l10n.weekLabel} ${i + 1}'),
                 ),
               ),
             ),
@@ -217,7 +217,7 @@ class _DayCard extends StatelessWidget {
                 if (day.isRestDay) ...[
                   const Spacer(),
                   Text(
-                    'Dinlenme',
+                    context.l10n.restDay,
                     style: TextStyle(
                       fontSize: 12,
                       color: theme.colorScheme.onSurfaceVariant,
@@ -227,7 +227,7 @@ class _DayCard extends StatelessWidget {
                 if (!day.isRestDay) ...[
                   const Spacer(),
                   Text(
-                    '${day.exercises.length} egzersiz',
+                    context.l10n.exercisesCount(day.exercises.length),
                     style: TextStyle(
                       fontSize: 12,
                       color: theme.colorScheme.onPrimaryContainer,
@@ -296,7 +296,7 @@ class _DayCard extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(16),
               child: Text(
-                'Henüz egzersiz eklenmedi',
+                context.l10n.noExercisesYet,
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),

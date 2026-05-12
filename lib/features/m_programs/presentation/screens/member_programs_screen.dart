@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/l10n/extensions.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../../features/auth/providers/auth_provider.dart';
 import '../../../../features/pt_calendar/providers/pt_calendar_provider.dart';
@@ -53,7 +54,7 @@ class _ProgramsContent extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Antrenman Programım'),
+        title: Text(context.l10n.myWorkoutProgram),
         actions: ptName.isNotEmpty
             ? [
                 Padding(
@@ -77,9 +78,9 @@ class _ProgramsContent extends ConsumerWidget {
         error: (e, _) => AppError(message: e.toString()),
         data: (programs) {
           if (programs.isEmpty) {
-            return const AppEmpty(
-              message: 'Henüz program atanmadı',
-              subMessage: 'PT\'niz size bir program atadığında burada görünür',
+            return AppEmpty(
+              message: context.l10n.noProgramAssigned,
+              subMessage: context.l10n.noAssignedPrograms,
               icon: Icons.fitness_center_outlined,
             );
           }
@@ -144,7 +145,7 @@ class _ProgramCard extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          '${program.weeks.length} Hafta Programı',
+                          context.l10n.weekProgramLabel(program.weeks.length),
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
                           ),

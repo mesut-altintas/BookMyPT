@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/l10n/extensions.dart';
+
 class HelpScreen extends StatelessWidget {
   final bool isPt;
   const HelpScreen({super.key, required this.isPt});
@@ -7,7 +9,7 @@ class HelpScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Kullanım Kılavuzu')),
+      appBar: AppBar(title: Text(context.l10n.helpGuideTitle)),
       body: ListView(
         padding: const EdgeInsets.symmetric(vertical: 8),
         children: isPt ? _ptSections(context) : _memberSections(context),
@@ -21,170 +23,122 @@ class HelpScreen extends StatelessWidget {
         _intro(
           context,
           icon: Icons.waving_hand_outlined,
-          title: 'BookMyPT\'e Hoş Geldiniz!',
-          body:
-              'Bu uygulama sayesinde eğitmeninizle kolayca randevu alabilir, '
-              'ilerlemenizi takip edebilir ve seans paketlerinizi yönetebilirsiniz.',
+          title: context.l10n.helpWelcomeTitle,
+          body: context.l10n.helpMemberIntroBody,
         ),
         _section(
           context,
           icon: Icons.home_outlined,
-          title: 'Ana Ekran',
+          title: context.l10n.helpHomeTitle,
           color: Colors.indigo,
-          items: const [
+          items: [
             _HelpItem(
-              title: 'Eğitmen Bilgileri',
-              body:
-                  'Atanmış PT\'niz, kalan seans hakkınız ve yaklaşan randevularınız '
-                  'ana ekranda bir bakışta görünür.',
+              title: context.l10n.helpHomeItem1Title,
+              body: context.l10n.helpHomeItem1Body,
             ),
             _HelpItem(
-              title: 'PT Atanmamışsa',
-              body:
-                  '"PT Bul" özelliği üzerinden e-posta adresiyle eğitmeninizi '
-                  'sisteme ekleyebilirsiniz. PT sizi sisteme aldıktan sonra '
-                  'randevu ve paket işlemleri aktif olur.',
+              title: context.l10n.helpHomeItem2Title,
+              body: context.l10n.helpHomeItem2Body,
             ),
             _HelpItem(
-              title: 'Üyeliği Bırak',
-              body:
-                  'PT kartındaki "Üyeliği Bırak" butonuyla eğitmeninizle '
-                  'bağlantınızı kesebilirsiniz. Kalan seans haklarınız '
-                  'bu işlemden etkilenmez.',
+              title: context.l10n.helpHomeItem3Title,
+              body: context.l10n.helpHomeItem3Body,
             ),
           ],
         ),
         _section(
           context,
           icon: Icons.calendar_today_outlined,
-          title: 'Randevularım',
+          title: context.l10n.helpCalendarTitle,
           color: Colors.teal,
-          items: const [
+          items: [
             _HelpItem(
-              title: 'Randevu Talebi Oluşturma',
-              body:
-                  'Sağ üstteki + butonuna basın, tarih ve saati seçin. '
-                  'Paketinizde seans süresi tanımlıysa otomatik belirlenir. '
-                  'Talebiniz PT onayına gönderilir.',
+              title: context.l10n.helpCalendarItem1Title,
+              body: context.l10n.helpCalendarItem1Body,
             ),
             _HelpItem(
-              title: 'Takvim Sekmesi',
-              body:
-                  'Günlük bazda tüm randevularınızı görürsünüz. '
-                  'Mavi nokta kendi randevularınızı, gri nokta PT\'nin meşgul '
-                  'olduğu saatleri gösterir. Bekleyen taleplerinize tıklayarak '
-                  'tarih veya saati değiştirebilirsiniz.',
+              title: context.l10n.helpCalendarItem2Title,
+              body: context.l10n.helpCalendarItem2Body,
             ),
             _HelpItem(
-              title: 'Geçmişim Sekmesi',
-              body:
-                  'Tamamlanan seanslarınızın sayısı ve toplam süresini burada '
-                  'görürsünüz. Yaklaşan onaylı randevularınız da bu sekmede '
-                  'listelenir.',
+              title: context.l10n.helpCalendarItem3Title,
+              body: context.l10n.helpCalendarItem3Body,
             ),
             _HelpItem(
-              title: 'Randevu Durumları',
-              body:
-                  '• Bekliyor: Talep oluşturuldu, PT onayı bekleniyor.\n'
-                  '• Onaylandı: PT kabul etti, seans gerçekleşecek.\n'
-                  '• Tamamlandı: Seans gerçekleşti.\n'
-                  '• İptal: Seans iptal edildi.',
+              title: context.l10n.helpCalendarItem4Title,
+              body: context.l10n.helpCalendarItem4Body,
             ),
           ],
         ),
         _section(
           context,
           icon: Icons.event_note_outlined,
-          title: 'Takvimim',
+          title: context.l10n.helpMyCalendarTitle,
           color: Colors.purple,
-          items: const [
+          items: [
             _HelpItem(
-              title: 'Kişisel Etkinlik Ekleme',
-              body:
-                  'Sağ üstteki + butonuyla kişisel etkinlikler ekleyebilirsiniz '
-                  '(antrenman, toplantı, tatil vb.). Bu etkinlikler yalnızca '
-                  'sizin takviminizde görünür.',
+              title: context.l10n.helpMyCalendarItem1Title,
+              body: context.l10n.helpMyCalendarItem1Body,
             ),
             _HelpItem(
-              title: 'PT\'nin Müsaitliği',
-              body:
-                  'PT\'nizin başka üyelerle olan randevuları ve kişisel etkinlikleri '
-                  'gri renkte görünür. Böylece randevu talebinde bulunmadan önce '
-                  'müsaitliği kontrol edebilirsiniz.',
+              title: context.l10n.helpMyCalendarItem2Title,
+              body: context.l10n.helpMyCalendarItem2Body,
             ),
             _HelpItem(
-              title: 'Etkinlik Düzenleme',
-              body:
-                  'Eklediğiniz kişisel etkinliklere tıklayarak tarih, saat, '
-                  'süre ve notlarını düzenleyebilir ya da silebilirsiniz.',
+              title: context.l10n.helpMyCalendarItem3Title,
+              body: context.l10n.helpMyCalendarItem3Body,
             ),
           ],
         ),
         _section(
           context,
           icon: Icons.inventory_2_outlined,
-          title: 'Paketlerim',
+          title: context.l10n.helpPackagesTitle,
           color: Colors.orange,
-          items: const [
+          items: [
             _HelpItem(
-              title: 'Paket Satın Alma',
-              body:
-                  'PT\'nizin sunduğu seans paketlerini bu ekranda görürsünüz. '
-                  '"Satın Al" butonuna bastığınızda ödeme talebi oluşur; '
-                  'PT onayladıktan sonra seans hakkınız hesabınıza eklenir.',
+              title: context.l10n.helpPackagesItem1Title,
+              body: context.l10n.helpPackagesItem1Body,
             ),
             _HelpItem(
-              title: 'Üyeye Özel Paketler',
-              body:
-                  'PT\'niz sizin için özel fiyatlı veya süreli paket '
-                  'oluşturmuş olabilir. Bu paketleri yalnızca siz görebilirsiniz.',
+              title: context.l10n.helpPackagesItem2Title,
+              body: context.l10n.helpPackagesItem2Body,
             ),
             _HelpItem(
-              title: 'Ödeme Geçmişi',
-              body:
-                  'Tüm ödeme talepleriniz ve durumları (Bekliyor / Tamamlandı) '
-                  'ekranın üst kısmında listelenir.',
+              title: context.l10n.helpPackagesItem3Title,
+              body: context.l10n.helpPackagesItem3Body,
             ),
           ],
         ),
         _section(
           context,
           icon: Icons.show_chart_outlined,
-          title: 'İlerleme',
+          title: context.l10n.helpProgressTitle,
           color: Colors.green,
-          items: const [
+          items: [
             _HelpItem(
-              title: 'Ölçüm Girişi',
-              body:
-                  'Kilo, boy ve vücut ölçülerinizi kaydedebilirsiniz. '
-                  'Fotoğraf ekleyerek görsel ilerlemenizi de takip edebilirsiniz.',
+              title: context.l10n.helpProgressItem1Title,
+              body: context.l10n.helpProgressItem1Body,
             ),
             _HelpItem(
-              title: 'Geçmişe Dönük Giriş',
-              body:
-                  'Girişi unuttuğunuz günler için tarih seçerek geçmişe dönük '
-                  'kayıt yapabilirsiniz.',
+              title: context.l10n.helpProgressItem2Title,
+              body: context.l10n.helpProgressItem2Body,
             ),
             _HelpItem(
-              title: 'Grafik Takibi',
-              body:
-                  'Kaydettiğiniz ölçümler grafik olarak gösterilir. '
-                  'Zaman içindeki değişiminizi kolayca izleyebilirsiniz.',
+              title: context.l10n.helpProgressItem3Title,
+              body: context.l10n.helpProgressItem3Body,
             ),
           ],
         ),
         _section(
           context,
           icon: Icons.chat_bubble_outline,
-          title: 'Mesajlar',
+          title: context.l10n.helpMessagesTitle,
           color: Colors.blue,
-          items: const [
+          items: [
             _HelpItem(
-              title: 'PT ile İletişim',
-              body:
-                  'PT\'nizle doğrudan mesajlaşabilirsiniz. '
-                  'Seans değişiklikleri, sorular veya antrenman notları için '
-                  'bu ekranı kullanın.',
+              title: context.l10n.helpMemberMessagesItem1Title,
+              body: context.l10n.helpMemberMessagesItem1Body,
             ),
           ],
         ),
@@ -198,158 +152,118 @@ class HelpScreen extends StatelessWidget {
         _intro(
           context,
           icon: Icons.waving_hand_outlined,
-          title: 'BookMyPT\'e Hoş Geldiniz!',
-          body:
-              'Bu uygulama sayesinde üyelerinizin randevularını kolayca yönetebilir, '
-              'seans paketleri oluşturabilir ve kazançlarınızı takip edebilirsiniz.',
+          title: context.l10n.helpWelcomeTitle,
+          body: context.l10n.helpPtIntroBody,
         ),
         _section(
           context,
           icon: Icons.home_outlined,
-          title: 'Ana Ekran',
+          title: context.l10n.helpHomeTitle,
           color: Colors.indigo,
-          items: const [
+          items: [
             _HelpItem(
-              title: 'Günlük Özet',
-              body:
-                  'Bugünkü randevularınız, bekleyen talepler ve son üye '
-                  'hareketleri ana ekranda listelenir.',
+              title: context.l10n.helpPtHomeItem1Title,
+              body: context.l10n.helpPtHomeItem1Body,
             ),
             _HelpItem(
-              title: 'Bekleyen Talepler',
-              body:
-                  'Üyelerinizin randevu taleplerini buradan hızlıca onaylayabilir '
-                  'veya reddedebilirsiniz. Onay verdiğinizde üyeye bildirim gider.',
+              title: context.l10n.helpPtHomeItem2Title,
+              body: context.l10n.helpPtHomeItem2Body,
             ),
             _HelpItem(
-              title: 'Aktivasyon İstekleri',
-              body:
-                  'Pasif üyeler aktivasyon isteği gönderebilir. '
-                  'Bu istekleri ana ekrandan yönetebilirsiniz.',
+              title: context.l10n.helpPtHomeItem3Title,
+              body: context.l10n.helpPtHomeItem3Body,
             ),
           ],
         ),
         _section(
           context,
           icon: Icons.calendar_today_outlined,
-          title: 'Takvim',
+          title: context.l10n.helpPtCalendarTitle,
           color: Colors.teal,
-          items: const [
+          items: [
             _HelpItem(
-              title: 'Randevu Yönetimi',
-              body:
-                  'Tüm üyelerinizin seansları takvimde renkli noktalarla görünür. '
-                  'Bir güne tıklayarak o günkü detaylı listeye geçebilirsiniz.',
+              title: context.l10n.helpPtCalendarItem1Title,
+              body: context.l10n.helpPtCalendarItem1Body,
             ),
             _HelpItem(
-              title: 'Kişisel Etkinlik',
-              body:
-                  'Sağ üstteki + butonu ile tatil, toplantı gibi kişisel '
-                  'etkinlikler ekleyebilirsiniz. Bu saatler üyelerin randevu '
-                  'takviminde "meşgul" olarak görünür.',
+              title: context.l10n.helpPtCalendarItem2Title,
+              body: context.l10n.helpPtCalendarItem2Body,
             ),
             _HelpItem(
-              title: 'Seans Detayı',
-              body:
-                  'Listedeki bir seansa tıklayarak detay ekranını açabilir, '
-                  'durumu güncelleyebilir (onayla / iptal / tamamla) ve '
-                  'notlar ekleyebilirsiniz.',
+              title: context.l10n.helpPtCalendarItem3Title,
+              body: context.l10n.helpPtCalendarItem3Body,
             ),
           ],
         ),
         _section(
           context,
           icon: Icons.people_outline,
-          title: 'Üyeler',
+          title: context.l10n.helpPtMembersTitle,
           color: Colors.purple,
-          items: const [
+          items: [
             _HelpItem(
-              title: 'Üye Ekleme',
-              body:
-                  'Yeni üye eklemek için + butonuna basın ve üyenin bilgilerini '
-                  'girin. Sisteme eklenen üye size bağlanır ve randevu alabilir.',
+              title: context.l10n.helpPtMembersItem1Title,
+              body: context.l10n.helpPtMembersItem1Body,
             ),
             _HelpItem(
-              title: 'Üye Yönetimi',
-              body:
-                  'Üye kartına tıklayarak profil detayını görüntüleyebilir, '
-                  'kişisel hedef ve notlar ekleyebilir, kalan seans haklarını '
-                  'takip edebilirsiniz.',
+              title: context.l10n.helpPtMembersItem2Title,
+              body: context.l10n.helpPtMembersItem2Body,
             ),
             _HelpItem(
-              title: 'Aktif / Pasif Durumu',
-              body:
-                  'Üyeyi pasife aldığınızda o üye yeni randevu talebi '
-                  'oluşturamaz. Aktivasyon isteği gönderirse siz onaylarsınız.',
+              title: context.l10n.helpPtMembersItem3Title,
+              body: context.l10n.helpPtMembersItem3Body,
             ),
           ],
         ),
         _section(
           context,
           icon: Icons.inventory_2_outlined,
-          title: 'Paket Yönetimi',
+          title: context.l10n.helpPtPackagesTitle,
           color: Colors.orange,
-          items: const [
+          items: [
             _HelpItem(
-              title: 'Paket Oluşturma',
-              body:
-                  'Seans sayısı, süresi ve fiyatını belirleyerek paket '
-                  'oluşturabilirsiniz. Paketler tüm aktif üyelerinize görünür.',
+              title: context.l10n.helpPtPackagesItem1Title,
+              body: context.l10n.helpPtPackagesItem1Body,
             ),
             _HelpItem(
-              title: 'Üyeye Özel Paket',
-              body:
-                  '"Üyeye özel" seçeneğiyle belirli bir üye için özel '
-                  'fiyatlı paket tanımlayabilirsiniz. Bu paket yalnızca '
-                  'o üyenin Paketlerim ekranında görünür.',
+              title: context.l10n.helpPtPackagesItem2Title,
+              body: context.l10n.helpPtPackagesItem2Body,
             ),
             _HelpItem(
-              title: 'Seans Süresi',
-              body:
-                  'Pakette seans süresi belirtirseniz, o üye randevu '
-                  'alırken süre otomatik olarak belirlenir ve üye '
-                  'manuel seçim yapamaz.',
+              title: context.l10n.helpPtPackagesItem3Title,
+              body: context.l10n.helpPtPackagesItem3Body,
             ),
           ],
         ),
         _section(
           context,
           icon: Icons.payments_outlined,
-          title: 'Kazançlar & Ödemeler',
+          title: context.l10n.helpPtEarningsTitle,
           color: Colors.green,
-          items: const [
+          items: [
             _HelpItem(
-              title: 'Ödeme Onaylama',
-              body:
-                  'Üye paket satın aldığında ödeme talebi oluşur. '
-                  'Siz onayladığınızda üyenin seans hakkı otomatik olarak '
-                  'güncellenir ve üyeye bildirim gider.',
+              title: context.l10n.helpPtEarningsItem1Title,
+              body: context.l10n.helpPtEarningsItem1Body,
             ),
             _HelpItem(
-              title: 'Ödeme Reddetme',
-              body:
-                  'Ödemenin gerçekleşmediği durumlarda talebi reddedebilirsiniz. '
-                  'Seans hakkı eklenmez.',
+              title: context.l10n.helpPtEarningsItem2Title,
+              body: context.l10n.helpPtEarningsItem2Body,
             ),
             _HelpItem(
-              title: 'Kazanç Özeti',
-              body:
-                  'Aylık ve toplam kazanç özeti ekranın üst kısmında görünür.',
+              title: context.l10n.helpPtEarningsItem3Title,
+              body: context.l10n.helpPtEarningsItem3Body,
             ),
           ],
         ),
         _section(
           context,
           icon: Icons.chat_bubble_outline,
-          title: 'Mesajlar',
+          title: context.l10n.helpMessagesTitle,
           color: Colors.blue,
-          items: const [
+          items: [
             _HelpItem(
-              title: 'Üye İletişimi',
-              body:
-                  'Tüm üyelerinizle ayrı ayrı mesajlaşabilirsiniz. '
-                  'Antrenman notları, diyet önerileri veya seans '
-                  'değişiklikleri için kullanın.',
+              title: context.l10n.helpPtMessagesItem1Title,
+              body: context.l10n.helpPtMessagesItem1Body,
             ),
           ],
         ),
@@ -502,9 +416,7 @@ class HelpScreen extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                'Sorun yaşarsanız uygulamayı kapatıp yeniden açmayı deneyin. '
-                'Bildirim almak için Profil → Bildirimler bölümünden '
-                'bildirim izinlerini kontrol edin.',
+                context.l10n.helpTipBody,
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                   height: 1.5,

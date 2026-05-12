@@ -6,6 +6,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../../core/router/app_router.dart';
 import '../../../../core/utils/extensions.dart';
+import '../../../../core/l10n/extensions.dart';
 import '../../../../features/auth/providers/auth_provider.dart';
 import '../../../../shared/widgets/app_loading.dart';
 import '../../../../shared/widgets/app_empty.dart';
@@ -41,7 +42,7 @@ class _ProgressContent extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('İlerleme Takibi'),
+        title: Text(context.l10n.progressTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -55,13 +56,13 @@ class _ProgressContent extends ConsumerWidget {
         data: (entries) {
           if (entries.isEmpty) {
             return AppEmpty(
-              message: 'Henüz ilerleme kaydı yok',
-              subMessage: 'Kilo ve ölçü bilgilerinizi kaydedin',
+              message: context.l10n.noProgressYet,
+              subMessage: context.l10n.addMeasurements,
               icon: Icons.trending_up_outlined,
               action: ElevatedButton.icon(
                 onPressed: () => context.push(AppRoutes.addProgress),
                 icon: const Icon(Icons.add),
-                label: const Text('Kayıt Ekle'),
+                label: Text(context.l10n.addRecord),
               ),
             );
           }
@@ -132,7 +133,7 @@ class _WeightChart extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Kilo Grafiği',
+            context.l10n.weightChart,
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
@@ -250,25 +251,25 @@ class _ProgressCard extends StatelessWidget {
               children: [
                 if (progress.weight != null)
                   _MeasurementChip(
-                    label: 'Kilo',
+                    label: context.l10n.weightShort,
                     value: '${progress.weight} kg',
                     icon: Icons.monitor_weight_outlined,
                   ),
                 if (progress.measurements?.waist != null)
                   _MeasurementChip(
-                    label: 'Bel',
+                    label: context.l10n.waistShort,
                     value: '${progress.measurements!.waist} cm',
                     icon: Icons.straighten,
                   ),
                 if (progress.measurements?.chest != null)
                   _MeasurementChip(
-                    label: 'Göğüs',
+                    label: context.l10n.chestShort,
                     value: '${progress.measurements!.chest} cm',
                     icon: Icons.straighten,
                   ),
                 if (progress.measurements?.hips != null)
                   _MeasurementChip(
-                    label: 'Kalça',
+                    label: context.l10n.hipsShort,
                     value: '${progress.measurements!.hips} cm',
                     icon: Icons.straighten,
                   ),

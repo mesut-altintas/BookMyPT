@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/router/app_router.dart';
+import '../../../../core/l10n/extensions.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../../features/auth/providers/auth_provider.dart';
 import '../../../../features/pt_calendar/providers/pt_calendar_provider.dart';
@@ -22,7 +23,7 @@ class PtDashboardScreen extends ConsumerWidget {
 
     return userAsync.when(
       loading: () => const Scaffold(body: AppLoading()),
-      error: (e, _) => Scaffold(body: Center(child: Text('Hata: $e'))),
+      error: (e, _) => Scaffold(body: Center(child: Text(e.toString()))),
       data: (user) {
         if (user == null) return const Scaffold(body: AppLoading());
         return _DashboardContent(ptId: user.uid, ptName: user.name);
@@ -42,6 +43,7 @@ class _DashboardContent extends ConsumerWidget {
     final membersAsync = ref.watch(ptMembersProvider(ptId));
     final sessionsAsync = ref.watch(upcomingSessionsProvider(ptId));
     final theme = Theme.of(context);
+    final l10n = context.l10n;
 
     return Scaffold(
       body: RefreshIndicator(
@@ -65,7 +67,7 @@ class _DashboardContent extends ConsumerWidget {
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
                             Text(
-                              'Merhaba, ${ptName.split(' ').first}!',
+                              l10n.helloName(ptName.split(' ').first),
                               style: theme.textTheme.headlineSmall?.copyWith(
                                 fontWeight: FontWeight.w700,
                               ),
@@ -108,18 +110,18 @@ class _DashboardContent extends ConsumerWidget {
 
                   // Upcoming Sessions
                   _SectionHeader(
-                    title: 'Yaklaşan Seanslar',
+                    title: l10n.upcomingSessions,
                     onSeeAll: () => context.go(AppRoutes.ptCalendar),
                   ),
                   const SizedBox(height: 12),
                   sessionsAsync.when(
                     loading: () => const AppLoading(size: 32),
-                    error: (e, _) => Text('Hata: $e'),
+                    error: (e, _) => Text(e.toString()),
                     data: (sessions) {
                       if (sessions.isEmpty) {
                         return _EmptyCard(
                           icon: Icons.calendar_today_outlined,
-                          message: 'Yaklaşan seans yok',
+                          message: l10n.noUpcomingSessions,
                         );
                       }
                       return Column(
@@ -134,18 +136,18 @@ class _DashboardContent extends ConsumerWidget {
 
                   // Recent Members
                   _SectionHeader(
-                    title: 'Son Üyeler',
+                    title: l10n.recentMembers,
                     onSeeAll: () => context.go(AppRoutes.ptMembers),
                   ),
                   const SizedBox(height: 12),
                   membersAsync.when(
                     loading: () => const AppLoading(size: 32),
-                    error: (e, _) => Text('Hata: $e'),
+                    error: (e, _) => Text(e.toString()),
                     data: (members) {
                       if (members.isEmpty) {
                         return _EmptyCard(
                           icon: Icons.people_outline,
-                          message: 'Henüz üye yok',
+                          message: l10n.noMembersYet,
                         );
                       }
                       return Column(
@@ -166,7 +168,7 @@ class _DashboardContent extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.push(AppRoutes.ptCalendar),
         icon: const Icon(Icons.add),
-        label: const Text('Seans Ekle'),
+        label: Text(l10n.addSession),
       ),
     );
   }
@@ -185,11 +187,12 @@ class _StatsRow extends ConsumerWidget {
     final memberCount = membersAsync.valueOrNull?.length ?? 0;
     final sessionCount = sessionsAsync.valueOrNull?.length ?? 0;
 
+    final l10n = context.l10n;
     return Row(
       children: [
         Expanded(
           child: _StatCard(
-            title: 'Toplam Üye',
+            title: l10n.totalMembers,
             value: memberCount.toString(),
             icon: Icons.people,
             color: Theme.of(context).colorScheme.primary,
@@ -198,7 +201,7 @@ class _StatsRow extends ConsumerWidget {
         const SizedBox(width: 12),
         Expanded(
           child: _StatCard(
-            title: 'Bu Hafta',
+            title: l10n.thisWeek,
             value: sessionCount.toString(),
             icon: Icons.calendar_today,
             color: Colors.orange,
@@ -207,7 +210,7 @@ class _StatsRow extends ConsumerWidget {
         const SizedBox(width: 12),
         Expanded(
           child: _StatCard(
-            title: 'Aktif',
+            title: l10n.active,
             value: memberCount.toString(),
             icon: Icons.trending_up,
             color: Colors.green,
@@ -285,7 +288,7 @@ class _SectionHeader extends StatelessWidget {
         if (onSeeAll != null)
           TextButton(
             onPressed: onSeeAll,
-            child: const Text('Tümünü Gör'),
+            child: Text(context.l10n.seeAll),
           ),
       ],
     );
@@ -345,7 +348,7 @@ class _MemberCard extends ConsumerWidget {
           member.name,
           style: const TextStyle(fontWeight: FontWeight.w600),
         ),
-        subtitle: Text(member.goal ?? 'Hedef belirtilmemiş'),
+        subtitle: Text(member.goal ?? context.l10n.goalNotSet),
         trailing: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -358,7 +361,7 @@ class _MemberCard extends ConsumerWidget {
               ),
             ),
             Text(
-              'seans',
+              context.l10n.sessions,
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ],

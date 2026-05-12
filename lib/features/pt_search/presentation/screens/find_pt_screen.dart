@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/l10n/extensions.dart';
 import '../../../../features/auth/providers/auth_provider.dart';
 import '../../../../features/m_calendar/providers/invitation_provider.dart';
 import '../../../../shared/models/user_model.dart';
@@ -73,16 +74,15 @@ class _FindPtScreenState extends ConsumerState<FindPtScreen> {
       context: context,
       useRootNavigator: false,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('PT\'ye İstek Gönder'),
-        content: Text(
-            '${pt.name} adlı eğitmene katılım isteği göndermek istiyor musunuz?\n\nEğitmen isteği onayladıktan sonra bağlantı kurulacak.'),
+        title: Text(context.l10n.ptRequestTitle),
+        content: Text(context.l10n.ptRequestContent(pt.name)),
         actions: [
           TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('İptal')),
+              child: Text(context.l10n.cancel)),
           ElevatedButton(
               onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('İstek Gönder')),
+              child: Text(context.l10n.sendRequest)),
         ],
       ),
     );
@@ -101,7 +101,7 @@ class _FindPtScreenState extends ConsumerState<FindPtScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('${pt.name} adlı eğitmene istek gönderildi'),
+          content: Text(context.l10n.requestSentTo(pt.name)),
           behavior: SnackBarBehavior.floating,
         ));
         Navigator.of(context).pop();
@@ -109,7 +109,7 @@ class _FindPtScreenState extends ConsumerState<FindPtScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('Hata: $e'),
+            content: Text(context.l10n.error('$e')),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating));
       }
@@ -123,16 +123,16 @@ class _FindPtScreenState extends ConsumerState<FindPtScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('PT Bul')),
+      appBar: AppBar(title: Text(context.l10n.findPtTitle)),
       body: Column(
         children: [
           Padding(
             padding: const EdgeInsets.all(16),
             child: TextField(
               controller: _searchCtrl,
-              decoration: const InputDecoration(
-                hintText: 'İsim veya e-posta ile ara',
-                prefixIcon: Icon(Icons.search),
+              decoration: InputDecoration(
+                hintText: context.l10n.searchByNameOrEmail,
+                prefixIcon: const Icon(Icons.search),
               ),
               textInputAction: TextInputAction.search,
               onSubmitted: (_) => _search(),
@@ -153,7 +153,7 @@ class _FindPtScreenState extends ConsumerState<FindPtScreen> {
                                 color: theme.colorScheme.outlineVariant),
                             const SizedBox(height: 12),
                             Text(
-                              'PT aramak için isim veya\ne-posta girin',
+                              context.l10n.searchHintFull,
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                   color: theme.colorScheme.onSurfaceVariant),
@@ -164,7 +164,7 @@ class _FindPtScreenState extends ConsumerState<FindPtScreen> {
                     : _results.isEmpty
                         ? Center(
                             child: Text(
-                              '"${_searchCtrl.text.trim()}" için sonuç bulunamadı',
+                              context.l10n.noResultFor(_searchCtrl.text.trim()),
                               style: TextStyle(
                                   color: theme.colorScheme.onSurfaceVariant),
                             ),
@@ -200,7 +200,7 @@ class _FindPtScreenState extends ConsumerState<FindPtScreen> {
                                     onPressed: _sending
                                         ? null
                                         : () => _sendRequest(pt),
-                                    child: const Text('İstek Gönder'),
+                                    child: Text(context.l10n.sendRequest),
                                   ),
                                 ),
                               );

@@ -1,0 +1,1551 @@
+{
+  "@@locale": "tr",
+
+  "@@last_modified": "2026-05-12",
+
+  "appName": "BookMyPT",
+  "@appName": { "description": "Application name" },
+
+  "cancel": "İptal",
+  "@cancel": { "description": "Cancel button" },
+
+  "save": "Kaydet",
+  "@save": { "description": "Save button" },
+
+  "delete": "Sil",
+  "@delete": { "description": "Delete button" },
+
+  "confirm": "Onayla",
+  "@confirm": { "description": "Confirm button" },
+
+  "yes": "Evet",
+  "@yes": { "description": "Yes" },
+
+  "no": "Hayır",
+  "@no": { "description": "No" },
+
+  "continueText": "Devam Et",
+  "@continueText": { "description": "Continue button" },
+
+  "update": "Güncelle",
+  "@update": { "description": "Update button" },
+
+  "add": "Ekle",
+  "@add": { "description": "Add button" },
+
+  "send": "Gönder",
+  "@send": { "description": "Send button" },
+
+  "seeAll": "Tümünü Gör",
+  "@seeAll": { "description": "See all link" },
+
+  "all": "Tümü",
+  "@all": { "description": "All tab label" },
+
+  "active": "Aktif",
+  "@active": { "description": "Active status" },
+
+  "passive": "Pasif",
+  "@passive": { "description": "Passive status" },
+
+  "requests": "İstekler",
+  "@requests": { "description": "Requests tab label" },
+
+  "error": "Hata: {message}",
+  "@error": {
+    "description": "Generic error with message",
+    "placeholders": { "message": { "type": "String" } }
+  },
+
+  "sessions": "seans",
+  "@sessions": { "description": "Sessions unit label" },
+
+  "minuteShort": "dk",
+  "@minuteShort": { "description": "Minute abbreviation" },
+
+  "helloName": "Merhaba, {name}!",
+  "@helloName": {
+    "description": "Hello greeting",
+    "placeholders": { "name": { "type": "String" } }
+  },
+
+  "signIn": "Giriş Yap",
+  "@signIn": { "description": "Sign in button" },
+
+  "register": "Kayıt Ol",
+  "@register": { "description": "Register button" },
+
+  "welcomeTitle": "Hoş Geldiniz",
+  "@welcomeTitle": { "description": "Login screen welcome title" },
+
+  "signInSubtitle": "Hesabınıza giriş yapın",
+  "@signInSubtitle": { "description": "Login screen subtitle" },
+
+  "email": "E-posta",
+  "@email": { "description": "Email field label" },
+
+  "emailHint": "ornek@email.com",
+  "@emailHint": { "description": "Email field hint" },
+
+  "password": "Şifre",
+  "@password": { "description": "Password field label" },
+
+  "forgotPassword": "Şifremi Unuttum",
+  "@forgotPassword": { "description": "Forgot password link" },
+
+  "orDivider": "veya",
+  "@orDivider": { "description": "Or divider between sign-in options" },
+
+  "noAccount": "Hesabınız yok mu? ",
+  "@noAccount": { "description": "No account prompt" },
+
+  "errorGoogleSignIn": "Google ile giriş başarısız",
+  "@errorGoogleSignIn": { "description": "Google sign in error" },
+
+  "errorUserNotFound": "Bu e-posta kayıtlı değil",
+  "@errorUserNotFound": { "description": "User not found error" },
+
+  "errorWrongPassword": "Şifre hatalı",
+  "@errorWrongPassword": { "description": "Wrong password error" },
+
+  "errorInvalidCredential": "E-posta veya şifre hatalı",
+  "@errorInvalidCredential": { "description": "Invalid credential error" },
+
+  "errorTooManyRequests": "Çok fazla deneme. Lütfen bekleyin",
+  "@errorTooManyRequests": { "description": "Too many requests error" },
+
+  "errorInvalidEmail": "Geçersiz e-posta adresi",
+  "@errorInvalidEmail": { "description": "Invalid email error" },
+
+  "errorNetworkFailed": "İnternet bağlantısı hatası",
+  "@errorNetworkFailed": { "description": "Network error" },
+
+  "errorUserDisabled": "Bu hesap devre dışı bırakıldı",
+  "@errorUserDisabled": { "description": "User disabled error" },
+
+  "errorSignInFailed": "Giriş başarısız. Lütfen tekrar deneyin",
+  "@errorSignInFailed": { "description": "Sign in failed error" },
+
+  "registerTitle": "Kayıt Ol",
+  "@registerTitle": { "description": "Register screen app bar title" },
+
+  "createAccount": "Hesap Oluştur",
+  "@createAccount": { "description": "Create account heading" },
+
+  "enterInfoToContinue": "Bilgilerinizi girerek devam edin",
+  "@enterInfoToContinue": { "description": "Register screen subtitle" },
+
+  "fullName": "Ad Soyad",
+  "@fullName": { "description": "Full name field label" },
+
+  "fullNameHint": "Ali Yılmaz",
+  "@fullNameHint": { "description": "Full name field hint" },
+
+  "passwordHint": "En az 6 karakter",
+  "@passwordHint": { "description": "Password field hint" },
+
+  "confirmPassword": "Şifre Tekrar",
+  "@confirmPassword": { "description": "Confirm password field label" },
+
+  "confirmPasswordHint": "Şifrenizi tekrar girin",
+  "@confirmPasswordHint": { "description": "Confirm password hint" },
+
+  "alreadyHaveAccount": "Zaten hesabınız var mı? ",
+  "@alreadyHaveAccount": { "description": "Already have account prompt" },
+
+  "errorEmailInUse": "Bu e-posta zaten kayıtlı",
+  "@errorEmailInUse": { "description": "Email already in use error" },
+
+  "errorWeakPassword": "Şifre çok zayıf",
+  "@errorWeakPassword": { "description": "Weak password error" },
+
+  "errorRegisterFailed": "Kayıt başarısız. Lütfen tekrar deneyin",
+  "@errorRegisterFailed": { "description": "Register failed error" },
+
+  "forgotPasswordTitle": "Şifremi Unuttum",
+  "@forgotPasswordTitle": { "description": "Forgot password screen title" },
+
+  "resetPassword": "Şifre Sıfırlama",
+  "@resetPassword": { "description": "Reset password heading" },
+
+  "resetPasswordSubtitle": "E-posta adresinize sıfırlama bağlantısı göndereceğiz",
+  "@resetPasswordSubtitle": { "description": "Reset password subtitle" },
+
+  "sendResetLink": "Sıfırlama Bağlantısı Gönder",
+  "@sendResetLink": { "description": "Send reset link button" },
+
+  "emailSent": "E-posta Gönderildi",
+  "@emailSent": { "description": "Email sent title" },
+
+  "emailSentMessage": "{email} adresine şifre sıfırlama bağlantısı gönderildi",
+  "@emailSentMessage": {
+    "description": "Email sent confirmation message",
+    "placeholders": { "email": { "type": "String" } }
+  },
+
+  "backToLogin": "Giriş Sayfasına Dön",
+  "@backToLogin": { "description": "Back to login button" },
+
+  "selectRole": "Rolünüzü Seçin",
+  "@selectRole": { "description": "Role selection title" },
+
+  "howToUseApp": "Uygulamayı nasıl kullanacaksınız?",
+  "@howToUseApp": { "description": "Role selection subtitle" },
+
+  "rolePtTitle": "Personal Trainer",
+  "@rolePtTitle": { "description": "PT role title" },
+
+  "rolePtSubtitle": "Üyelerinizi yönetin, program oluşturun ve takvim tutun",
+  "@rolePtSubtitle": { "description": "PT role subtitle" },
+
+  "roleMemberTitle": "Üye",
+  "@roleMemberTitle": { "description": "Member role title" },
+
+  "roleMemberSubtitle": "PT'nizin programını görün, randevu alın ve ilerlemenizi takip edin",
+  "@roleMemberSubtitle": { "description": "Member role subtitle" },
+
+  "navHome": "Ana Sayfa",
+  "@navHome": { "description": "Navigation: Home" },
+
+  "navCalendar": "Takvim",
+  "@navCalendar": { "description": "Navigation: Calendar" },
+
+  "navPrograms": "Program",
+  "@navPrograms": { "description": "Navigation: Programs" },
+
+  "navProgress": "İlerleme",
+  "@navProgress": { "description": "Navigation: Progress" },
+
+  "navPackages": "Paketler",
+  "@navPackages": { "description": "Navigation: Packages" },
+
+  "navChat": "Mesaj",
+  "@navChat": { "description": "Navigation: Chat" },
+
+  "navDashboard": "Panel",
+  "@navDashboard": { "description": "Navigation: Dashboard (PT)" },
+
+  "navMembers": "Üyeler",
+  "@navMembers": { "description": "Navigation: Members (PT)" },
+
+  "navEarnings": "Gelir",
+  "@navEarnings": { "description": "Navigation: Earnings (PT)" },
+
+  "upcomingSessions": "Yaklaşan Seanslar",
+  "@upcomingSessions": { "description": "Upcoming sessions section title" },
+
+  "noUpcomingSessions": "Yaklaşan seans yok",
+  "@noUpcomingSessions": { "description": "Empty upcoming sessions message" },
+
+  "recentMembers": "Son Üyeler",
+  "@recentMembers": { "description": "Recent members section title" },
+
+  "noMembersYet": "Henüz üye yok",
+  "@noMembersYet": { "description": "Empty members message in dashboard" },
+
+  "addSession": "Seans Ekle",
+  "@addSession": { "description": "Add session FAB label" },
+
+  "totalMembers": "Toplam Üye",
+  "@totalMembers": { "description": "Total members stat card" },
+
+  "thisWeek": "Bu Hafta",
+  "@thisWeek": { "description": "This week stat card" },
+
+  "goalNotSet": "Hedef belirtilmemiş",
+  "@goalNotSet": { "description": "Goal not set placeholder" },
+
+  "upcomingAppointments": "Yaklaşan Randevular",
+  "@upcomingAppointments": { "description": "Upcoming appointments section" },
+
+  "noUpcomingAppointments": "Yaklaşan randevu yok",
+  "@noUpcomingAppointments": { "description": "Empty upcoming appointments" },
+
+  "bookAppointment": "Randevu Al",
+  "@bookAppointment": { "description": "Book appointment action" },
+
+  "latestProgress": "Son İlerleme",
+  "@latestProgress": { "description": "Latest progress section title" },
+
+  "noProgressRecord": "İlerleme kaydı yok",
+  "@noProgressRecord": { "description": "No progress record message" },
+
+  "recordProgress": "Kaydet",
+  "@recordProgress": { "description": "Record progress action" },
+
+  "myTrainer": "Eğitmeniniz",
+  "@myTrainer": { "description": "My trainer label" },
+
+  "trainerNotLoaded": "Eğitmen yüklenemedi",
+  "@trainerNotLoaded": { "description": "Trainer load error" },
+
+  "trainerInfoNotFound": "Eğitmen bilgisi bulunamadı",
+  "@trainerInfoNotFound": { "description": "Trainer info not found" },
+
+  "leaveTrainer": "Üyeliği Bırak",
+  "@leaveTrainer": { "description": "Leave trainer button" },
+
+  "leaveTrainerTitle": "Üyeliği Bırak",
+  "@leaveTrainerTitle": { "description": "Leave trainer dialog title" },
+
+  "leaveTrainerConfirm": "{ptName} ile üyeliğinizi sonlandırmak istiyor musunuz?",
+  "@leaveTrainerConfirm": {
+    "description": "Leave trainer confirmation message",
+    "placeholders": { "ptName": { "type": "String" } }
+  },
+
+  "remainingSessionsWarning": "{count} kalan seansınız bulunuyor.",
+  "@remainingSessionsWarning": {
+    "description": "Remaining sessions warning",
+    "placeholders": { "count": { "type": "int" } }
+  },
+
+  "yesLeave": "Evet, Bırak",
+  "@yesLeave": { "description": "Yes leave button" },
+
+  "noPtAssigned": "PT Atanmamış",
+  "@noPtAssigned": { "description": "No PT assigned banner title" },
+
+  "findPtBannerSub": "PT bularak antrenmanlarınıza başlayabilirsiniz",
+  "@findPtBannerSub": { "description": "Find PT banner subtitle" },
+
+  "findPt": "PT Bul",
+  "@findPt": { "description": "Find PT button" },
+
+  "myPrograms": "Programım",
+  "@myPrograms": { "description": "My programs quick action label" },
+
+  "lastWeight": "Son kilo",
+  "@lastWeight": { "description": "Last weight label" },
+
+  "myMembers": "Üyelerim",
+  "@myMembers": { "description": "My members screen title" },
+
+  "searchMember": "Üye ara...",
+  "@searchMember": { "description": "Search member hint" },
+
+  "noMembersYetFull": "Henüz üyeniz yok",
+  "@noMembersYetFull": { "description": "No members yet full message" },
+
+  "addMemberHint": "Üye eklemek için + butonuna tıklayın",
+  "@addMemberHint": { "description": "Add member hint" },
+
+  "addMember": "Üye Ekle",
+  "@addMember": { "description": "Add member button" },
+
+  "searchNoResult": "Arama sonucu bulunamadı",
+  "@searchNoResult": { "description": "No search results" },
+
+  "memberNotFound": "Üye bulunamadı",
+  "@memberNotFound": { "description": "Member not found message" },
+
+  "sendMessage": "Mesaj Gönder",
+  "@sendMessage": { "description": "Send message action" },
+
+  "chatOpenError": "Mesaj açılamadı: {error}",
+  "@chatOpenError": {
+    "description": "Chat open error",
+    "placeholders": { "error": { "type": "String" } }
+  },
+
+  "addMemberTitle": "Üye Ekle",
+  "@addMemberTitle": { "description": "Add member screen title" },
+
+  "memberEmail": "Üye E-posta",
+  "@memberEmail": { "description": "Member email field" },
+
+  "goal": "Hedef",
+  "@goal": { "description": "Goal field" },
+
+  "goalHint": "Kilo vermek, kas yapmak...",
+  "@goalHint": { "description": "Goal field hint" },
+
+  "notes": "Notlar",
+  "@notes": { "description": "Notes field" },
+
+  "invitationSent": "{name} adresine davet gönderildi",
+  "@invitationSent": {
+    "description": "Invitation sent message",
+    "placeholders": { "name": { "type": "String" } }
+  },
+
+  "memberNotFoundByEmail": "Bu e-posta ile kayıtlı üye bulunamadı. Önce üye kayıt olmalıdır.",
+  "@memberNotFoundByEmail": { "description": "Member not found by email" },
+
+  "calendarTitle": "Takvim",
+  "@calendarTitle": { "description": "PT Calendar screen title" },
+
+  "sessionDetailTitle": "Seans Detayı",
+  "@sessionDetailTitle": { "description": "Session detail title" },
+
+  "deleteSession": "Seansı Sil",
+  "@deleteSession": { "description": "Delete session option" },
+
+  "deleteSessionConfirm": "Bu seansı silmek istiyor musunuz?",
+  "@deleteSessionConfirm": { "description": "Delete session confirmation" },
+
+  "deleteError": "Silme Hatası",
+  "@deleteError": { "description": "Delete error dialog title" },
+
+  "close": "Kapat",
+  "@close": { "description": "Close button" },
+
+  "myAppointments": "Randevularım",
+  "@myAppointments": { "description": "My appointments screen title" },
+
+  "tabCalendar": "Takvim",
+  "@tabCalendar": { "description": "Calendar tab" },
+
+  "tabHistory": "Geçmişim",
+  "@tabHistory": { "description": "History tab" },
+
+  "requestAppointment": "Randevu Talep Et",
+  "@requestAppointment": { "description": "Request appointment button" },
+
+  "noDayAppointment": "Bu gün randevu yok",
+  "@noDayAppointment": { "description": "No appointment for today" },
+
+  "appointmentsCount": "{count} randevum",
+  "@appointmentsCount": {
+    "description": "Appointments count label",
+    "placeholders": { "count": { "type": "int" } }
+  },
+
+  "sessionDurationMin": "{count} dk seans",
+  "@sessionDurationMin": {
+    "description": "Session duration in minutes",
+    "placeholders": { "count": { "type": "int" } }
+  },
+
+  "ptBusy": "PT dolu",
+  "@ptBusy": { "description": "PT busy label" },
+
+  "ptBusyPersonal": "PT meşgul",
+  "@ptBusyPersonal": { "description": "PT personal busy label" },
+
+  "personalActivity": "Kişisel etkinlik",
+  "@personalActivity": { "description": "Personal activity label" },
+
+  "passiveMemberTitle": "Pasif Üye",
+  "@passiveMemberTitle": { "description": "Passive member dialog title" },
+
+  "passiveMemberContent": "Randevu alabilmek için aktif olmanız gerekiyor. Eğitmeninize aktivasyon isteği göndermek ister misiniz?",
+  "@passiveMemberContent": { "description": "Passive member dialog content" },
+
+  "sendRequest": "İstek Gönder",
+  "@sendRequest": { "description": "Send request button" },
+
+  "activationRequestSent": "Aktivasyon isteği gönderildi",
+  "@activationRequestSent": { "description": "Activation request sent snackbar" },
+
+  "dateAndTime": "Tarih ve Saat",
+  "@dateAndTime": { "description": "Date and time field label" },
+
+  "timeConflict": "Bu saatte zaten randevunuz var",
+  "@timeConflict": { "description": "Time conflict error" },
+
+  "ptNotAvailable": "PT bu saatte müsait değil",
+  "@ptNotAvailable": { "description": "PT not available error" },
+
+  "sessionDurationLabel": "Seans süresi: {count} dk",
+  "@sessionDurationLabel": {
+    "description": "Session duration label with value",
+    "placeholders": { "count": { "type": "int" } }
+  },
+
+  "durationLabel": "Süre (dk):",
+  "@durationLabel": { "description": "Duration field label" },
+
+  "findPtEnterEmail": "PT'nizi bulmak için e-posta adresini girin",
+  "@findPtEnterEmail": { "description": "Find PT by email instruction" },
+
+  "ptEmail": "PT E-posta",
+  "@ptEmail": { "description": "PT email field label" },
+
+  "linkPt": "PT'yi Bağla",
+  "@linkPt": { "description": "Link PT button" },
+
+  "ptNotFoundByEmail": "Bu e-posta ile kayıtlı PT bulunamadı",
+  "@ptNotFoundByEmail": { "description": "PT not found by email error" },
+
+  "editAppointment": "Randevu Düzenle",
+  "@editAppointment": { "description": "Edit appointment sheet title" },
+
+  "onlyPendingCanEdit": "Sadece bekleyen talepler düzenlenebilir",
+  "@onlyPendingCanEdit": { "description": "Edit restriction note" },
+
+  "completedCount": "Tamamlanan",
+  "@completedCount": { "description": "Completed sessions label" },
+
+  "totalDuration": "Toplam süre",
+  "@totalDuration": { "description": "Total duration label" },
+
+  "upcomingMySessions": "Yaklaşan Seanslarım",
+  "@upcomingMySessions": { "description": "Upcoming sessions history tab header" },
+
+  "completedSessions": "Tamamlanan Seanslar",
+  "@completedSessions": { "description": "Completed sessions history tab header" },
+
+  "noCompletedSessions": "Henüz tamamlanan seans yok",
+  "@noCompletedSessions": { "description": "No completed sessions message" },
+
+  "noCompletedSessionsSub": "Onaylanan seanslarınız tamamlandıkça burada görünecek",
+  "@noCompletedSessionsSub": { "description": "No completed sessions sub-message" },
+
+  "bookingConfirmTitle": "Randevu Onayla",
+  "@bookingConfirmTitle": { "description": "Booking confirm screen title" },
+
+  "appointmentDetails": "Randevu Detayları",
+  "@appointmentDetails": { "description": "Appointment details card title" },
+
+  "waitingPtApproval": "Randevunuz PT'niz tarafından onaylanmayı bekleyecektir.",
+  "@waitingPtApproval": { "description": "Waiting for PT approval note" },
+
+  "goToMyAppointments": "Randevularıma Git",
+  "@goToMyAppointments": { "description": "Go to my appointments button" },
+
+  "addPersonalEvent": "Kişisel Etkinlik Ekle",
+  "@addPersonalEvent": { "description": "Add personal event title" },
+
+  "eventTitle": "Başlık",
+  "@eventTitle": { "description": "Event title field" },
+
+  "eventTitleHint": "Yoga, antrenman...",
+  "@eventTitleHint": { "description": "Event title hint" },
+
+  "memberCalendarTitle": "Takvimim",
+  "@memberCalendarTitle": { "description": "Member calendar screen title" },
+
+  "progressTitle": "İlerleme Takibi",
+  "@progressTitle": { "description": "Progress screen title" },
+
+  "noProgressYet": "Henüz ilerleme kaydı yok",
+  "@noProgressYet": { "description": "No progress records yet" },
+
+  "addMeasurements": "Kilo ve ölçü bilgilerinizi kaydedin",
+  "@addMeasurements": { "description": "Add measurements subtitle" },
+
+  "addRecord": "Kayıt Ekle",
+  "@addRecord": { "description": "Add record button" },
+
+  "weightChart": "Kilo Grafiği",
+  "@weightChart": { "description": "Weight chart title" },
+
+  "addProgressTitle": "İlerleme Ekle",
+  "@addProgressTitle": { "description": "Add progress screen title" },
+
+  "progressSaved": "İlerleme kaydedildi",
+  "@progressSaved": { "description": "Progress saved snackbar" },
+
+  "saving": "Kaydediliyor...",
+  "@saving": { "description": "Saving loading message" },
+
+  "addProgressPhoto": "İlerleme Fotoğrafı Ekle",
+  "@addProgressPhoto": { "description": "Add progress photo button" },
+
+  "enterAtLeastOneMeasurement": "En az bir ölçüm girin",
+  "@enterAtLeastOneMeasurement": { "description": "At least one measurement required" },
+
+  "weight": "Kilo (kg)",
+  "@weight": { "description": "Weight field" },
+
+  "chest": "Göğüs (cm)",
+  "@chest": { "description": "Chest measurement field" },
+
+  "waist": "Bel (cm)",
+  "@waist": { "description": "Waist measurement field" },
+
+  "hips": "Kalça (cm)",
+  "@hips": { "description": "Hips measurement field" },
+
+  "bicep": "Biceps (cm)",
+  "@bicep": { "description": "Bicep measurement field" },
+
+  "thigh": "Uyluk (cm)",
+  "@thigh": { "description": "Thigh measurement field" },
+
+  "bodyFat": "Yağ Oranı (%)",
+  "@bodyFat": { "description": "Body fat field" },
+
+  "date": "Tarih",
+  "@date": { "description": "Date field" },
+
+  "messagesTitle": "Mesajlar",
+  "@messagesTitle": { "description": "Chat list screen title" },
+
+  "noMessagesYet": "Henüz mesajınız yok",
+  "@noMessagesYet": { "description": "No messages yet" },
+
+  "startMessaging": "PT'niz veya üyeniz ile mesajlaşmaya başlayın",
+  "@startMessaging": { "description": "Start messaging subtitle" },
+
+  "typeMessage": "Mesaj yaz...",
+  "@typeMessage": { "description": "Type message hint" },
+
+  "earningsTitle": "Gelir Takibi",
+  "@earningsTitle": { "description": "Earnings screen title" },
+
+  "packageManagement": "Paket Yönetimi",
+  "@packageManagement": { "description": "Package management title" },
+
+  "totalEarnings": "Toplam Gelir",
+  "@totalEarnings": { "description": "Total earnings label" },
+
+  "pendingPayments": "Bekleyen Ödemeler",
+  "@pendingPayments": { "description": "Pending payments section" },
+
+  "completedPayments": "Tamamlanan Ödemeler",
+  "@completedPayments": { "description": "Completed payments section" },
+
+  "noEarningsYet": "Henüz gelir kaydı yok",
+  "@noEarningsYet": { "description": "No earnings yet" },
+
+  "paymentTitle": "Ödeme",
+  "@paymentTitle": { "description": "Payment screen title" },
+
+  "paymentHistoryTitle": "Ödeme Geçmişi",
+  "@paymentHistoryTitle": { "description": "Payment history screen title" },
+
+  "noPaymentsYet": "Henüz ödeme yok",
+  "@noPaymentsYet": { "description": "No payments yet" },
+
+  "programListTitle": "Programlar",
+  "@programListTitle": { "description": "Program list screen title" },
+
+  "noProgramsYet": "Henüz program oluşturulmamış",
+  "@noProgramsYet": { "description": "No programs yet" },
+
+  "createProgram": "Program Oluştur",
+  "@createProgram": { "description": "Create program button" },
+
+  "programDetailTitle": "Program Detayı",
+  "@programDetailTitle": { "description": "Program detail screen title" },
+
+  "assignToMember": "Üyeye Ata",
+  "@assignToMember": { "description": "Assign to member button" },
+
+  "memberProgramsTitle": "Programlarım",
+  "@memberProgramsTitle": { "description": "Member programs screen title" },
+
+  "noProgramAssigned": "Henüz program atanmamış",
+  "@noProgramAssigned": { "description": "No program assigned message" },
+
+  "workoutDetailTitle": "Antrenman Detayı",
+  "@workoutDetailTitle": { "description": "Workout detail screen title" },
+
+  "invitationListTitle": "Davetler",
+  "@invitationListTitle": { "description": "Invitation list screen title" },
+
+  "noPendingInvitations": "Bekleyen davet yok",
+  "@noPendingInvitations": { "description": "No pending invitations" },
+
+  "accept": "Kabul Et",
+  "@accept": { "description": "Accept button" },
+
+  "reject": "Reddet",
+  "@reject": { "description": "Reject button" },
+
+  "findPtTitle": "PT Bul",
+  "@findPtTitle": { "description": "Find PT screen title" },
+
+  "searchPt": "PT ara...",
+  "@searchPt": { "description": "Search PT hint" },
+
+  "noPtFound": "PT bulunamadı",
+  "@noPtFound": { "description": "No PT found" },
+
+  "profileTitle": "Profil",
+  "@profileTitle": { "description": "Profile screen title" },
+
+  "noName": "İsim yok",
+  "@noName": { "description": "No name placeholder" },
+
+  "rolePt": "Personal Trainer",
+  "@rolePt": { "description": "PT role label on profile" },
+
+  "roleMember": "Üye",
+  "@roleMember": { "description": "Member role label on profile" },
+
+  "notifications": "Bildirimler",
+  "@notifications": { "description": "Notifications menu item" },
+
+  "language": "Dil",
+  "@language": { "description": "Language menu item" },
+
+  "appearance": "Görünüm",
+  "@appearance": { "description": "Appearance menu item" },
+
+  "helpGuide": "Kullanım Kılavuzu",
+  "@helpGuide": { "description": "Help guide menu item" },
+
+  "signOut": "Çıkış Yap",
+  "@signOut": { "description": "Sign out menu item" },
+
+  "notifSettings": "Bildirim Ayarları",
+  "@notifSettings": { "description": "Notification settings sheet title" },
+
+  "notifOn": "Bildirimler Açık",
+  "@notifOn": { "description": "Notifications on status" },
+
+  "notifOff": "Bildirimler Kapalı",
+  "@notifOff": { "description": "Notifications off status" },
+
+  "notifOnSub": "Randevu ve seans bildirimleri alıyorsunuz",
+  "@notifOnSub": { "description": "Notifications on subtitle" },
+
+  "notifOffSub": "Randevu ve seans bildirimleri için izin gerekli",
+  "@notifOffSub": { "description": "Notifications off subtitle" },
+
+  "openSystemSettings": "Sistem Ayarlarını Aç",
+  "@openSystemSettings": { "description": "Open system settings button" },
+
+  "requestPermission": "İzin İste",
+  "@requestPermission": { "description": "Request permission button" },
+
+  "appearanceTitle": "Görünüm",
+  "@appearanceTitle": { "description": "Appearance sheet title" },
+
+  "themeSystem": "Sistem Varsayılanı",
+  "@themeSystem": { "description": "System theme option" },
+
+  "themeSystemSub": "Cihazınızın temasını takip eder",
+  "@themeSystemSub": { "description": "System theme subtitle" },
+
+  "themeLight": "Açık Tema",
+  "@themeLight": { "description": "Light theme option" },
+
+  "themeLightSub": "Her zaman açık renk tema",
+  "@themeLightSub": { "description": "Light theme subtitle" },
+
+  "themeDark": "Koyu Tema",
+  "@themeDark": { "description": "Dark theme option" },
+
+  "themeDarkSub": "Her zaman koyu renk tema",
+  "@themeDarkSub": { "description": "Dark theme subtitle" },
+
+  "themeLabelLight": "☀️  Açık",
+  "@themeLabelLight": { "description": "Light theme chip label" },
+
+  "themeLabelDark": "🌙  Koyu",
+  "@themeLabelDark": { "description": "Dark theme chip label" },
+
+  "themeLabelSystem": "⚙️  Sistem",
+  "@themeLabelSystem": { "description": "System theme chip label" },
+
+  "languageTitle": "Dil / Language",
+  "@languageTitle": { "description": "Language sheet title" },
+
+  "signOutTitle": "Çıkış Yap",
+  "@signOutTitle": { "description": "Sign out dialog title" },
+
+  "signOutConfirm": "Hesabınızdan çıkmak istediğinize emin misiniz?",
+  "@signOutConfirm": { "description": "Sign out confirmation message" },
+
+  "editName": "İsim Düzenle",
+  "@editName": { "description": "Edit name dialog title" },
+
+  "photoUpdated": "Profil fotoğrafı güncellendi",
+  "@photoUpdated": { "description": "Photo updated snackbar" },
+
+  "photoFailed": "Fotoğraf yüklenemedi",
+  "@photoFailed": { "description": "Photo upload failed snackbar" },
+
+  "nameUpdated": "İsim güncellendi",
+  "@nameUpdated": { "description": "Name updated snackbar" },
+
+  "updateFailed": "Güncellenemedi",
+  "@updateFailed": { "description": "Update failed snackbar" },
+
+  "messaging": "Mesajlaşma",
+  "@messaging": { "description": "Chat screen fallback title" },
+
+  "chatEmptyMessage": "Henüz mesaj yok.\nMerhaba diyerek başlayın!",
+  "@chatEmptyMessage": { "description": "Empty chat placeholder" },
+
+  "sendFailed": "Gönderilemedi: {error}",
+  "@sendFailed": {
+    "description": "Message send failed error",
+    "placeholders": { "error": { "type": "String" } }
+  },
+
+  "noEventToday": "Bu gün etkinlik yok",
+  "@noEventToday": { "description": "No events today placeholder" },
+
+  "addSessionSubtitle": "Üye ile antrenman seansı planla",
+  "@addSessionSubtitle": { "description": "Add session bottom sheet subtitle" },
+
+  "addPersonalEventSubtitle": "Antrenman, not veya hatırlatıcı ekle",
+  "@addPersonalEventSubtitle": { "description": "Add personal event subtitle (PT)" },
+
+  "addPersonalEventSubtitleMember": "Antrenman, not veya hatırlatıcı ekleyin",
+  "@addPersonalEventSubtitleMember": { "description": "Add personal event subtitle (member)" },
+
+  "createSession": "Seans Oluştur",
+  "@createSession": { "description": "Create session button" },
+
+  "eventConflict": "Bu saatte çakışan etkinlik var",
+  "@eventConflict": { "description": "Event conflict error" },
+
+  "sessionConflict": "Bu saatte çakışan seans var",
+  "@sessionConflict": { "description": "Session conflict error in personal event" },
+
+  "selectMember": "Üye Seç",
+  "@selectMember": { "description": "Select member hint" },
+
+  "member": "Üye",
+  "@member": { "description": "Member label" },
+
+  "time": "Saat",
+  "@time": { "description": "Time field label" },
+
+  "appointmentRequest": "Randevu Talebi",
+  "@appointmentRequest": { "description": "Appointment request list tile title" },
+
+  "appointmentRequestSub": "Eğitmeninizden randevu isteyin",
+  "@appointmentRequestSub": { "description": "Appointment request subtitle" },
+
+  "noEventForDay": "Bu gün için etkinlik yok",
+  "@noEventForDay": { "description": "No events for selected day" },
+
+  "ptAppointment": "PT Randevusu",
+  "@ptAppointment": { "description": "PT appointment tile title" },
+
+  "statusConfirmed": "Onaylandı",
+  "@statusConfirmed": { "description": "Session confirmed status" },
+
+  "statusPending": "Bekliyor",
+  "@statusPending": { "description": "Session pending status" },
+
+  "statusCompleted": "Tamamlandı",
+  "@statusCompleted": { "description": "Session completed status" },
+
+  "editEvent": "Etkinliği Düzenle",
+  "@editEvent": { "description": "Edit event screen title" },
+
+  "addEvent": "Etkinlik Ekle",
+  "@addEvent": { "description": "Add event screen title" },
+
+  "titleRequired": "Başlık gerekli",
+  "@titleRequired": { "description": "Title required validation message" },
+
+  "duration": "Süre",
+  "@duration": { "description": "Duration section label" },
+
+  "notesOptional": "Notlar (İsteğe bağlı)",
+  "@notesOptional": { "description": "Notes optional field label" },
+
+  "setPassive": "Pasif Yap",
+  "@setPassive": { "description": "Set member passive action" },
+
+  "setActive": "Aktif Yap",
+  "@setActive": { "description": "Set member active action" },
+
+  "removeMember": "Üyeyi Sil",
+  "@removeMember": { "description": "Remove member dialog title" },
+
+  "overview": "Genel Bakış",
+  "@overview": { "description": "Overview tab label" },
+
+  "programs": "Programlar",
+  "@programs": { "description": "Programs tab label" },
+
+  "sessionsTab": "Seanslar",
+  "@sessionsTab": { "description": "Sessions tab label" },
+
+  "notSpecified": "Belirtilmemiş",
+  "@notSpecified": { "description": "Not specified placeholder" },
+
+  "joinDate": "Katılım Tarihi",
+  "@joinDate": { "description": "Join date label" },
+
+  "startingWeightLabel": "Başlangıç Kilosu",
+  "@startingWeightLabel": { "description": "Starting weight label" },
+
+  "heightLabel": "Boy",
+  "@heightLabel": { "description": "Height label" },
+
+  "phone": "Telefon",
+  "@phone": { "description": "Phone label" },
+
+  "bodyMeasurements": "Vücut Ölçüleri (cm)",
+  "@bodyMeasurements": { "description": "Body measurements section title" },
+
+  "leg": "Bacak",
+  "@leg": { "description": "Leg measurement field" },
+
+  "armBicep": "Kol (bicep)",
+  "@armBicep": { "description": "Arm/bicep measurement field" },
+
+  "myPackages": "Paketlerim",
+  "@myPackages": { "description": "My packages screen title" },
+
+  "pendingApproval": "Onay Bekliyor",
+  "@pendingApproval": { "description": "Pending approval section header" },
+
+  "recentTransactions": "Son İşlemler",
+  "@recentTransactions": { "description": "Recent transactions section header" },
+
+  "remainingSessionRights": "kalan seans hakkı",
+  "@remainingSessionRights": { "description": "Remaining session rights label" },
+
+  "noPtPackagesSub": "PT'niz sizi sisteme ekledikten sonra paketleri görebilirsiniz",
+  "@noPtPackagesSub": { "description": "No PT packages subtitle" },
+
+  "buyPackage": "Paket Satın Al",
+  "@buyPackage": { "description": "Buy package section header" },
+
+  "purchase": "Satın Al",
+  "@purchase": { "description": "Purchase button" },
+
+  "paymentRequestCreated": "Ödeme talebiniz oluşturuldu. PT'niz onayladığında seans hakkınız yüklenecektir.",
+  "@paymentRequestCreated": { "description": "Payment request created snackbar" },
+
+  "noPackagesYet": "Henüz paket oluşturmadınız",
+  "@noPackagesYet": { "description": "No packages yet message" },
+
+  "noPackagesYetSub": "Üyeleriniz için seans paketi oluşturun",
+  "@noPackagesYetSub": { "description": "No packages yet subtitle" },
+
+  "addPackage": "Paket Ekle",
+  "@addPackage": { "description": "Add package button" },
+
+  "editPackage": "Paketi Düzenle",
+  "@editPackage": { "description": "Edit package sheet title" },
+
+  "newPackage": "Yeni Paket",
+  "@newPackage": { "description": "New package sheet title" },
+
+  "packageName": "Paket Adı",
+  "@packageName": { "description": "Package name field" },
+
+  "sessionCountLabel": "Seans Sayısı",
+  "@sessionCountLabel": { "description": "Session count field label" },
+
+  "sessionDuration": "Seans Süresi",
+  "@sessionDuration": { "description": "Session duration label" },
+
+  "priceTry": "Fiyat (TRY)",
+  "@priceTry": { "description": "Price in TRY field label" },
+
+  "descriptionOptional": "Açıklama (İsteğe bağlı)",
+  "@descriptionOptional": { "description": "Description optional field label" },
+
+  "memberSpecificPackage": "Üyeye özel paket",
+  "@memberSpecificPackage": { "description": "Member specific package toggle label" },
+
+  "createPackage": "Paketi Oluştur",
+  "@createPackage": { "description": "Create package button" },
+
+  "deletePackageTitle": "Paketi Sil",
+  "@deletePackageTitle": { "description": "Delete package dialog title" },
+
+  "deletePackageConfirm": "Bu paketi silmek istiyor musunuz?",
+  "@deletePackageConfirm": { "description": "Delete package confirmation" },
+
+  "packageDeleted": "Paket silindi",
+  "@packageDeleted": { "description": "Package deleted snackbar" },
+
+  "deleteFailed": "Silinemedi: {error}",
+  "@deleteFailed": {
+    "description": "Delete failed snackbar",
+    "placeholders": { "error": { "type": "String" } }
+  },
+
+  "special": "Özel",
+  "@special": { "description": "Special/custom badge label" },
+
+  "edit": "Düzenle",
+  "@edit": { "description": "Edit action" },
+
+  "deactivate": "Pasife Al",
+  "@deactivate": { "description": "Deactivate action" },
+
+  "activate": "Aktive Et",
+  "@activate": { "description": "Activate action" },
+
+  "enterValidNumber": "Geçerli bir sayı girin",
+  "@enterValidNumber": { "description": "Enter valid number validation" },
+
+  "selectMemberHint": "Üye seç",
+  "@selectMemberHint": { "description": "Select member dropdown hint" },
+
+  "selectMemberRequired": "Üye seçin",
+  "@selectMemberRequired": { "description": "Select member validation message" },
+
+  "deleteProgram": "Programı Sil",
+  "@deleteProgram": { "description": "Delete program menu item" },
+
+  "deleteProgramConfirm": "Bu programı kalıcı olarak silmek istiyor musunuz?",
+  "@deleteProgramConfirm": { "description": "Delete program confirmation" },
+
+  "ok": "Tamam",
+  "@ok": { "description": "OK button" },
+
+  "restDay": "Dinlenme",
+  "@restDay": { "description": "Rest day label (short)" },
+
+  "restDayLabel": "Dinlenme Günü",
+  "@restDayLabel": { "description": "Rest day toggle label" },
+
+  "restDayFull": "Dinlenme Günü 🛌",
+  "@restDayFull": { "description": "Rest day full label with emoji" },
+
+  "noExercisesYet": "Henüz egzersiz eklenmedi",
+  "@noExercisesYet": { "description": "No exercises added yet" },
+
+  "myWorkoutProgram": "Antrenman Programım",
+  "@myWorkoutProgram": { "description": "My workout program screen title" },
+
+  "programName": "Program Adı",
+  "@programName": { "description": "Program name field label" },
+
+  "programUpdated": "Program güncellendi",
+  "@programUpdated": { "description": "Program updated snackbar" },
+
+  "programCreated": "Program oluşturuldu",
+  "@programCreated": { "description": "Program created snackbar" },
+
+  "weekCountLabel": "Hafta Sayısı:",
+  "@weekCountLabel": { "description": "Week count label" },
+
+  "addWorkout": "Antrenman Ekle",
+  "@addWorkout": { "description": "Add workout to day button" },
+
+  "addExercise": "Egzersiz Ekle",
+  "@addExercise": { "description": "Add exercise button" },
+
+  "exerciseName": "Egzersiz Adı",
+  "@exerciseName": { "description": "Exercise name field" },
+
+  "sets": "Set",
+  "@sets": { "description": "Sets field label" },
+
+  "reps": "Tekrar",
+  "@reps": { "description": "Reps field label" },
+
+  "weightKg": "Ağırlık (kg)",
+  "@weightKg": { "description": "Weight in kg field" },
+
+  "restSeconds": "Dinlenme (sn)",
+  "@restSeconds": { "description": "Rest seconds field" },
+
+  "noteLabel": "Not",
+  "@noteLabel": { "description": "Note field label" },
+
+  "selectMemberSnack": "Lütfen bir üye seçin",
+  "@selectMemberSnack": { "description": "Please select a member snackbar" },
+
+  "membersLoadFailed": "Üyeler yüklenemedi",
+  "@membersLoadFailed": { "description": "Members load failed message" },
+
+  "editProgram": "Programı Düzenle",
+  "@editProgram": { "description": "Edit program screen title" },
+
+  "sendingInvitation": "Davet gönderiliyor...",
+  "@sendingInvitation": { "description": "Sending invitation loading message" },
+
+  "memberInfo": "Üye Bilgileri",
+  "@memberInfo": { "description": "Member info section title" },
+
+  "memberEmailInstructions": "Üyenin e-posta adresiyle arama yapın. Üye önce uygulamaya kayıt olmalı.",
+  "@memberEmailInstructions": { "description": "Member email search instructions" },
+
+  "goalOptional": "Hedef (İsteğe bağlı)",
+  "@goalOptional": { "description": "Goal optional field label" },
+
+  "goalHintAlt": "Kilo verme, kas kazanma...",
+  "@goalHintAlt": { "description": "Alternative goal hint text" },
+
+  "notesHint": "Özel durumlar, sağlık notları...",
+  "@notesHint": { "description": "Notes field hint text" },
+
+  "sendInvitation": "Davet Gönder",
+  "@sendInvitation": { "description": "Send invitation button" },
+
+  "memberMadeActive": "{name} aktif yapıldı",
+  "@memberMadeActive": {
+    "description": "Member made active snackbar",
+    "placeholders": { "name": { "type": "String" } }
+  },
+
+  "memberMadePassive": "{name} pasif yapıldı",
+  "@memberMadePassive": {
+    "description": "Member made passive snackbar",
+    "placeholders": { "name": { "type": "String" } }
+  },
+
+  "memberDeleteConfirm": "{name} kalıcı olarak silinecek. Bu işlem geri alınamaz.",
+  "@memberDeleteConfirm": {
+    "description": "Member delete confirmation content",
+    "placeholders": { "name": { "type": "String" } }
+  },
+
+  "noAssignedPrograms": "PT'niz size bir program atadığında burada görünür",
+  "@noAssignedPrograms": { "description": "No assigned programs subtitle" },
+
+  "weekLabel": "Hafta",
+  "@weekLabel": { "description": "Week label used in tab/header" },
+
+  "programNotFound": "Program bulunamadı",
+  "@programNotFound": { "description": "Program not found placeholder" },
+
+  "helpGuideTitle": "Kullanım Kılavuzu",
+  "@helpGuideTitle": { "description": "Help guide screen title" },
+
+  "ptRequestTitle": "PT'ye İstek Gönder",
+  "@ptRequestTitle": { "description": "PT request dialog title" },
+
+  "ptRequestContent": "{ptName} adlı eğitmene katılım isteği göndermek istiyor musunuz?\n\nEğitmen isteği onayladıktan sonra bağlantı kurulacak.",
+  "@ptRequestContent": {
+    "description": "PT request dialog content",
+    "placeholders": { "ptName": { "type": "String" } }
+  },
+
+  "requestSentTo": "{ptName} adlı eğitmene istek gönderildi",
+  "@requestSentTo": {
+    "description": "Request sent to PT snackbar",
+    "placeholders": { "ptName": { "type": "String" } }
+  },
+
+  "searchByNameOrEmail": "İsim veya e-posta ile ara",
+  "@searchByNameOrEmail": { "description": "Find PT search hint" },
+
+  "searchHintFull": "PT aramak için isim veya\ne-posta girin",
+  "@searchHintFull": { "description": "Find PT empty search placeholder" },
+
+  "noResultFor": "\"{query}\" için sonuç bulunamadı",
+  "@noResultFor": {
+    "description": "No search results for query",
+    "placeholders": { "query": { "type": "String" } }
+  },
+
+  "ptConnected": "{ptName} ile bağlantı kuruldu",
+  "@ptConnected": {
+    "description": "PT connected snackbar",
+    "placeholders": { "ptName": { "type": "String" } }
+  },
+
+  "invitationRejected": "Davet reddedildi",
+  "@invitationRejected": { "description": "Invitation rejected snackbar" },
+
+  "invitationDate": "Davet: {date}",
+  "@invitationDate": {
+    "description": "Invitation date label",
+    "placeholders": { "date": { "type": "String" } }
+  },
+
+  "noInvitationsYetSub": "PT'niz sizi davet ettiğinde burada görünür",
+  "@noInvitationsYetSub": { "description": "No invitations yet subtitle" },
+
+  "memberDeleteError": "Silme hatası: {error}",
+  "@memberDeleteError": {
+    "description": "Member delete error snackbar",
+    "placeholders": { "error": { "type": "String" } }
+  },
+
+  "sessionsLeft": "{count} seans kaldı",
+  "@sessionsLeft": {
+    "description": "Remaining sessions count in member header",
+    "placeholders": { "count": { "type": "int" } }
+  },
+
+  "noMemberPrograms": "Henüz program yok",
+  "@noMemberPrograms": { "description": "No programs for member" },
+
+  "noMemberSessions": "Henüz seans yok",
+  "@noMemberSessions": { "description": "No sessions for member" },
+
+  "personalEvent": "Kişisel Etkinlik",
+  "@personalEvent": { "description": "Personal event option title" },
+
+  "deleteEventTitle": "Etkinliği Sil",
+  "@deleteEventTitle": { "description": "Delete event dialog title" },
+
+  "deleteEventConfirm": "\"{title}\" etkinliğini silmek istiyor musunuz?",
+  "@deleteEventConfirm": {
+    "description": "Delete event dialog confirm message",
+    "placeholders": { "title": { "type": "String" } }
+  },
+
+  "anonymousMember": "İsimsiz Üye",
+  "@anonymousMember": { "description": "Anonymous member name fallback" },
+
+  "sessionsCount": "{count} seans",
+  "@sessionsCount": {
+    "description": "Sessions count label",
+    "placeholders": { "count": { "type": "int" } }
+  },
+
+  "eventsCount": "{count} etkinlik",
+  "@eventsCount": {
+    "description": "Events count label",
+    "placeholders": { "count": { "type": "int" } }
+  },
+
+  "noProgramsYetSub": "Üyeleriniz için antrenman programı oluşturun",
+  "@noProgramsYetSub": { "description": "No programs yet subtitle" },
+
+  "weekProgramLabel": "{count} Hafta Programı",
+  "@weekProgramLabel": {
+    "description": "Week program label",
+    "placeholders": { "count": { "type": "int" } }
+  },
+
+  "exercisesCount": "{count} egzersiz",
+  "@exercisesCount": {
+    "description": "Exercises count label",
+    "placeholders": { "count": { "type": "int" } }
+  },
+
+  "completedPaymentsCount": "{count} Ödeme",
+  "@completedPaymentsCount": {
+    "description": "Completed payments count chip label",
+    "placeholders": { "count": { "type": "int" } }
+  },
+
+  "pendingPaymentsCount": "{count} Bekleyen",
+  "@pendingPaymentsCount": {
+    "description": "Pending payments count chip label",
+    "placeholders": { "count": { "type": "int" } }
+  },
+
+  "pendingApprovalCount": "Onay Bekleyen ({count})",
+  "@pendingApprovalCount": {
+    "description": "Pending approval section header with count",
+    "placeholders": { "count": { "type": "int" } }
+  },
+
+  "noPaymentsYetSub": "Üyeleriniz paket satın aldığında burada görünür",
+  "@noPaymentsYetSub": { "description": "No payments yet subtitle" },
+
+  "transactionHistory": "İşlem Geçmişi",
+  "@transactionHistory": { "description": "Transaction history section header" },
+
+  "sessionsLoadedToMember": "{count} seans üyeye yüklendi",
+  "@sessionsLoadedToMember": {
+    "description": "Sessions loaded to member snackbar",
+    "placeholders": { "count": { "type": "int" } }
+  },
+
+  "paymentRequestRejected": "Ödeme talebi reddedildi",
+  "@paymentRequestRejected": { "description": "Payment request rejected snackbar" },
+
+  "statusLabel": "Durum",
+  "@statusLabel": { "description": "Status label in session detail" },
+
+  "cancelSession": "İptal Et",
+  "@cancelSession": { "description": "Cancel session button label" },
+
+  "markAsCompleted": "Tamamlandı Olarak İşaretle",
+  "@markAsCompleted": { "description": "Mark as completed button label" },
+
+  "durationMinutesValue": "{minutes} dakika",
+  "@durationMinutesValue": {
+    "description": "Duration in minutes value label",
+    "placeholders": { "minutes": { "type": "int" } }
+  },
+
+  "requestRejected": "İstek reddedildi",
+  "@requestRejected": { "description": "Request rejected snackbar" },
+
+  "memberAddedSnack": "{name} üye olarak eklendi",
+  "@memberAddedSnack": {
+    "description": "Member added snackbar message",
+    "placeholders": { "name": { "type": "String" } }
+  },
+
+  "restDayMessage": "Bugün dinlenme günü 🛌 İyi dinlenmeler!",
+  "@restDayMessage": { "description": "Rest day message in workout detail" },
+
+  "memberActivatedSnack": "{name} aktif hale getirildi",
+  "@memberActivatedSnack": {
+    "description": "Member activated snackbar",
+    "placeholders": { "name": { "type": "String" } }
+  },
+
+  "appSubtitle": "Kişisel Antrenman Uygulaması",
+  "@appSubtitle": { "description": "App subtitle shown on splash screen" },
+
+  "weightShort": "Kilo",
+  "@weightShort": { "description": "Weight chip label (no unit)" },
+
+  "waistShort": "Bel",
+  "@waistShort": { "description": "Waist chip label (no unit)" },
+
+  "chestShort": "Göğüs",
+  "@chestShort": { "description": "Chest chip label (no unit)" },
+
+  "hipsShort": "Kalça",
+  "@hipsShort": { "description": "Hips chip label (no unit)" },
+
+  "purchaseDialogContent": "{name} paketini {price} karşılığında satın almak istiyor musunuz?\n\n{count} seans hakkı PT onayından sonra hesabınıza yüklenecektir.",
+  "@purchaseDialogContent": {
+    "description": "Purchase confirmation dialog content",
+    "placeholders": {
+      "name": { "type": "String" },
+      "price": { "type": "String" },
+      "count": { "type": "int" }
+    }
+  },
+
+  "helpWelcomeTitle": "BookMyPT'e Hoş Geldiniz!",
+  "@helpWelcomeTitle": { "description": "Help screen welcome title" },
+
+  "helpMemberIntroBody": "Bu uygulama sayesinde eğitmeninizle kolayca randevu alabilir, ilerlemenizi takip edebilir ve seans paketlerinizi yönetebilirsiniz.",
+  "@helpMemberIntroBody": { "description": "Help screen member intro body" },
+
+  "helpPtIntroBody": "Bu uygulama sayesinde üyelerinizin randevularını kolayca yönetebilir, seans paketleri oluşturabilir ve kazançlarınızı takip edebilirsiniz.",
+  "@helpPtIntroBody": { "description": "Help screen PT intro body" },
+
+  "helpHomeTitle": "Ana Ekran",
+  "@helpHomeTitle": { "description": "Help home section title" },
+
+  "helpHomeItem1Title": "Eğitmen Bilgileri",
+  "@helpHomeItem1Title": { "description": "Help home item 1 title (member)" },
+
+  "helpHomeItem1Body": "Atanmış PT'niz, kalan seans hakkınız ve yaklaşan randevularınız ana ekranda bir bakışta görünür.",
+  "@helpHomeItem1Body": { "description": "Help home item 1 body (member)" },
+
+  "helpHomeItem2Title": "PT Atanmamışsa",
+  "@helpHomeItem2Title": { "description": "Help home item 2 title (member)" },
+
+  "helpHomeItem2Body": "\"PT Bul\" özelliği üzerinden e-posta adresiyle eğitmeninizi sisteme ekleyebilirsiniz. PT sizi sisteme aldıktan sonra randevu ve paket işlemleri aktif olur.",
+  "@helpHomeItem2Body": { "description": "Help home item 2 body (member)" },
+
+  "helpHomeItem3Title": "Üyeliği Bırak",
+  "@helpHomeItem3Title": { "description": "Help home item 3 title (member)" },
+
+  "helpHomeItem3Body": "PT kartındaki \"Üyeliği Bırak\" butonuyla eğitmeninizle bağlantınızı kesebilirsiniz. Kalan seans haklarınız bu işlemden etkilenmez.",
+  "@helpHomeItem3Body": { "description": "Help home item 3 body (member)" },
+
+  "helpCalendarTitle": "Randevularım",
+  "@helpCalendarTitle": { "description": "Help calendar section title (member)" },
+
+  "helpCalendarItem1Title": "Randevu Talebi Oluşturma",
+  "@helpCalendarItem1Title": { "description": "Help calendar item 1 title" },
+
+  "helpCalendarItem1Body": "Sağ üstteki + butonuna basın, tarih ve saati seçin. Paketinizde seans süresi tanımlıysa otomatik belirlenir. Talebiniz PT onayına gönderilir.",
+  "@helpCalendarItem1Body": { "description": "Help calendar item 1 body" },
+
+  "helpCalendarItem2Title": "Takvim Sekmesi",
+  "@helpCalendarItem2Title": { "description": "Help calendar item 2 title" },
+
+  "helpCalendarItem2Body": "Günlük bazda tüm randevularınızı görürsünüz. Mavi nokta kendi randevularınızı, gri nokta PT'nin meşgul olduğu saatleri gösterir. Bekleyen taleplerinize tıklayarak tarih veya saati değiştirebilirsiniz.",
+  "@helpCalendarItem2Body": { "description": "Help calendar item 2 body" },
+
+  "helpCalendarItem3Title": "Geçmişim Sekmesi",
+  "@helpCalendarItem3Title": { "description": "Help calendar item 3 title" },
+
+  "helpCalendarItem3Body": "Tamamlanan seanslarınızın sayısı ve toplam süresini burada görürsünüz. Yaklaşan onaylı randevularınız da bu sekmede listelenir.",
+  "@helpCalendarItem3Body": { "description": "Help calendar item 3 body" },
+
+  "helpCalendarItem4Title": "Randevu Durumları",
+  "@helpCalendarItem4Title": { "description": "Help calendar item 4 title" },
+
+  "helpCalendarItem4Body": "• Bekliyor: Talep oluşturuldu, PT onayı bekleniyor.\n• Onaylandı: PT kabul etti, seans gerçekleşecek.\n• Tamamlandı: Seans gerçekleşti.\n• İptal: Seans iptal edildi.",
+  "@helpCalendarItem4Body": { "description": "Help calendar item 4 body" },
+
+  "helpMyCalendarTitle": "Takvimim",
+  "@helpMyCalendarTitle": { "description": "Help my-calendar section title (member)" },
+
+  "helpMyCalendarItem1Title": "Kişisel Etkinlik Ekleme",
+  "@helpMyCalendarItem1Title": { "description": "Help my-calendar item 1 title" },
+
+  "helpMyCalendarItem1Body": "Sağ üstteki + butonuyla kişisel etkinlikler ekleyebilirsiniz (antrenman, toplantı, tatil vb.). Bu etkinlikler yalnızca sizin takviminizde görünür.",
+  "@helpMyCalendarItem1Body": { "description": "Help my-calendar item 1 body" },
+
+  "helpMyCalendarItem2Title": "PT'nin Müsaitliği",
+  "@helpMyCalendarItem2Title": { "description": "Help my-calendar item 2 title" },
+
+  "helpMyCalendarItem2Body": "PT'nizin başka üyelerle olan randevuları ve kişisel etkinlikleri gri renkte görünür. Böylece randevu talebinde bulunmadan önce müsaitliği kontrol edebilirsiniz.",
+  "@helpMyCalendarItem2Body": { "description": "Help my-calendar item 2 body" },
+
+  "helpMyCalendarItem3Title": "Etkinlik Düzenleme",
+  "@helpMyCalendarItem3Title": { "description": "Help my-calendar item 3 title" },
+
+  "helpMyCalendarItem3Body": "Eklediğiniz kişisel etkinliklere tıklayarak tarih, saat, süre ve notlarını düzenleyebilir ya da silebilirsiniz.",
+  "@helpMyCalendarItem3Body": { "description": "Help my-calendar item 3 body" },
+
+  "helpPackagesTitle": "Paketlerim",
+  "@helpPackagesTitle": { "description": "Help packages section title (member)" },
+
+  "helpPackagesItem1Title": "Paket Satın Alma",
+  "@helpPackagesItem1Title": { "description": "Help packages item 1 title" },
+
+  "helpPackagesItem1Body": "PT'nizin sunduğu seans paketlerini bu ekranda görürsünüz. \"Satın Al\" butonuna bastığınızda ödeme talebi oluşur; PT onayladıktan sonra seans hakkınız hesabınıza eklenir.",
+  "@helpPackagesItem1Body": { "description": "Help packages item 1 body" },
+
+  "helpPackagesItem2Title": "Üyeye Özel Paketler",
+  "@helpPackagesItem2Title": { "description": "Help packages item 2 title" },
+
+  "helpPackagesItem2Body": "PT'niz sizin için özel fiyatlı veya süreli paket oluşturmuş olabilir. Bu paketleri yalnızca siz görebilirsiniz.",
+  "@helpPackagesItem2Body": { "description": "Help packages item 2 body" },
+
+  "helpPackagesItem3Title": "Ödeme Geçmişi",
+  "@helpPackagesItem3Title": { "description": "Help packages item 3 title" },
+
+  "helpPackagesItem3Body": "Tüm ödeme talepleriniz ve durumları (Bekliyor / Tamamlandı) ekranın üst kısmında listelenir.",
+  "@helpPackagesItem3Body": { "description": "Help packages item 3 body" },
+
+  "helpProgressTitle": "İlerleme",
+  "@helpProgressTitle": { "description": "Help progress section title (member)" },
+
+  "helpProgressItem1Title": "Ölçüm Girişi",
+  "@helpProgressItem1Title": { "description": "Help progress item 1 title" },
+
+  "helpProgressItem1Body": "Kilo, boy ve vücut ölçülerinizi kaydedebilirsiniz. Fotoğraf ekleyerek görsel ilerlemenizi de takip edebilirsiniz.",
+  "@helpProgressItem1Body": { "description": "Help progress item 1 body" },
+
+  "helpProgressItem2Title": "Geçmişe Dönük Giriş",
+  "@helpProgressItem2Title": { "description": "Help progress item 2 title" },
+
+  "helpProgressItem2Body": "Girişi unuttuğunuz günler için tarih seçerek geçmişe dönük kayıt yapabilirsiniz.",
+  "@helpProgressItem2Body": { "description": "Help progress item 2 body" },
+
+  "helpProgressItem3Title": "Grafik Takibi",
+  "@helpProgressItem3Title": { "description": "Help progress item 3 title" },
+
+  "helpProgressItem3Body": "Kaydettiğiniz ölçümler grafik olarak gösterilir. Zaman içindeki değişiminizi kolayca izleyebilirsiniz.",
+  "@helpProgressItem3Body": { "description": "Help progress item 3 body" },
+
+  "helpMessagesTitle": "Mesajlar",
+  "@helpMessagesTitle": { "description": "Help messages section title" },
+
+  "helpMemberMessagesItem1Title": "PT ile İletişim",
+  "@helpMemberMessagesItem1Title": { "description": "Help messages item 1 title (member)" },
+
+  "helpMemberMessagesItem1Body": "PT'nizle doğrudan mesajlaşabilirsiniz. Seans değişiklikleri, sorular veya antrenman notları için bu ekranı kullanın.",
+  "@helpMemberMessagesItem1Body": { "description": "Help messages item 1 body (member)" },
+
+  "helpPtHomeItem1Title": "Günlük Özet",
+  "@helpPtHomeItem1Title": { "description": "Help home item 1 title (PT)" },
+
+  "helpPtHomeItem1Body": "Bugünkü randevularınız, bekleyen talepler ve son üye hareketleri ana ekranda listelenir.",
+  "@helpPtHomeItem1Body": { "description": "Help home item 1 body (PT)" },
+
+  "helpPtHomeItem2Title": "Bekleyen Talepler",
+  "@helpPtHomeItem2Title": { "description": "Help home item 2 title (PT)" },
+
+  "helpPtHomeItem2Body": "Üyelerinizin randevu taleplerini buradan hızlıca onaylayabilir veya reddedebilirsiniz. Onay verdiğinizde üyeye bildirim gider.",
+  "@helpPtHomeItem2Body": { "description": "Help home item 2 body (PT)" },
+
+  "helpPtHomeItem3Title": "Aktivasyon İstekleri",
+  "@helpPtHomeItem3Title": { "description": "Help home item 3 title (PT)" },
+
+  "helpPtHomeItem3Body": "Pasif üyeler aktivasyon isteği gönderebilir. Bu istekleri ana ekrandan yönetebilirsiniz.",
+  "@helpPtHomeItem3Body": { "description": "Help home item 3 body (PT)" },
+
+  "helpPtCalendarTitle": "Takvim",
+  "@helpPtCalendarTitle": { "description": "Help calendar section title (PT)" },
+
+  "helpPtCalendarItem1Title": "Randevu Yönetimi",
+  "@helpPtCalendarItem1Title": { "description": "Help PT calendar item 1 title" },
+
+  "helpPtCalendarItem1Body": "Tüm üyelerinizin seansları takvimde renkli noktalarla görünür. Bir güne tıklayarak o günkü detaylı listeye geçebilirsiniz.",
+  "@helpPtCalendarItem1Body": { "description": "Help PT calendar item 1 body" },
+
+  "helpPtCalendarItem2Title": "Kişisel Etkinlik",
+  "@helpPtCalendarItem2Title": { "description": "Help PT calendar item 2 title" },
+
+  "helpPtCalendarItem2Body": "Sağ üstteki + butonu ile tatil, toplantı gibi kişisel etkinlikler ekleyebilirsiniz. Bu saatler üyelerin randevu takviminde \"meşgul\" olarak görünür.",
+  "@helpPtCalendarItem2Body": { "description": "Help PT calendar item 2 body" },
+
+  "helpPtCalendarItem3Title": "Seans Detayı",
+  "@helpPtCalendarItem3Title": { "description": "Help PT calendar item 3 title" },
+
+  "helpPtCalendarItem3Body": "Listedeki bir seansa tıklayarak detay ekranını açabilir, durumu güncelleyebilir (onayla / iptal / tamamla) ve notlar ekleyebilirsiniz.",
+  "@helpPtCalendarItem3Body": { "description": "Help PT calendar item 3 body" },
+
+  "helpPtMembersTitle": "Üyeler",
+  "@helpPtMembersTitle": { "description": "Help PT members section title" },
+
+  "helpPtMembersItem1Title": "Üye Ekleme",
+  "@helpPtMembersItem1Title": { "description": "Help PT members item 1 title" },
+
+  "helpPtMembersItem1Body": "Yeni üye eklemek için + butonuna basın ve üyenin bilgilerini girin. Sisteme eklenen üye size bağlanır ve randevu alabilir.",
+  "@helpPtMembersItem1Body": { "description": "Help PT members item 1 body" },
+
+  "helpPtMembersItem2Title": "Üye Yönetimi",
+  "@helpPtMembersItem2Title": { "description": "Help PT members item 2 title" },
+
+  "helpPtMembersItem2Body": "Üye kartına tıklayarak profil detayını görüntüleyebilir, kişisel hedef ve notlar ekleyebilir, kalan seans haklarını takip edebilirsiniz.",
+  "@helpPtMembersItem2Body": { "description": "Help PT members item 2 body" },
+
+  "helpPtMembersItem3Title": "Aktif / Pasif Durumu",
+  "@helpPtMembersItem3Title": { "description": "Help PT members item 3 title" },
+
+  "helpPtMembersItem3Body": "Üyeyi pasife aldığınızda o üye yeni randevu talebi oluşturamaz. Aktivasyon isteği gönderirse siz onaylarsınız.",
+  "@helpPtMembersItem3Body": { "description": "Help PT members item 3 body" },
+
+  "helpPtPackagesTitle": "Paket Yönetimi",
+  "@helpPtPackagesTitle": { "description": "Help PT packages section title" },
+
+  "helpPtPackagesItem1Title": "Paket Oluşturma",
+  "@helpPtPackagesItem1Title": { "description": "Help PT packages item 1 title" },
+
+  "helpPtPackagesItem1Body": "Seans sayısı, süresi ve fiyatını belirleyerek paket oluşturabilirsiniz. Paketler tüm aktif üyelerinize görünür.",
+  "@helpPtPackagesItem1Body": { "description": "Help PT packages item 1 body" },
+
+  "helpPtPackagesItem2Title": "Üyeye Özel Paket",
+  "@helpPtPackagesItem2Title": { "description": "Help PT packages item 2 title" },
+
+  "helpPtPackagesItem2Body": "\"Üyeye özel\" seçeneğiyle belirli bir üye için özel fiyatlı paket tanımlayabilirsiniz. Bu paket yalnızca o üyenin Paketlerim ekranında görünür.",
+  "@helpPtPackagesItem2Body": { "description": "Help PT packages item 2 body" },
+
+  "helpPtPackagesItem3Title": "Seans Süresi",
+  "@helpPtPackagesItem3Title": { "description": "Help PT packages item 3 title" },
+
+  "helpPtPackagesItem3Body": "Pakette seans süresi belirtirseniz, o üye randevu alırken süre otomatik olarak belirlenir ve üye manuel seçim yapamaz.",
+  "@helpPtPackagesItem3Body": { "description": "Help PT packages item 3 body" },
+
+  "helpPtEarningsTitle": "Kazançlar & Ödemeler",
+  "@helpPtEarningsTitle": { "description": "Help PT earnings section title" },
+
+  "helpPtEarningsItem1Title": "Ödeme Onaylama",
+  "@helpPtEarningsItem1Title": { "description": "Help PT earnings item 1 title" },
+
+  "helpPtEarningsItem1Body": "Üye paket satın aldığında ödeme talebi oluşur. Siz onayladığınızda üyenin seans hakkı otomatik olarak güncellenir ve üyeye bildirim gider.",
+  "@helpPtEarningsItem1Body": { "description": "Help PT earnings item 1 body" },
+
+  "helpPtEarningsItem2Title": "Ödeme Reddetme",
+  "@helpPtEarningsItem2Title": { "description": "Help PT earnings item 2 title" },
+
+  "helpPtEarningsItem2Body": "Ödemenin gerçekleşmediği durumlarda talebi reddedebilirsiniz. Seans hakkı eklenmez.",
+  "@helpPtEarningsItem2Body": { "description": "Help PT earnings item 2 body" },
+
+  "helpPtEarningsItem3Title": "Kazanç Özeti",
+  "@helpPtEarningsItem3Title": { "description": "Help PT earnings item 3 title" },
+
+  "helpPtEarningsItem3Body": "Aylık ve toplam kazanç özeti ekranın üst kısmında görünür.",
+  "@helpPtEarningsItem3Body": { "description": "Help PT earnings item 3 body" },
+
+  "helpPtMessagesItem1Title": "Üye İletişimi",
+  "@helpPtMessagesItem1Title": { "description": "Help PT messages item 1 title" },
+
+  "helpPtMessagesItem1Body": "Tüm üyelerinizle ayrı ayrı mesajlaşabilirsiniz. Antrenman notları, diyet önerileri veya seans değişiklikleri için kullanın.",
+  "@helpPtMessagesItem1Body": { "description": "Help PT messages item 1 body" },
+
+  "helpTipBody": "Sorun yaşarsanız uygulamayı kapatıp yeniden açmayı deneyin. Bildirim almak için Profil → Bildirimler bölümünden bildirim izinlerini kontrol edin.",
+  "@helpTipBody": { "description": "Help tip box body text" },
+
+  "signInWithGoogle": "Google ile Giriş Yap",
+  "@signInWithGoogle": { "description": "Google sign-in button label" },
+
+  "noPendingRequests": "Bekleyen istek yok",
+  "@noPendingRequests": { "description": "No pending requests empty state message" },
+
+  "noPendingRequestsSub": "Üyeler size katılmak için istek gönderdiğinde burada görünür",
+  "@noPendingRequestsSub": { "description": "No pending requests empty state subtitle" },
+
+  "activationRequest": "Aktivasyon isteği",
+  "@activationRequest": { "description": "Activation request label" },
+
+  "joinRequest": "Katılım isteği",
+  "@joinRequest": { "description": "Join request label" },
+
+  "programNameHint": "Başlangıç Programı",
+  "@programNameHint": { "description": "Program name field hint text" },
+
+  "programDescriptionHint": "Program hakkında kısa bilgi",
+  "@programDescriptionHint": { "description": "Program description field hint text" }
+}

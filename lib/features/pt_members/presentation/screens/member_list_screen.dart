@@ -7,6 +7,7 @@ import '../../../../core/router/app_router.dart';
 import '../../../../features/auth/providers/auth_provider.dart';
 import '../../../../features/m_calendar/providers/invitation_provider.dart';
 import '../../../../shared/models/invitation_model.dart';
+import '../../../../core/l10n/extensions.dart';
 import '../../../../shared/widgets/app_loading.dart';
 import '../../../../shared/widgets/app_empty.dart';
 import '../../../../shared/widgets/app_error.dart';
@@ -58,7 +59,7 @@ class _MemberListScreenState extends ConsumerState<MemberListScreen>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Üyelerim'),
+        title: Text(context.l10n.myMembers),
         actions: [
           IconButton(
             icon: const Icon(Icons.person_add_outlined),
@@ -73,31 +74,31 @@ class _MemberListScreenState extends ConsumerState<MemberListScreen>
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                 child: TextField(
                   onChanged: (v) => setState(() => _search = v.toLowerCase()),
-                  decoration: const InputDecoration(
-                    hintText: 'Üye ara...',
-                    prefixIcon: Icon(Icons.search),
-                    contentPadding: EdgeInsets.symmetric(vertical: 0),
+                  decoration: InputDecoration(
+                    hintText: context.l10n.searchMember,
+                    prefixIcon: const Icon(Icons.search),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 0),
                   ),
                 ),
               ),
               TabBar(
                 controller: _tabController,
                 tabs: [
-                  const Tab(text: 'Tümü'),
-                  const Tab(text: 'Aktif'),
-                  const Tab(text: 'Pasif'),
+                  Tab(text: context.l10n.all),
+                  Tab(text: context.l10n.active),
+                  Tab(text: context.l10n.passive),
                   Tab(
                     child: requestCount > 0
                         ? badges.Badge(
                             badgeContent: Text('$requestCount',
                                 style: const TextStyle(
                                     color: Colors.white, fontSize: 10)),
-                            child: const Padding(
-                              padding: EdgeInsets.only(right: 8),
-                              child: Text('İstekler'),
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: Text(context.l10n.requests),
                             ),
                           )
-                        : const Text('İstekler'),
+                        : Text(context.l10n.requests),
                   ),
                 ],
                 onTap: (_) => setState(() {}),
@@ -137,20 +138,20 @@ class _MemberListScreenState extends ConsumerState<MemberListScreen>
 
                 if (members.isEmpty) {
                   return AppEmpty(
-                    message: 'Henüz üyeniz yok',
-                    subMessage: 'Üye eklemek için + butonuna tıklayın',
+                    message: context.l10n.noMembersYetFull,
+                    subMessage: context.l10n.addMemberHint,
                     icon: Icons.people_outline,
                     action: ElevatedButton.icon(
                       onPressed: () => context.push(AppRoutes.addMember),
                       icon: const Icon(Icons.person_add),
-                      label: const Text('Üye Ekle'),
+                      label: Text(context.l10n.addMember),
                     ),
                   );
                 }
 
                 if (filtered.isEmpty) {
-                  return const AppEmpty(
-                    message: 'Arama sonucu bulunamadı',
+                  return AppEmpty(
+                    message: context.l10n.searchNoResult,
                     icon: Icons.search_off,
                   );
                 }
@@ -302,9 +303,9 @@ class _MemberRequestsTab extends ConsumerWidget {
       error: (e, _) => AppError(message: e.toString()),
       data: (requests) {
         if (requests.isEmpty) {
-          return const AppEmpty(
-            message: 'Bekleyen istek yok',
-            subMessage: 'Üyeler size katılmak için istek gönderdiğinde burada görünür',
+          return AppEmpty(
+            message: context.l10n.noPendingRequests,
+            subMessage: context.l10n.noPendingRequestsSub,
             icon: Icons.person_add_outlined,
           );
         }
@@ -350,8 +351,8 @@ class _MemberRequestCardState extends ConsumerState<_MemberRequestCard> {
           await invRepo.rejectInvitation(widget.request.id); // close the request
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text(
-                  '${widget.request.memberName ?? widget.request.memberEmail} aktif hale getirildi'),
+              content: Text(context.l10n.memberActivatedSnack(
+                  widget.request.memberName ?? widget.request.memberEmail)),
               behavior: SnackBarBehavior.floating,
             ));
           }
@@ -363,8 +364,8 @@ class _MemberRequestCardState extends ConsumerState<_MemberRequestCard> {
           );
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text(
-                  '${widget.request.memberName ?? widget.request.memberEmail} üye olarak eklendi'),
+              content: Text(context.l10n.memberAddedSnack(
+                  widget.request.memberName ?? widget.request.memberEmail)),
               behavior: SnackBarBehavior.floating,
             ));
           }
@@ -372,8 +373,8 @@ class _MemberRequestCardState extends ConsumerState<_MemberRequestCard> {
       } else {
         await invRepo.rejectInvitation(widget.request.id);
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('İstek reddedildi'),
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(context.l10n.requestRejected),
             behavior: SnackBarBehavior.floating,
           ));
         }
@@ -381,7 +382,7 @@ class _MemberRequestCardState extends ConsumerState<_MemberRequestCard> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Hata: $e'),
+          content: Text(context.l10n.error('$e')),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
         ));
@@ -430,7 +431,7 @@ class _MemberRequestCardState extends ConsumerState<_MemberRequestCard> {
                           style: const TextStyle(
                               fontWeight: FontWeight.w700, fontSize: 15)),
                       Text(
-                        isActivation ? 'Aktivasyon isteği' : 'Katılım isteği',
+                        isActivation ? context.l10n.activationRequest : context.l10n.joinRequest,
                         style: TextStyle(
                             color: theme.colorScheme.onSurfaceVariant,
                             fontSize: 12)),

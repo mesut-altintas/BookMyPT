@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/l10n/extensions.dart';
+
 class GoogleSignInButton extends StatelessWidget {
   final VoidCallback? onPressed;
 
@@ -20,9 +22,9 @@ class GoogleSignInButton extends StatelessWidget {
         children: [
           _GoogleLogo(),
           const SizedBox(width: 12),
-          const Text(
-            'Google ile Giriş Yap',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+          Text(
+            context.l10n.signInWithGoogle,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
           ),
         ],
       ),

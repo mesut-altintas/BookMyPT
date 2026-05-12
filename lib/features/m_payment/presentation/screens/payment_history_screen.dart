@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../../features/auth/providers/auth_provider.dart';
 import '../../../../features/m_payment/providers/payment_provider.dart';
+import '../../../../core/l10n/extensions.dart';
 import '../../../../shared/widgets/app_loading.dart';
 import '../../../../shared/widgets/app_empty.dart';
 import '../../../../shared/widgets/status_badge.dart';
@@ -36,14 +37,14 @@ class _HistoryContent extends ConsumerWidget {
     final paymentsAsync = ref.watch(memberPaymentsProvider(memberId));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Ödeme Geçmişi')),
+      appBar: AppBar(title: Text(context.l10n.paymentHistoryTitle)),
       body: paymentsAsync.when(
         loading: () => const AppLoading(),
         error: (e, _) => Center(child: Text(e.toString())),
         data: (payments) {
           if (payments.isEmpty) {
-            return const AppEmpty(
-              message: 'Henüz ödeme yapılmadı',
+            return AppEmpty(
+              message: context.l10n.noPaymentsYet,
               icon: Icons.receipt_outlined,
             );
           }

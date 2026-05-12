@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/l10n/extensions.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/utils/validators.dart';
 import '../../providers/auth_provider.dart';
@@ -65,10 +66,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   }
 
   String _parseError(String error) {
-    if (error.contains('email-already-in-use')) return 'Bu e-posta zaten kayıtlı';
-    if (error.contains('weak-password')) return 'Şifre çok zayıf';
-    if (error.contains('invalid-email')) return 'Geçersiz e-posta';
-    return 'Kayıt başarısız. Lütfen tekrar deneyin';
+    final l10n = context.l10n;
+    if (error.contains('email-already-in-use')) return l10n.errorEmailInUse;
+    if (error.contains('weak-password')) return l10n.errorWeakPassword;
+    if (error.contains('invalid-email')) return l10n.errorInvalidEmail;
+    return l10n.errorRegisterFailed;
   }
 
   @override
@@ -76,10 +78,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     final authState = ref.watch(authNotifierProvider);
     final isLoading = authState.isLoading;
     final theme = Theme.of(context);
+    final l10n = context.l10n;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Kayıt Ol'),
+        title: Text(l10n.registerTitle),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.pop(),
@@ -94,14 +97,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Hesap Oluştur',
+                  l10n.createAccount,
                   style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Bilgilerinizi girerek devam edin',
+                  l10n.enterInfoToContinue,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -109,8 +112,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 const SizedBox(height: 32),
                 AuthTextField(
                   controller: _nameCtrl,
-                  label: 'Ad Soyad',
-                  hint: 'Ali Yılmaz',
+                  label: l10n.fullName,
+                  hint: l10n.fullNameHint,
                   prefixIcon: Icons.person_outlined,
                   validator: Validators.name,
                   textInputAction: TextInputAction.next,
@@ -118,8 +121,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 const SizedBox(height: 16),
                 AuthTextField(
                   controller: _emailCtrl,
-                  label: 'E-posta',
-                  hint: 'ornek@email.com',
+                  label: l10n.email,
+                  hint: l10n.emailHint,
                   keyboardType: TextInputType.emailAddress,
                   prefixIcon: Icons.email_outlined,
                   validator: Validators.email,
@@ -128,8 +131,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 const SizedBox(height: 16),
                 AuthTextField(
                   controller: _passCtrl,
-                  label: 'Şifre',
-                  hint: 'En az 6 karakter',
+                  label: l10n.password,
+                  hint: l10n.passwordHint,
                   obscureText: _obscurePass,
                   prefixIcon: Icons.lock_outlined,
                   suffixIcon: IconButton(
@@ -145,8 +148,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 const SizedBox(height: 16),
                 AuthTextField(
                   controller: _confirmPassCtrl,
-                  label: 'Şifre Tekrar',
-                  hint: 'Şifrenizi tekrar girin',
+                  label: l10n.confirmPassword,
+                  hint: l10n.confirmPasswordHint,
                   obscureText: _obscureConfirm,
                   prefixIcon: Icons.lock_outlined,
                   suffixIcon: IconButton(
@@ -170,19 +173,19 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           width: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('Devam Et'),
+                      : Text(l10n.continueText),
                 ),
                 const SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'Zaten hesabınız var mı? ',
+                      l10n.alreadyHaveAccount,
                       style: theme.textTheme.bodyMedium,
                     ),
                     TextButton(
                       onPressed: () => context.pop(),
-                      child: const Text('Giriş Yap'),
+                      child: Text(l10n.signIn),
                     ),
                   ],
                 ),

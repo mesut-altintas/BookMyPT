@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/l10n/extensions.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../../features/auth/providers/auth_provider.dart';
 import '../../../../features/pt_members/providers/pt_members_provider.dart';
@@ -60,7 +61,7 @@ class _PaymentContent extends ConsumerWidget {
         .toList();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Paketlerim')),
+      appBar: AppBar(title: Text(context.l10n.myPackages)),
       body: memberDetailAsync.isLoading
           ? const AppLoading()
           : CustomScrollView(
@@ -76,7 +77,7 @@ class _PaymentContent extends ConsumerWidget {
                 // Bekleyen ödemeler
                 if (pendingPayments.isNotEmpty) ...[
                   _SectionHeader(
-                    title: 'Onay Bekliyor',
+                    title: context.l10n.pendingApproval,
                     icon: Icons.hourglass_top_outlined,
                     color: Colors.orange,
                   ),
@@ -94,7 +95,7 @@ class _PaymentContent extends ConsumerWidget {
                 // Son işlemler
                 if (recentPayments.isNotEmpty) ...[
                   _SectionHeader(
-                    title: 'Son İşlemler',
+                    title: context.l10n.recentTransactions,
                     icon: Icons.history,
                   ),
                   SliverList(
@@ -113,10 +114,9 @@ class _PaymentContent extends ConsumerWidget {
                   SliverFillRemaining(
                     hasScrollBody: false,
                     child: payments.isEmpty
-                        ? const AppEmpty(
-                            message: 'PT atanmamış',
-                            subMessage:
-                                'PT\'niz sizi sisteme ekledikten sonra paketleri görebilirsiniz',
+                        ? AppEmpty(
+                            message: context.l10n.noPtAssigned,
+                            subMessage: context.l10n.noPtPackagesSub,
                             icon: Icons.person_off_outlined,
                           )
                         : const SizedBox.shrink(),
@@ -128,14 +128,14 @@ class _PaymentContent extends ConsumerWidget {
                     child: Padding(
                       padding: const EdgeInsets.all(16),
                       child: _SectionHeader(
-                        title: 'Paket Satın Al',
+                        title: context.l10n.buyPackage,
                         icon: Icons.inventory_2_outlined,
                       ),
                     ),
                   )
                 else ...[
                   _SectionHeader(
-                    title: 'Paket Satın Al',
+                    title: context.l10n.buyPackage,
                     icon: Icons.inventory_2_outlined,
                   ),
                   SliverList(
@@ -207,14 +207,14 @@ class _SessionStatusCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'kalan seans hakkı',
+                    context.l10n.remainingSessionRights,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
                   if (!hasPt)
                     Text(
-                      'PT atanmamış',
+                      context.l10n.noPtAssigned,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.error,
                       ),
@@ -390,7 +390,7 @@ class _PackageCard extends ConsumerWidget {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () => _purchase(context, ref),
-                child: const Text('Satın Al'),
+                child: Text(context.l10n.purchase),
               ),
             ),
           ],
@@ -404,19 +404,22 @@ class _PackageCard extends ConsumerWidget {
       context: context,
       useRootNavigator: false,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Paket Satın Al'),
+        title: Text(context.l10n.buyPackage),
         content: Text(
-          '${package.name} paketini ${package.price.formattedCurrency} karşılığında satın almak istiyor musunuz?\n\n'
-          '${package.sessionCount} seans hakkı PT onayından sonra hesabınıza yüklenecektir.',
+          context.l10n.purchaseDialogContent(
+            package.name,
+            package.price.formattedCurrency,
+            package.sessionCount,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('İptal'),
+            child: Text(context.l10n.cancel),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Onayla'),
+            child: Text(context.l10n.confirm),
           ),
         ],
       ),
@@ -440,9 +443,8 @@ class _PackageCard extends ConsumerWidget {
           );
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-                'Ödeme talebiniz oluşturuldu. PT\'niz onayladığında seans hakkınız yüklenecektir.'),
+          SnackBar(
+            content: Text(context.l10n.paymentRequestCreated),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -451,7 +453,7 @@ class _PackageCard extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Hata: $e'),
+            content: Text(context.l10n.error('$e')),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
           ),
