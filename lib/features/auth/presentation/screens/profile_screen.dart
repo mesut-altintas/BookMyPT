@@ -10,6 +10,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'dart:io';
 
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/l10n/app_strings.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../providers/auth_provider.dart';
@@ -30,6 +31,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   bool _isUploadingPhoto = false;
 
   Future<void> _pickAndUploadPhoto() async {
+    final s = ref.read(appStringsProvider);
     final picker = ImagePicker();
     final picked = await picker.pickImage(
       source: ImageSource.gallery,
@@ -60,8 +62,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       ref.invalidate(currentUserProvider);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Profil fotoğrafı güncellendi'),
+          SnackBar(
+            content: Text(s.photoUpdated),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -70,7 +72,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Fotoğraf yüklenemedi: $e'),
+            content: Text('${s.photoFailed}: $e'),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
           ),
@@ -82,12 +84,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Future<void> _editName(String currentName) async {
+    final s = ref.read(appStringsProvider);
     String? result;
     await showDialog<void>(
       context: context,
       builder: (_) => _EditNameDialog(
         initialName: currentName,
         onSave: (name) => result = name,
+        strings: s,
       ),
     );
 
@@ -107,7 +111,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Güncellenemedi: $e'),
+            content: Text('${s.updateFailed}: $e'),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
           ),
@@ -116,7 +120,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       return;
     }
 
-    // Best-effort: sync to PT's member subcollection
     if (user.ptId != null && user.ptId!.isNotEmpty) {
       try {
         await FirebaseFirestore.instance
@@ -130,8 +133,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('İsim güncellendi'),
+        SnackBar(
+          content: Text(s.nameUpdated),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -139,13 +142,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Future<void> _showNotificationSettings() async {
-    // Mevcut izin durumunu al
     final settings = await FirebaseMessaging.instance.getNotificationSettings();
     final isGranted =
         settings.authorizationStatus == AuthorizationStatus.authorized ||
         settings.authorizationStatus == AuthorizationStatus.provisional;
 
     if (!mounted) return;
+    final s = ref.read(appStringsProvider);
 
     showModalBottomSheet(
       context: context,
@@ -162,30 +165,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Center(
-                  child: Container(
-                    width: 36,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.outlineVariant,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
+                Center(child: _sheetHandle(theme)),
                 const SizedBox(height: 20),
-                Text(
-                  'Bildirim Ayarları',
-                  style: theme.textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w700),
-                ),
+                Text(s.notifSettings,
+                    style: theme.textTheme.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w700)),
                 const SizedBox(height: 16),
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: isGranted
                         ? Colors.green.withValues(alpha: 0.08)
-                        : theme.colorScheme.errorContainer
-                            .withValues(alpha: 0.4),
+                        : theme.colorScheme.errorContainer.withValues(alpha: 0.4),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: isGranted
@@ -199,9 +190,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         isGranted
                             ? Icons.notifications_active_outlined
                             : Icons.notifications_off_outlined,
-                        color: isGranted
-                            ? Colors.green
-                            : theme.colorScheme.error,
+                        color: isGranted ? Colors.green : theme.colorScheme.error,
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -209,19 +198,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              isGranted ? 'Bildirimler Açık' : 'Bildirimler Kapalı',
+                              isGranted ? s.notifOn : s.notifOff,
                               style: TextStyle(
                                 fontWeight: FontWeight.w600,
-                                color: isGranted
-                                    ? Colors.green
-                                    : theme.colorScheme.error,
+                                color: isGranted ? Colors.green : theme.colorScheme.error,
                               ),
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              isGranted
-                                  ? 'Randevu ve seans bildirimleri alıyorsunuz'
-                                  : 'Randevu ve seans bildirimleri için izin gerekli',
+                              isGranted ? s.notifOnSub : s.notifOffSub,
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: theme.colorScheme.onSurfaceVariant,
                               ),
@@ -237,7 +222,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   width: double.infinity,
                   child: ElevatedButton.icon(
                     icon: const Icon(Icons.settings_outlined),
-                    label: const Text('Sistem Ayarlarını Aç'),
+                    label: Text(s.openSystemSettings),
                     onPressed: () {
                       Navigator.of(ctx).pop();
                       openAppSettings();
@@ -250,7 +235,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     width: double.infinity,
                     child: OutlinedButton.icon(
                       icon: const Icon(Icons.notifications_outlined),
-                      label: const Text('İzin İste'),
+                      label: Text(s.requestPermission),
                       onPressed: () async {
                         Navigator.of(ctx).pop();
                         await FirebaseMessaging.instance.requestPermission();
@@ -267,179 +252,139 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   void _showThemeSettings() {
-    final current = ref.read(themeModeProvider);
     showModalBottomSheet(
       context: context,
       useRootNavigator: false,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (ctx) {
-        final theme = Theme.of(ctx);
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 36,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.outlineVariant,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
+      // Consumer burada: provider'ı dinler, seçim her zaman doğru gösterilir
+      builder: (ctx) => Consumer(
+        builder: (ctx, r, _) {
+          final current = r.watch(themeModeProvider);
+          final s = r.watch(appStringsProvider);
+          final theme = Theme.of(ctx);
+
+          return SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(child: _sheetHandle(theme)),
+                  const SizedBox(height: 20),
+                  Text(s.appearanceTitle,
+                      style: theme.textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 12),
+                  _ThemeOption(
+                    icon: Icons.brightness_auto_outlined,
+                    label: s.themeSystem,
+                    subtitle: s.themeSystemSub,
+                    value: ThemeMode.system,
+                    groupValue: current,
+                    onChanged: (v) =>
+                        r.read(themeModeProvider.notifier).setThemeMode(v!),
                   ),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  'Görünüm',
-                  style: theme.textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 8),
-                StatefulBuilder(
-                  builder: (ctx, setStateSB) {
-                    ThemeMode selected = current;
-                    return Column(
-                      children: [
-                        _ThemeOption(
-                          icon: Icons.brightness_auto_outlined,
-                          label: 'Sistem Varsayılanı',
-                          subtitle: 'Cihazınızın temasını takip eder',
-                          value: ThemeMode.system,
-                          groupValue: selected,
-                          onChanged: (v) {
-                            setStateSB(() => selected = v!);
-                            ref.read(themeModeProvider.notifier).setThemeMode(v!);
-                          },
-                        ),
-                        _ThemeOption(
-                          icon: Icons.light_mode_outlined,
-                          label: 'Açık Tema',
-                          subtitle: 'Her zaman açık renk tema',
-                          value: ThemeMode.light,
-                          groupValue: selected,
-                          onChanged: (v) {
-                            setStateSB(() => selected = v!);
-                            ref.read(themeModeProvider.notifier).setThemeMode(v!);
-                          },
-                        ),
-                        _ThemeOption(
-                          icon: Icons.dark_mode_outlined,
-                          label: 'Koyu Tema',
-                          subtitle: 'Her zaman koyu renk tema',
-                          value: ThemeMode.dark,
-                          groupValue: selected,
-                          onChanged: (v) {
-                            setStateSB(() => selected = v!);
-                            ref.read(themeModeProvider.notifier).setThemeMode(v!);
-                          },
-                        ),
-                      ],
-                    );
-                  },
-                ),
-              ],
+                  _ThemeOption(
+                    icon: Icons.light_mode_outlined,
+                    label: s.themeLight,
+                    subtitle: s.themeLightSub,
+                    value: ThemeMode.light,
+                    groupValue: current,
+                    onChanged: (v) =>
+                        r.read(themeModeProvider.notifier).setThemeMode(v!),
+                  ),
+                  _ThemeOption(
+                    icon: Icons.dark_mode_outlined,
+                    label: s.themeDark,
+                    subtitle: s.themeDarkSub,
+                    value: ThemeMode.dark,
+                    groupValue: current,
+                    onChanged: (v) =>
+                        r.read(themeModeProvider.notifier).setThemeMode(v!),
+                  ),
+                ],
+              ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 
   void _showLanguageSettings() {
-    final currentLocale = ref.read(localeProvider);
     showModalBottomSheet(
       context: context,
       useRootNavigator: false,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (ctx) {
-        final theme = Theme.of(ctx);
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 36,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.outlineVariant,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
+      builder: (ctx) => Consumer(
+        builder: (ctx, r, _) {
+          final current = r.watch(localeProvider);
+          final s = r.watch(appStringsProvider);
+          final theme = Theme.of(ctx);
+
+          return SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(child: _sheetHandle(theme)),
+                  const SizedBox(height: 20),
+                  Text(s.languageTitle,
+                      style: theme.textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 12),
+                  _LocaleOption(
+                    flag: '🇹🇷',
+                    label: 'Türkçe',
+                    value: const Locale('tr', 'TR'),
+                    groupValue: current,
+                    onChanged: (v) {
+                      r.read(localeProvider.notifier).setLocale(v!);
+                      Navigator.of(ctx).pop();
+                    },
                   ),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  'Dil / Language',
-                  style: theme.textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 8),
-                StatefulBuilder(
-                  builder: (ctx, setStateSB) {
-                    Locale selected = currentLocale;
-                    return Column(
-                      children: [
-                        _LocaleOption(
-                          flag: '🇹🇷',
-                          label: 'Türkçe',
-                          value: const Locale('tr', 'TR'),
-                          groupValue: selected,
-                          onChanged: (v) {
-                            setStateSB(() => selected = v!);
-                            ref.read(localeProvider.notifier).setLocale(v!);
-                            Navigator.of(ctx).pop();
-                          },
-                        ),
-                        _LocaleOption(
-                          flag: '🇬🇧',
-                          label: 'English',
-                          value: const Locale('en', 'US'),
-                          groupValue: selected,
-                          onChanged: (v) {
-                            setStateSB(() => selected = v!);
-                            ref.read(localeProvider.notifier).setLocale(v!);
-                            Navigator.of(ctx).pop();
-                          },
-                        ),
-                      ],
-                    );
-                  },
-                ),
-              ],
+                  _LocaleOption(
+                    flag: '🇬🇧',
+                    label: 'English',
+                    value: const Locale('en', 'US'),
+                    groupValue: current,
+                    onChanged: (v) {
+                      r.read(localeProvider.notifier).setLocale(v!);
+                      Navigator.of(ctx).pop();
+                    },
+                  ),
+                ],
+              ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 
   Future<void> _signOut() async {
+    final s = ref.read(appStringsProvider);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Çıkış Yap'),
-        content: const Text('Hesabınızdan çıkmak istediğinize emin misiniz?'),
+        title: Text(s.signOutTitle),
+        content: Text(s.signOutConfirm),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('İptal'),
+            child: Text(s.cancel),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.error,
-            ),
-            child: const Text('Çıkış Yap'),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+            child: Text(s.signOut),
           ),
         ],
       ),
@@ -450,13 +395,23 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     if (mounted) context.go(AppRoutes.login);
   }
 
+  Widget _sheetHandle(ThemeData theme) => Container(
+        width: 36,
+        height: 4,
+        decoration: BoxDecoration(
+          color: theme.colorScheme.outlineVariant,
+          borderRadius: BorderRadius.circular(2),
+        ),
+      );
+
   @override
   Widget build(BuildContext context) {
     final userAsync = ref.watch(currentUserProvider);
     final theme = Theme.of(context);
+    final s = ref.watch(appStringsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Profil')),
+      appBar: AppBar(title: Text(s.profileTitle)),
       body: userAsync.when(
         loading: () => const AppLoading(),
         error: (e, _) => Center(child: Text('Hata: $e')),
@@ -503,7 +458,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      user.name.isNotEmpty ? user.name : 'İsim yok',
+                      user.name.isNotEmpty ? user.name : s.noName,
                       style: theme.textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.w700,
                         color: user.name.isEmpty
@@ -540,7 +495,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    user.isPt ? 'Personal Trainer' : 'Üye',
+                    user.isPt ? s.rolePt : s.roleMember,
                     style: TextStyle(
                       color: theme.colorScheme.onPrimaryContainer,
                       fontWeight: FontWeight.w600,
@@ -552,13 +507,41 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 const Divider(),
                 ListTile(
                   leading: const Icon(Icons.notifications_outlined),
-                  title: const Text('Bildirimler'),
+                  title: Text(s.notifications),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: _showNotificationSettings,
                 ),
                 ListTile(
+                  leading: const Icon(Icons.language),
+                  title: Text(s.language),
+                  trailing: Consumer(builder: (_, r, __) {
+                    final locale = r.watch(localeProvider);
+                    return Text(
+                      locale.languageCode == 'tr' ? '🇹🇷  Türkçe' : '🇬🇧  English',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    );
+                  }),
+                  onTap: _showLanguageSettings,
+                ),
+                ListTile(
+                  leading: const Icon(Icons.dark_mode_outlined),
+                  title: Text(s.appearance),
+                  trailing: Consumer(builder: (_, r, __) {
+                    final mode = r.watch(themeModeProvider);
+                    return Text(
+                      s.themeModeLabel(mode.name),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    );
+                  }),
+                  onTap: _showThemeSettings,
+                ),
+                ListTile(
                   leading: const Icon(Icons.menu_book_outlined),
-                  title: const Text('Kullanım Kılavuzu'),
+                  title: Text(s.helpGuide),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute(
@@ -566,41 +549,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ),
                   ),
                 ),
-                Consumer(builder: (ctx, r, _) {
-                  final locale = r.watch(localeProvider);
-                  final label = locale.languageCode == 'tr' ? '🇹🇷  Türkçe' : '🇬🇧  English';
-                  return ListTile(
-                    leading: const Icon(Icons.language),
-                    title: const Text('Dil'),
-                    trailing: Text(label,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        )),
-                    onTap: _showLanguageSettings,
-                  );
-                }),
-                Consumer(builder: (ctx, r, _) {
-                  final mode = r.watch(themeModeProvider);
-                  final label = switch (mode) {
-                    ThemeMode.light  => '☀️  Açık',
-                    ThemeMode.dark   => '🌙  Koyu',
-                    ThemeMode.system => '⚙️  Sistem',
-                  };
-                  return ListTile(
-                    leading: const Icon(Icons.dark_mode_outlined),
-                    title: const Text('Görünüm'),
-                    trailing: Text(label,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        )),
-                    onTap: _showThemeSettings,
-                  );
-                }),
                 const Divider(),
                 ListTile(
                   leading: Icon(Icons.logout, color: AppColors.error),
                   title: Text(
-                    'Çıkış Yap',
+                    s.signOut,
                     style: TextStyle(color: AppColors.error),
                   ),
                   onTap: _signOut,
@@ -613,6 +566,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 }
+
+// ── Sheet handle ──────────────────────────────────────────────────────────────
 
 // ── Theme option row ──────────────────────────────────────────────────────────
 class _ThemeOption extends StatelessWidget {
@@ -639,7 +594,8 @@ class _ThemeOption extends StatelessWidget {
     return InkWell(
       onTap: () => onChanged(value),
       borderRadius: BorderRadius.circular(12),
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
@@ -651,8 +607,8 @@ class _ThemeOption extends StatelessWidget {
             width: selected ? 2 : 1,
           ),
           color: selected
-              ? theme.colorScheme.primaryContainer.withValues(alpha: 0.3)
-              : null,
+              ? theme.colorScheme.primaryContainer.withValues(alpha: 0.4)
+              : theme.colorScheme.surface,
         ),
         child: Row(
           children: [
@@ -715,7 +671,8 @@ class _LocaleOption extends StatelessWidget {
     return InkWell(
       onTap: () => onChanged(value),
       borderRadius: BorderRadius.circular(12),
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
@@ -727,8 +684,8 @@ class _LocaleOption extends StatelessWidget {
             width: selected ? 2 : 1,
           ),
           color: selected
-              ? theme.colorScheme.primaryContainer.withValues(alpha: 0.3)
-              : null,
+              ? theme.colorScheme.primaryContainer.withValues(alpha: 0.4)
+              : theme.colorScheme.surface,
         ),
         child: Row(
           children: [
@@ -761,8 +718,13 @@ class _LocaleOption extends StatelessWidget {
 class _EditNameDialog extends StatefulWidget {
   final String initialName;
   final void Function(String) onSave;
+  final AppStrings strings;
 
-  const _EditNameDialog({required this.initialName, required this.onSave});
+  const _EditNameDialog({
+    required this.initialName,
+    required this.onSave,
+    required this.strings,
+  });
 
   @override
   State<_EditNameDialog> createState() => _EditNameDialogState();
@@ -785,15 +747,16 @@ class _EditNameDialogState extends State<_EditNameDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final s = widget.strings;
     return AlertDialog(
-      title: const Text('İsim Düzenle'),
+      title: Text(s.editName),
       content: TextField(
         controller: _ctrl,
         autofocus: true,
         textCapitalization: TextCapitalization.words,
-        decoration: const InputDecoration(
-          labelText: 'Ad Soyad',
-          border: OutlineInputBorder(),
+        decoration: InputDecoration(
+          labelText: s.fullName,
+          border: const OutlineInputBorder(),
         ),
         onSubmitted: (v) {
           widget.onSave(v.trim());
@@ -803,14 +766,14 @@ class _EditNameDialogState extends State<_EditNameDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('İptal'),
+          child: Text(s.cancel),
         ),
         ElevatedButton(
           onPressed: () {
             widget.onSave(_ctrl.text.trim());
             Navigator.of(context).pop();
           },
-          child: const Text('Kaydet'),
+          child: Text(s.save),
         ),
       ],
     );
