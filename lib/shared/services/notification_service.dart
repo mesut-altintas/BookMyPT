@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -47,7 +49,12 @@ class NotificationService {
       final route = message.data['route'] as String?;
       final type  = message.data['type']  as String?;
 
-      if (notification != null) {
+      // On iOS, setForegroundNotificationPresentationOptions already makes
+      // the system display the FCM notification natively in the foreground.
+      // Showing a local notification here too would cause a duplicate.
+      // On Android, FCM never displays notifications in the foreground, so
+      // we must show one manually.
+      if (notification != null && !Platform.isIOS) {
         _localNotifications.show(
           notification.hashCode,
           notification.title,
@@ -60,11 +67,6 @@ class NotificationService {
               importance: Importance.high,
               priority: Priority.high,
               icon: '@mipmap/ic_launcher',
-            ),
-            iOS: const DarwinNotificationDetails(
-              presentAlert: true,
-              presentBadge: true,
-              presentSound: true,
             ),
           ),
           payload: route, // passed to onDidReceiveNotificationResponse
