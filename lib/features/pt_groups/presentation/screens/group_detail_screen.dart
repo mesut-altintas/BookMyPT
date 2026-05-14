@@ -6,6 +6,7 @@ import '../../../../core/l10n/extensions.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../../features/auth/providers/auth_provider.dart';
+import '../../../../features/m_chat/presentation/screens/chat_screen.dart';
 import '../../../../features/m_chat/providers/chat_provider.dart';
 import '../../../../features/pt_groups/providers/pt_groups_provider.dart';
 import '../../../../shared/models/group_model.dart';
@@ -464,8 +465,6 @@ class _ChatTab extends ConsumerWidget {
     if (user == null) return const AppLoading();
 
     final chatId = ref.read(chatRepositoryProvider).getGroupChatId(group.id);
-    final isPt = user.isPt;
-    final basePath = isPt ? '/pt/chat' : '/member/chat';
 
     return Center(
       child: Column(
@@ -486,7 +485,23 @@ class _ChatTab extends ConsumerWidget {
           ),
           const SizedBox(height: 20),
           FilledButton.icon(
-            onPressed: () => context.push('$basePath/$chatId'),
+            onPressed: () async {
+              // Ensure the chat room document exists with participants field
+              // (handles groups created before the group-chat feature was added)
+              await ref.read(chatRepositoryProvider).createOrUpdateGroupChatRoom(
+                groupId: group.id,
+                groupName: group.name,
+                ptId: group.ptId,
+                memberIds: group.memberIds,
+              );
+              if (context.mounted) {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => ChatScreen(chatId: chatId),
+                  ),
+                );
+              }
+            },
             icon: const Icon(Icons.chat_outlined),
             label: Text(context.l10n.openChat),
           ),

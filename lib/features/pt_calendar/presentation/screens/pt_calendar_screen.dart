@@ -9,6 +9,9 @@ import '../../../../core/utils/extensions.dart';
 import '../../../../features/auth/providers/auth_provider.dart';
 import '../../../../features/m_calendar/presentation/screens/add_personal_event_screen.dart';
 import '../../../../features/m_calendar/providers/personal_event_provider.dart';
+import '../../../../features/pt_groups/presentation/screens/group_session_screen.dart';
+import '../../../../features/pt_groups/providers/pt_groups_provider.dart';
+import '../../../../shared/models/group_model.dart';
 import '../../../../shared/models/member_model.dart';
 import '../../../../shared/models/personal_event_model.dart';
 import '../../../../shared/models/session_model.dart';
@@ -51,15 +54,23 @@ class _PtCalendarScreenState extends ConsumerState<PtCalendarScreen> {
   Widget _buildCalendar(BuildContext context, WidgetRef ref, String ptId) {
     final sessionsAsync = ref.watch(ptSessionsProvider(ptId));
     final personalEventsAsync = ref.watch(memberPersonalEventsProvider(ptId));
+    final groupSessionsAsync = ref.watch(ptGroupSessionsProvider(ptId));
     final theme = Theme.of(context);
 
     final sessions = sessionsAsync.valueOrNull ?? [];
     final personalEvents = personalEventsAsync.valueOrNull ?? [];
+    final groupSessions = groupSessionsAsync.valueOrNull ?? [];
 
     final selectedSessions = sessions
         .where((s) =>
             _isSameDay(s.dateTime, _selectedDay) &&
             s.status != SessionStatus.cancelled)
+        .toList()
+      ..sort((a, b) => a.dateTime.compareTo(b.dateTime));
+
+    final selectedGroupSessions = groupSessions
+        .where((s) =>
+            _isSameDay(s.dateTime, _selectedDay) && !s.isCancelled)
         .toList()
       ..sort((a, b) => a.dateTime.compareTo(b.dateTime));
 
@@ -94,10 +105,13 @@ class _PtCalendarScreenState extends ConsumerState<PtCalendarScreen> {
               final hasSession = sessions.any((s) =>
                   _isSameDay(s.dateTime, day) &&
                   s.status != SessionStatus.cancelled);
+              final hasGroupSession = groupSessions.any((s) =>
+                  _isSameDay(s.dateTime, day) && !s.isCancelled);
               final hasPersonal =
                   personalEvents.any((e) => _isSameDay(e.dateTime, day));
               return [
                 if (hasSession) 'session',
+                if (hasGroupSession) 'group',
                 if (hasPersonal) 'personal',
               ];
             },
@@ -109,7 +123,9 @@ class _PtCalendarScreenState extends ConsumerState<PtCalendarScreen> {
                   children: events.map((e) {
                     final color = e == 'session'
                         ? Colors.green
-                        : theme.colorScheme.secondary;
+                        : e == 'group'
+                            ? Colors.purple
+                            : theme.colorScheme.secondary;
                     return Container(
                       width: 6,
                       height: 6,
@@ -155,14 +171,15 @@ class _PtCalendarScreenState extends ConsumerState<PtCalendarScreen> {
                       ?.copyWith(fontWeight: FontWeight.w700),
                 ),
                 const Spacer(),
-                if (selectedSessions.isNotEmpty)
+                if (selectedSessions.isNotEmpty || selectedGroupSessions.isNotEmpty)
                   Text(
-                    context.l10n.sessionsCount(selectedSessions.length),
+                    context.l10n.sessionsCount(
+                        selectedSessions.length + selectedGroupSessions.length),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                   ),
-                if (selectedSessions.isNotEmpty &&
+                if ((selectedSessions.isNotEmpty || selectedGroupSessions.isNotEmpty) &&
                     selectedPersonalEvents.isNotEmpty)
                   const Text(' · '),
                 if (selectedPersonalEvents.isNotEmpty)
@@ -176,7 +193,9 @@ class _PtCalendarScreenState extends ConsumerState<PtCalendarScreen> {
             ),
           ),
           Expanded(
-            child: (selectedSessions.isEmpty && selectedPersonalEvents.isEmpty)
+            child: (selectedSessions.isEmpty &&
+                    selectedGroupSessions.isEmpty &&
+                    selectedPersonalEvents.isEmpty)
                 ? AppEmpty(
                     message: context.l10n.noEventToday,
                     icon: Icons.event_available_outlined,
@@ -194,6 +213,8 @@ class _PtCalendarScreenState extends ConsumerState<PtCalendarScreen> {
                             onTap: () =>
                                 context.push('/pt/calendar/${s.id}'),
                           )),
+                      ...selectedGroupSessions.map((s) =>
+                          _GroupSessionTile(groupSession: s)),
                       ...selectedPersonalEvents.map((e) =>
                           _PersonalEventTile(
                             event: e,
@@ -318,6 +339,114 @@ class _SessionTile extends StatelessWidget {
     );
   }
 }
+
+// ─── Group Session Tile (PT Calendar) ────────────────────────────────────────
+
+class _GroupSessionTile extends StatelessWidget {
+  final GroupSession groupSession;
+
+  const _GroupSessionTile({required this.groupSession});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final s = groupSession;
+    final statusColor = s.isCompleted
+        ? Colors.green
+        : s.isCancelled
+            ? Colors.red
+            : Colors.purple;
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: ListTile(
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => _GroupSessionLoader(groupSession: s),
+          ),
+        ),
+        leading: Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: Colors.purple.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                s.dateTime.formattedTime,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: statusColor,
+                ),
+              ),
+            ],
+          ),
+        ),
+        title: Text(
+          s.groupName,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+        subtitle: Text(
+          '${s.durationMinutes} dk · '
+          '${s.attendedCount}/${s.memberIds.length} katılımcı',
+        ),
+        trailing: Chip(
+          label: Text(
+            s.isCompleted
+                ? context.l10n.completed
+                : s.isCancelled
+                    ? context.l10n.cancelled
+                    : context.l10n.scheduled,
+            style: TextStyle(
+              fontSize: 11,
+              color: s.isCompleted || s.isCancelled
+                  ? Colors.white
+                  : statusColor,
+            ),
+          ),
+          backgroundColor: s.isCompleted
+              ? Colors.green
+              : s.isCancelled
+                  ? Colors.red
+                  : theme.colorScheme.primaryContainer,
+          padding: EdgeInsets.zero,
+        ),
+      ),
+    );
+  }
+}
+
+/// Loads the GroupModel then opens GroupSessionScreen.
+class _GroupSessionLoader extends ConsumerWidget {
+  final GroupSession groupSession;
+
+  const _GroupSessionLoader({required this.groupSession});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final groupAsync = ref.watch(groupByIdProvider(groupSession.groupId));
+
+    return groupAsync.when(
+      loading: () => const Scaffold(body: AppLoading()),
+      error: (e, _) => Scaffold(body: Center(child: Text(e.toString()))),
+      data: (group) {
+        if (group == null) {
+          return Scaffold(
+            appBar: AppBar(),
+            body: const Center(child: Text('Grup bulunamadı')),
+          );
+        }
+        return GroupSessionScreen(group: group, session: groupSession);
+      },
+    );
+  }
+}
+
+// ─── Personal Event Tile ──────────────────────────────────────────────────────
 
 class _PersonalEventTile extends ConsumerWidget {
   final PersonalEventModel event;

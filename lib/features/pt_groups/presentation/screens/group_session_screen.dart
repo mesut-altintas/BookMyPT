@@ -105,7 +105,12 @@ class _GroupSessionScreenState extends ConsumerState<GroupSessionScreen> {
     try {
       await ref
           .read(groupRepositoryProvider)
-          .completeGroupSession(widget.session!.id, _attendance);
+          .completeGroupSession(
+            widget.session!.id,
+            widget.session!.groupId,
+            widget.session!.ptId,
+            _attendance,
+          );
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
       if (mounted) {

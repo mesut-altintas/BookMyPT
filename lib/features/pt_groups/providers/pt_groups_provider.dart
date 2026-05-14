@@ -99,6 +99,54 @@ final memberGroupPaymentsProvider =
       .handleError((_, __) {});
 });
 
+/// PT's all group sessions (for PT calendar view).
+final ptGroupSessionsProvider =
+    StreamProvider.family<List<GroupSession>, String>((ref, ptId) {
+  if (ref.watch(currentUserProvider).valueOrNull == null) {
+    return Stream.value(const <GroupSession>[]);
+  }
+  return FirebaseFirestore.instance
+      .collection(AppConstants.groupSessionsCollection)
+      .where('ptId', isEqualTo: ptId)
+      .snapshots()
+      .map((snap) {
+        final list =
+            snap.docs.map((d) => GroupSession.fromFirestore(d)).toList();
+        list.sort((a, b) => a.dateTime.compareTo(b.dateTime));
+        return list;
+      })
+      .handleError((_, __) {});
+});
+
+/// All groups the member belongs to (for member calendar).
+final memberGroupsProvider =
+    StreamProvider.family<List<GroupModel>, String>((ref, memberId) {
+  if (ref.watch(currentUserProvider).valueOrNull == null) {
+    return Stream.value(const <GroupModel>[]);
+  }
+  return FirebaseFirestore.instance
+      .collection(AppConstants.groupsCollection)
+      .where('memberIds', arrayContains: memberId)
+      .snapshots()
+      .map((snap) =>
+          snap.docs.map((d) => GroupModel.fromFirestore(d)).toList())
+      .handleError((_, __) {});
+});
+
+/// Single group by ID (used in calendar to navigate to GroupSessionScreen).
+final groupByIdProvider =
+    StreamProvider.family<GroupModel?, String>((ref, groupId) {
+  if (ref.watch(currentUserProvider).valueOrNull == null) {
+    return Stream.value(null);
+  }
+  return FirebaseFirestore.instance
+      .collection(AppConstants.groupsCollection)
+      .doc(groupId)
+      .snapshots()
+      .map((d) => d.exists ? GroupModel.fromFirestore(d) : null)
+      .handleError((_, __) {});
+});
+
 /// Member's group sessions (all groups they're in).
 final memberGroupSessionsProvider =
     StreamProvider.family<List<GroupSession>, String>((ref, memberId) {
@@ -318,7 +366,7 @@ class GroupRepository {
   }
 
   Future<void> completeGroupSession(
-      String sessionId, Map<String, bool> attendance) async {
+      String sessionId, String groupId, String ptId, Map<String, bool> attendance) async {
     final batch = _firestore.batch();
 
     // Mark session as completed
@@ -329,23 +377,28 @@ class GroupRepository {
       {'status': 'completed', 'attendance': attendance},
     );
 
-    // Decrement remaining sessions for members who attended
+    // Decrement remaining sessions for members who attended.
+    // Query by ptId (PT reads their own payments — satisfies security rule),
+    // then filter by memberId / groupId / status / remainingSessions client-side.
+    final allPtPayments = await _firestore
+        .collection(AppConstants.paymentsCollection)
+        .where('ptId', isEqualTo: ptId)
+        .get();
+
     final attending =
         attendance.entries.where((e) => e.value).map((e) => e.key).toList();
 
     for (final memberId in attending) {
-      // Find their active group payment for this session's group
-      final snap = await _firestore
-          .collection(AppConstants.paymentsCollection)
-          .where('memberId', isEqualTo: memberId)
-          .where('isGroup', isEqualTo: true)
-          .where('status', isEqualTo: 'completed')
-          .where('remainingSessions', isGreaterThan: 0)
-          .limit(1)
-          .get();
+      final validDocs = allPtPayments.docs.where((d) {
+        final data = d.data();
+        return data['memberId'] == memberId &&
+            data['groupId'] == groupId &&
+            data['status'] == 'completed' &&
+            ((data['remainingSessions'] as int?) ?? 0) > 0;
+      }).toList();
 
-      if (snap.docs.isNotEmpty) {
-        final doc = snap.docs.first;
+      if (validDocs.isNotEmpty) {
+        final doc = validDocs.first;
         final current = doc.data()['remainingSessions'] as int? ?? 0;
         batch.update(doc.reference,
             {'remainingSessions': current > 0 ? current - 1 : 0});

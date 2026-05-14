@@ -8,6 +8,9 @@ import '../../../../core/l10n/extensions.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../features/auth/providers/auth_provider.dart';
 import '../../../../features/pt_calendar/providers/pt_calendar_provider.dart';
+import '../../../../features/pt_groups/presentation/screens/group_session_screen.dart';
+import '../../../../features/pt_groups/providers/pt_groups_provider.dart';
+import '../../../../shared/models/group_model.dart';
 import '../../../../shared/models/personal_event_model.dart';
 import '../../../../shared/models/session_model.dart';
 import '../../../../shared/widgets/app_empty.dart';
@@ -123,6 +126,19 @@ class _CalendarContent extends ConsumerWidget {
     final personalEvents = personalEventsAsync.valueOrNull ?? [];
     final sessions = sessionsAsync.valueOrNull ?? [];
 
+    // Two-step group session approach:
+    // 1) Get all groups the member belongs to
+    // 2) For each group, watch its sessions (simple groupId == groupId query)
+    // This avoids arrayContains on group_sessions.memberIds and is more robust.
+    final memberGroups =
+        ref.watch(memberGroupsProvider(memberId)).valueOrNull ?? [];
+    final groupSessions = <GroupSession>[];
+    for (final group in memberGroups) {
+      final sessions2 =
+          ref.watch(groupSessionsProvider(group.id)).valueOrNull ?? [];
+      groupSessions.addAll(sessions2);
+    }
+
     // Events for selected day
     final dayPersonalEvents = personalEvents
         .where((e) => isSameDay(e.dateTime, selectedDay))
@@ -133,6 +149,11 @@ class _CalendarContent extends ConsumerWidget {
         .where((s) =>
             isSameDay(s.dateTime, selectedDay) &&
             s.status != SessionStatus.cancelled)
+        .toList()
+      ..sort((a, b) => a.dateTime.compareTo(b.dateTime));
+
+    final dayGroupSessions = groupSessions
+        .where((s) => isSameDay(s.dateTime, selectedDay) && !s.isCancelled)
         .toList()
       ..sort((a, b) => a.dateTime.compareTo(b.dateTime));
 
@@ -181,9 +202,12 @@ class _CalendarContent extends ConsumerWidget {
               final hasSession = sessions.any((s) =>
                   isSameDay(s.dateTime, day) &&
                   s.status != SessionStatus.cancelled);
+              final hasGroupSession = groupSessions
+                  .any((s) => isSameDay(s.dateTime, day) && !s.isCancelled);
               final markers = <Object>[];
               if (hasPersonal) markers.add('personal');
               if (hasSession) markers.add('session');
+              if (hasGroupSession) markers.add('group');
               return markers;
             },
             calendarBuilders: CalendarBuilders(
@@ -194,7 +218,9 @@ class _CalendarContent extends ConsumerWidget {
                   children: events.map((e) {
                     final color = e == 'session'
                         ? Colors.green
-                        : theme.colorScheme.secondary;
+                        : e == 'group'
+                            ? Colors.purple
+                            : theme.colorScheme.secondary;
                     return Container(
                       width: 6,
                       height: 6,
@@ -209,7 +235,9 @@ class _CalendarContent extends ConsumerWidget {
           ),
           const Divider(height: 1),
           Expanded(
-            child: (dayPersonalEvents.isEmpty && daySessions.isEmpty)
+            child: (dayPersonalEvents.isEmpty &&
+                    daySessions.isEmpty &&
+                    dayGroupSessions.isEmpty)
                 ? AppEmpty(
                     message: DateFormat('d MMMM', 'tr').format(selectedDay),
                     subMessage: context.l10n.noEventForDay,
@@ -219,6 +247,8 @@ class _CalendarContent extends ConsumerWidget {
                     padding: const EdgeInsets.all(12),
                     children: [
                       ...daySessions.map((s) => _SessionTile(session: s)),
+                      ...dayGroupSessions.map(
+                          (s) => _MemberGroupSessionTile(groupSession: s)),
                       ...dayPersonalEvents.map((e) => _PersonalEventTile(
                           event: e,
                           memberId: memberId,
@@ -288,6 +318,95 @@ class _SessionTile extends StatelessWidget {
     );
   }
 }
+
+// ─── Member Group Session Tile ────────────────────────────────────────────────
+
+class _MemberGroupSessionTile extends StatelessWidget {
+  final GroupSession groupSession;
+
+  const _MemberGroupSessionTile({required this.groupSession});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final s = groupSession;
+    final statusColor =
+        s.isCompleted ? Colors.green : s.isCancelled ? Colors.red : Colors.purple;
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: ListTile(
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => _MemberGroupSessionLoader(groupSession: s),
+          ),
+        ),
+        leading: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: Colors.purple.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: const Icon(Icons.groups, color: Colors.purple, size: 20),
+        ),
+        title: Text(
+          s.groupName,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+        subtitle: Text(
+          '${DateFormat('HH:mm').format(s.dateTime)} • ${s.durationMinutes} dk',
+        ),
+        trailing: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: statusColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            s.isCompleted
+                ? context.l10n.completed
+                : s.isCancelled
+                    ? context.l10n.cancelled
+                    : context.l10n.scheduled,
+            style: TextStyle(
+                color: statusColor,
+                fontSize: 12,
+                fontWeight: FontWeight.w600),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Loads the GroupModel then opens GroupSessionScreen (read-only for member).
+class _MemberGroupSessionLoader extends ConsumerWidget {
+  final GroupSession groupSession;
+
+  const _MemberGroupSessionLoader({required this.groupSession});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final groupAsync = ref.watch(groupByIdProvider(groupSession.groupId));
+
+    return groupAsync.when(
+      loading: () => const Scaffold(body: AppLoading()),
+      error: (e, _) => Scaffold(body: Center(child: Text(e.toString()))),
+      data: (group) {
+        if (group == null) {
+          return Scaffold(
+            appBar: AppBar(),
+            body: const Center(child: Text('Grup bulunamadı')),
+          );
+        }
+        return GroupSessionScreen(group: group, session: groupSession);
+      },
+    );
+  }
+}
+
+// ─── Personal Event Tile ──────────────────────────────────────────────────────
 
 class _PersonalEventTile extends ConsumerWidget {
   final PersonalEventModel event;
