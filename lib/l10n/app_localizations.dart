@@ -3001,6 +3001,295 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Canlı ve enerjik renkler'**
   String get colorSchemeSportSub;
+
+  /// Delete message for me only
+  ///
+  /// In tr, this message translates to:
+  /// **'Benden Sil'**
+  String get deleteForMe;
+
+  /// Delete message for everyone
+  ///
+  /// In tr, this message translates to:
+  /// **'Herkesten Sil'**
+  String get deleteForEveryone;
+
+  /// Deleted message placeholder text
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu mesaj silindi'**
+  String get messageDeleted;
+
+  /// Groups tab/nav label
+  ///
+  /// In tr, this message translates to:
+  /// **'Gruplar'**
+  String get groups;
+
+  /// Group singular label
+  ///
+  /// In tr, this message translates to:
+  /// **'Grup'**
+  String get group;
+
+  /// No groups yet empty state
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz grup yok'**
+  String get noGroupsYet;
+
+  /// Create group hint subtitle
+  ///
+  /// In tr, this message translates to:
+  /// **'Grup oluşturmak için + butonuna tıklayın'**
+  String get createGroupHint;
+
+  /// Create group button / screen title
+  ///
+  /// In tr, this message translates to:
+  /// **'Grup Oluştur'**
+  String get createGroup;
+
+  /// Edit group screen title
+  ///
+  /// In tr, this message translates to:
+  /// **'Grubu Düzenle'**
+  String get editGroup;
+
+  /// Delete group menu item
+  ///
+  /// In tr, this message translates to:
+  /// **'Grubu Sil'**
+  String get deleteGroup;
+
+  /// Delete group confirmation message
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu grubu silmek istiyor musunuz? Geçmiş seans kayıtları korunur.'**
+  String get deleteGroupConfirm;
+
+  /// Group name field label
+  ///
+  /// In tr, this message translates to:
+  /// **'Grup Adı'**
+  String get groupName;
+
+  /// Group name field hint
+  ///
+  /// In tr, this message translates to:
+  /// **'Sabah Grubu, Kilo Verme Grubu...'**
+  String get groupNameHint;
+
+  /// Group description field label
+  ///
+  /// In tr, this message translates to:
+  /// **'Açıklama'**
+  String get groupDescription;
+
+  /// Group description field hint
+  ///
+  /// In tr, this message translates to:
+  /// **'Grup hakkında kısa bilgi'**
+  String get groupDescriptionHint;
+
+  /// Group color picker label
+  ///
+  /// In tr, this message translates to:
+  /// **'Grup Rengi'**
+  String get groupColor;
+
+  /// Validation: group needs at least one member
+  ///
+  /// In tr, this message translates to:
+  /// **'En az bir üye seçmelisiniz'**
+  String get groupNeedMembers;
+
+  /// Select members section label
+  ///
+  /// In tr, this message translates to:
+  /// **'Üye Seç'**
+  String get selectMembers;
+
+  /// Selected count suffix (e.g. '3 seçili')
+  ///
+  /// In tr, this message translates to:
+  /// **'seçili'**
+  String get selected;
+
+  /// No active members to select
+  ///
+  /// In tr, this message translates to:
+  /// **'Aktif üye bulunamadı'**
+  String get noActiveMembers;
+
+  /// Members tab label
+  ///
+  /// In tr, this message translates to:
+  /// **'Üyeler'**
+  String get members;
+
+  /// No members in group empty state
+  ///
+  /// In tr, this message translates to:
+  /// **'Grupta henüz üye yok'**
+  String get noMembersInGroup;
+
+  /// Packages tab label
+  ///
+  /// In tr, this message translates to:
+  /// **'Paketler'**
+  String get packages;
+
+  /// Per member price suffix
+  ///
+  /// In tr, this message translates to:
+  /// **'üye başına'**
+  String get perMember;
+
+  /// Inactive status chip label
+  ///
+  /// In tr, this message translates to:
+  /// **'Pasif'**
+  String get inactive;
+
+  /// Required field validation message
+  ///
+  /// In tr, this message translates to:
+  /// **'Zorunlu alan'**
+  String get required;
+
+  /// Price field label
+  ///
+  /// In tr, this message translates to:
+  /// **'Fiyat'**
+  String get price;
+
+  /// Session count field label
+  ///
+  /// In tr, this message translates to:
+  /// **'Seans Sayısı'**
+  String get sessionCount;
+
+  /// New session screen title
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni Seans'**
+  String get newSession;
+
+  /// Session detail screen title
+  ///
+  /// In tr, this message translates to:
+  /// **'Seans Detayı'**
+  String get sessionDetail;
+
+  /// Date and time field label
+  ///
+  /// In tr, this message translates to:
+  /// **'Tarih & Saat'**
+  String get dateTime;
+
+  /// Attendance section label
+  ///
+  /// In tr, this message translates to:
+  /// **'Katılım'**
+  String get attendance;
+
+  /// Attended count suffix (e.g. '3/5 katıldı')
+  ///
+  /// In tr, this message translates to:
+  /// **'katıldı'**
+  String get attended;
+
+  /// Scheduled session status chip
+  ///
+  /// In tr, this message translates to:
+  /// **'Planlandı'**
+  String get scheduled;
+
+  /// Completed status chip label
+  ///
+  /// In tr, this message translates to:
+  /// **'Tamamlandı'**
+  String get completed;
+
+  /// Cancelled status chip label
+  ///
+  /// In tr, this message translates to:
+  /// **'İptal Edildi'**
+  String get cancelled;
+
+  /// Session completed chip label
+  ///
+  /// In tr, this message translates to:
+  /// **'Seans Tamamlandı'**
+  String get sessionCompleted;
+
+  /// Cancel session confirmation message
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu seansı iptal etmek istiyor musunuz?'**
+  String get cancelSessionConfirm;
+
+  /// No group sessions yet empty state
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz seans yok'**
+  String get noSessionsYet;
+
+  /// Notes optional hint text
+  ///
+  /// In tr, this message translates to:
+  /// **'Notlar (İsteğe bağlı)'**
+  String get optionalNotes;
+
+  /// Participants count suffix
+  ///
+  /// In tr, this message translates to:
+  /// **'katılımcı'**
+  String get participants;
+
+  /// Open chat button in group detail
+  ///
+  /// In tr, this message translates to:
+  /// **'Sohbeti Aç'**
+  String get openChat;
+
+  /// Individual packages tab label
+  ///
+  /// In tr, this message translates to:
+  /// **'Bireysel'**
+  String get individual;
+
+  /// Group packages tab label
+  ///
+  /// In tr, this message translates to:
+  /// **'Grup Paketleri'**
+  String get groupPackages;
+
+  /// Member not in any group empty state
+  ///
+  /// In tr, this message translates to:
+  /// **'Herhangi bir gruba üye değilsiniz'**
+  String get notInAnyGroup;
+
+  /// No group packages available empty state
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz grup paketi bulunmuyor'**
+  String get noGroupPackagesYet;
+
+  /// Already purchased button label (disabled)
+  ///
+  /// In tr, this message translates to:
+  /// **'Satın Alındı'**
+  String get alreadyPurchased;
+
+  /// Group package purchase confirmation dialog content
+  ///
+  /// In tr, this message translates to:
+  /// **'{name} paketini {groupName} grubu için {price} karşılığında satın almak istiyor musunuz?\n\n{count} seans hakkı PT onayından sonra hesabınıza yüklenecektir.'**
+  String groupPurchaseConfirm(
+      String name, String groupName, String price, int count);
 }
 
 class _AppLocalizationsDelegate

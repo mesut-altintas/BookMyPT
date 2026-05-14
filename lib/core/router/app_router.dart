@@ -24,6 +24,10 @@ import '../../features/pt_calendar/presentation/screens/session_detail_screen.da
 import '../../features/pt_earnings/presentation/screens/earnings_screen.dart';
 import '../../features/pt_earnings/presentation/screens/package_management_screen.dart';
 
+// PT Group Screens
+import '../../features/pt_groups/presentation/screens/create_group_screen.dart';
+import '../../features/pt_groups/presentation/screens/group_detail_screen.dart';
+
 // Member Screens
 import '../../features/m_booking/presentation/screens/member_dashboard_screen.dart';
 import '../../features/m_booking/presentation/screens/booking_screen.dart';
@@ -44,6 +48,9 @@ import '../../features/pt_search/presentation/screens/find_pt_screen.dart';
 import '../../shared/widgets/pt_shell.dart';
 import '../../shared/widgets/member_shell.dart';
 import '../../features/auth/presentation/screens/profile_screen.dart';
+
+/// Global navigator key — used by NotificationService for deep-link navigation.
+final navigatorKey = GlobalKey<NavigatorState>();
 
 class _AuthRefreshNotifier extends ChangeNotifier {
   _AuthRefreshNotifier() {
@@ -80,6 +87,10 @@ class AppRoutes {
   static const ptChatList = '/pt/chat';
   static const ptChat = '/pt/chat/:chatId';
 
+  // PT Groups (outside shell — full-screen)
+  static const createGroup = '/pt/groups/create';
+  static const groupDetail = '/pt/groups/:groupId';
+
   // Member shell routes
   static const memberDashboard = '/member/dashboard';
   static const memberCalendar = '/member/calendar';
@@ -107,6 +118,7 @@ final routerProvider = Provider<GoRouter>((ref) {
   ref.onDispose(notifier.dispose);
 
   return GoRouter(
+    navigatorKey: navigatorKey,
     initialLocation: AppRoutes.splash,
     debugLogDiagnostics: false,
     refreshListenable: notifier,
@@ -156,6 +168,20 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.profile,
         builder: (_, __) => const ProfileScreen(),
+      ),
+
+      // PT Group full-screen routes
+      GoRoute(
+        path: AppRoutes.createGroup,
+        builder: (_, state) => CreateGroupScreen(
+          initialGroup: state.extra as dynamic,
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.groupDetail,
+        builder: (_, state) => GroupDetailScreen(
+          groupId: state.pathParameters['groupId']!,
+        ),
       ),
 
       // Member full-screen routes (outside shell — no bottom nav)

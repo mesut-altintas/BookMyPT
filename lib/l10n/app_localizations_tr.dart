@@ -1582,4 +1582,152 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get colorSchemeSportSub => 'Canlı ve enerjik renkler';
+
+  @override
+  String get deleteForMe => 'Benden Sil';
+
+  @override
+  String get deleteForEveryone => 'Herkesten Sil';
+
+  @override
+  String get messageDeleted => 'Bu mesaj silindi';
+
+  @override
+  String get groups => 'Gruplar';
+
+  @override
+  String get group => 'Grup';
+
+  @override
+  String get noGroupsYet => 'Henüz grup yok';
+
+  @override
+  String get createGroupHint => 'Grup oluşturmak için + butonuna tıklayın';
+
+  @override
+  String get createGroup => 'Grup Oluştur';
+
+  @override
+  String get editGroup => 'Grubu Düzenle';
+
+  @override
+  String get deleteGroup => 'Grubu Sil';
+
+  @override
+  String get deleteGroupConfirm =>
+      'Bu grubu silmek istiyor musunuz? Geçmiş seans kayıtları korunur.';
+
+  @override
+  String get groupName => 'Grup Adı';
+
+  @override
+  String get groupNameHint => 'Sabah Grubu, Kilo Verme Grubu...';
+
+  @override
+  String get groupDescription => 'Açıklama';
+
+  @override
+  String get groupDescriptionHint => 'Grup hakkında kısa bilgi';
+
+  @override
+  String get groupColor => 'Grup Rengi';
+
+  @override
+  String get groupNeedMembers => 'En az bir üye seçmelisiniz';
+
+  @override
+  String get selectMembers => 'Üye Seç';
+
+  @override
+  String get selected => 'seçili';
+
+  @override
+  String get noActiveMembers => 'Aktif üye bulunamadı';
+
+  @override
+  String get members => 'Üyeler';
+
+  @override
+  String get noMembersInGroup => 'Grupta henüz üye yok';
+
+  @override
+  String get packages => 'Paketler';
+
+  @override
+  String get perMember => 'üye başına';
+
+  @override
+  String get inactive => 'Pasif';
+
+  @override
+  String get required => 'Zorunlu alan';
+
+  @override
+  String get price => 'Fiyat';
+
+  @override
+  String get sessionCount => 'Seans Sayısı';
+
+  @override
+  String get newSession => 'Yeni Seans';
+
+  @override
+  String get sessionDetail => 'Seans Detayı';
+
+  @override
+  String get dateTime => 'Tarih & Saat';
+
+  @override
+  String get attendance => 'Katılım';
+
+  @override
+  String get attended => 'katıldı';
+
+  @override
+  String get scheduled => 'Planlandı';
+
+  @override
+  String get completed => 'Tamamlandı';
+
+  @override
+  String get cancelled => 'İptal Edildi';
+
+  @override
+  String get sessionCompleted => 'Seans Tamamlandı';
+
+  @override
+  String get cancelSessionConfirm => 'Bu seansı iptal etmek istiyor musunuz?';
+
+  @override
+  String get noSessionsYet => 'Henüz seans yok';
+
+  @override
+  String get optionalNotes => 'Notlar (İsteğe bağlı)';
+
+  @override
+  String get participants => 'katılımcı';
+
+  @override
+  String get openChat => 'Sohbeti Aç';
+
+  @override
+  String get individual => 'Bireysel';
+
+  @override
+  String get groupPackages => 'Grup Paketleri';
+
+  @override
+  String get notInAnyGroup => 'Herhangi bir gruba üye değilsiniz';
+
+  @override
+  String get noGroupPackagesYet => 'Henüz grup paketi bulunmuyor';
+
+  @override
+  String get alreadyPurchased => 'Satın Alındı';
+
+  @override
+  String groupPurchaseConfirm(
+      String name, String groupName, String price, int count) {
+    return '$name paketini $groupName grubu için $price karşılığında satın almak istiyor musunuz?\n\n$count seans hakkı PT onayından sonra hesabınıza yüklenecektir.';
+  }
 }

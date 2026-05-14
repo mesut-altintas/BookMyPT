@@ -17,6 +17,9 @@ class AppConstants {
   static const String packagesSubCollection = 'packages';
   static const String invitationsCollection = 'invitations';
   static const String personalEventsCollection = 'personal_events';
+  static const String groupsCollection = 'groups';
+  static const String groupPackagesCollection = 'group_packages';
+  static const String groupSessionsCollection = 'group_sessions';
 
   // Storage Paths
   static const String profilePhotosPath = 'profile_photos';

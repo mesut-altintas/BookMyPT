@@ -14,6 +14,7 @@ import '../../../../shared/widgets/app_error.dart';
 import '../../../../shared/widgets/user_avatar.dart';
 import '../../../../shared/models/member_model.dart';
 import '../../../pt_members/providers/pt_members_provider.dart';
+import '../../../pt_groups/providers/pt_groups_provider.dart';
 
 class MemberListScreen extends ConsumerStatefulWidget {
   const MemberListScreen({super.key});
@@ -30,7 +31,7 @@ class _MemberListScreenState extends ConsumerState<MemberListScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
   }
 
   @override
@@ -56,37 +57,49 @@ class _MemberListScreenState extends ConsumerState<MemberListScreen>
   Scaffold _buildScaffold(BuildContext context, WidgetRef ref, String ptId) {
     final membersAsync = ref.watch(ptMembersProvider(ptId));
     final requestCount = ref.watch(ptPendingRequestsCountProvider);
+    final l10n = context.l10n;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(context.l10n.myMembers),
+        title: Text(l10n.myMembers),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.person_add_outlined),
-            onPressed: () => context.push(AppRoutes.addMember),
-          ),
+          if (_tabController.index == 4)
+            IconButton(
+              icon: const Icon(Icons.group_add_outlined),
+              onPressed: () => context.push(AppRoutes.createGroup),
+            )
+          else
+            IconButton(
+              icon: const Icon(Icons.person_add_outlined),
+              onPressed: () => context.push(AppRoutes.addMember),
+            ),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(108),
           child: Column(
             children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                child: TextField(
-                  onChanged: (v) => setState(() => _search = v.toLowerCase()),
-                  decoration: InputDecoration(
-                    hintText: context.l10n.searchMember,
-                    prefixIcon: const Icon(Icons.search),
-                    contentPadding: const EdgeInsets.symmetric(vertical: 0),
+              if (_tabController.index != 4)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: TextField(
+                    onChanged: (v) => setState(() => _search = v.toLowerCase()),
+                    decoration: InputDecoration(
+                      hintText: l10n.searchMember,
+                      prefixIcon: const Icon(Icons.search),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                    ),
                   ),
-                ),
-              ),
+                )
+              else
+                const SizedBox(height: 8),
               TabBar(
                 controller: _tabController,
+                isScrollable: true,
+                tabAlignment: TabAlignment.start,
                 tabs: [
-                  Tab(text: context.l10n.all),
-                  Tab(text: context.l10n.active),
-                  Tab(text: context.l10n.passive),
+                  Tab(text: l10n.all),
+                  Tab(text: l10n.active),
+                  Tab(text: l10n.passive),
                   Tab(
                     child: requestCount > 0
                         ? badges.Badge(
@@ -95,10 +108,20 @@ class _MemberListScreenState extends ConsumerState<MemberListScreen>
                                     color: Colors.white, fontSize: 10)),
                             child: Padding(
                               padding: const EdgeInsets.only(right: 8),
-                              child: Text(context.l10n.requests),
+                              child: Text(l10n.requests),
                             ),
                           )
-                        : Text(context.l10n.requests),
+                        : Text(l10n.requests),
+                  ),
+                  Tab(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.group, size: 14),
+                        const SizedBox(width: 4),
+                        Text(l10n.groups),
+                      ],
+                    ),
                   ),
                 ],
                 onTap: (_) => setState(() {}),
@@ -109,7 +132,9 @@ class _MemberListScreenState extends ConsumerState<MemberListScreen>
       ),
       body: _tabController.index == 3
           ? _MemberRequestsTab(ptId: ptId)
-          : membersAsync.when(
+          : _tabController.index == 4
+              ? _GroupsTab(ptId: ptId)
+              : membersAsync.when(
               loading: () => const AppLoading(),
               error: (e, _) => AppError(
                 message: e.toString(),
@@ -175,10 +200,86 @@ class _MemberListScreenState extends ConsumerState<MemberListScreen>
                 );
               },
             ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push(AppRoutes.addMember),
-        child: const Icon(Icons.person_add),
-      ),
+      floatingActionButton: _tabController.index == 4
+          ? FloatingActionButton(
+              onPressed: () => context.push(AppRoutes.createGroup),
+              child: const Icon(Icons.group_add),
+            )
+          : FloatingActionButton(
+              onPressed: () => context.push(AppRoutes.addMember),
+              child: const Icon(Icons.person_add),
+            ),
+    );
+  }
+}
+
+// ─── Groups Tab ───────────────────────────────────────────────────────────────
+
+class _GroupsTab extends ConsumerWidget {
+  final String ptId;
+
+  const _GroupsTab({required this.ptId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final groupsAsync = ref.watch(ptGroupsProvider(ptId));
+    final l10n = context.l10n;
+    final theme = Theme.of(context);
+
+    return groupsAsync.when(
+      loading: () => const AppLoading(),
+      error: (e, _) => AppError(message: e.toString()),
+      data: (groups) {
+        if (groups.isEmpty) {
+          return AppEmpty(
+            message: l10n.noGroupsYet,
+            subMessage: l10n.createGroupHint,
+            icon: Icons.group_outlined,
+            action: ElevatedButton.icon(
+              onPressed: () => context.push(AppRoutes.createGroup),
+              icon: const Icon(Icons.group_add),
+              label: Text(l10n.createGroup),
+            ),
+          );
+        }
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: groups.length,
+          itemBuilder: (_, i) {
+            final g = groups[i];
+            final color = Color(g.colorValue);
+            return Card(
+              margin: const EdgeInsets.only(bottom: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+              elevation: 1,
+              child: ListTile(
+                onTap: () =>
+                    context.push('/pt/groups/${g.id}'),
+                leading: CircleAvatar(
+                  backgroundColor: color,
+                  child: Text(
+                    g.name.isNotEmpty ? g.name[0].toUpperCase() : 'G',
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700),
+                  ),
+                ),
+                title: Text(g.name,
+                    style: const TextStyle(fontWeight: FontWeight.w600)),
+                subtitle: Text(
+                  '${g.memberIds.length} ${l10n.members}',
+                  style: TextStyle(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      fontSize: 12),
+                ),
+                trailing: const Icon(Icons.chevron_right),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

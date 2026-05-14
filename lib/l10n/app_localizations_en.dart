@@ -1581,4 +1581,153 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get colorSchemeSportSub => 'Vibrant and energetic colors';
+
+  @override
+  String get deleteForMe => 'Delete for Me';
+
+  @override
+  String get deleteForEveryone => 'Delete for Everyone';
+
+  @override
+  String get messageDeleted => 'This message was deleted';
+
+  @override
+  String get groups => 'Groups';
+
+  @override
+  String get group => 'Group';
+
+  @override
+  String get noGroupsYet => 'No groups yet';
+
+  @override
+  String get createGroupHint => 'Tap + to create a group';
+
+  @override
+  String get createGroup => 'Create Group';
+
+  @override
+  String get editGroup => 'Edit Group';
+
+  @override
+  String get deleteGroup => 'Delete Group';
+
+  @override
+  String get deleteGroupConfirm =>
+      'Are you sure you want to delete this group? Past session records will be kept.';
+
+  @override
+  String get groupName => 'Group Name';
+
+  @override
+  String get groupNameHint => 'Morning Group, Weight Loss Group...';
+
+  @override
+  String get groupDescription => 'Description';
+
+  @override
+  String get groupDescriptionHint => 'Brief description of the group';
+
+  @override
+  String get groupColor => 'Group Color';
+
+  @override
+  String get groupNeedMembers => 'Please select at least one member';
+
+  @override
+  String get selectMembers => 'Select Members';
+
+  @override
+  String get selected => 'selected';
+
+  @override
+  String get noActiveMembers => 'No active members found';
+
+  @override
+  String get members => 'Members';
+
+  @override
+  String get noMembersInGroup => 'No members in this group yet';
+
+  @override
+  String get packages => 'Packages';
+
+  @override
+  String get perMember => 'per member';
+
+  @override
+  String get inactive => 'Inactive';
+
+  @override
+  String get required => 'Required';
+
+  @override
+  String get price => 'Price';
+
+  @override
+  String get sessionCount => 'Session Count';
+
+  @override
+  String get newSession => 'New Session';
+
+  @override
+  String get sessionDetail => 'Session Detail';
+
+  @override
+  String get dateTime => 'Date & Time';
+
+  @override
+  String get attendance => 'Attendance';
+
+  @override
+  String get attended => 'attended';
+
+  @override
+  String get scheduled => 'Scheduled';
+
+  @override
+  String get completed => 'Completed';
+
+  @override
+  String get cancelled => 'Cancelled';
+
+  @override
+  String get sessionCompleted => 'Session Completed';
+
+  @override
+  String get cancelSessionConfirm =>
+      'Are you sure you want to cancel this session?';
+
+  @override
+  String get noSessionsYet => 'No sessions yet';
+
+  @override
+  String get optionalNotes => 'Notes (optional)';
+
+  @override
+  String get participants => 'participants';
+
+  @override
+  String get openChat => 'Open Chat';
+
+  @override
+  String get individual => 'Individual';
+
+  @override
+  String get groupPackages => 'Group Packages';
+
+  @override
+  String get notInAnyGroup => 'You are not a member of any group';
+
+  @override
+  String get noGroupPackagesYet => 'No group packages available';
+
+  @override
+  String get alreadyPurchased => 'Already Purchased';
+
+  @override
+  String groupPurchaseConfirm(
+      String name, String groupName, String price, int count) {
+    return 'Would you like to purchase the $name package for $groupName for $price?\n\n$count session credits will be added to your account after PT approval.';
+  }
 }

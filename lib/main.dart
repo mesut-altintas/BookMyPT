@@ -1,9 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'l10n/app_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
@@ -13,6 +15,7 @@ import 'core/theme/app_theme.dart';
 import 'features/auth/providers/auth_provider.dart';
 import 'firebase_options.dart';
 import 'shared/services/notification_service.dart';
+import 'shared/services/notification_badge_service.dart';
 import 'shared/services/theme_service.dart';
 import 'shared/services/locale_service.dart';
 import 'shared/services/color_scheme_service.dart';
@@ -20,21 +23,18 @@ import 'shared/services/color_scheme_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize date formatting for Turkish locale
   await initializeDateFormatting('tr_TR', null);
 
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // Disable offline persistence to prevent stale auth error states from
-  // carrying over across user sessions (logout → login permission-denied bug).
+  // Disable offline persistence to prevent stale auth error states
   FirebaseFirestore.instance.settings = const Settings(persistenceEnabled: false);
 
   // Fire-and-forget — permission dialog must not block runApp
   NotificationService().initialize().catchError((_) {});
 
-  // Set preferred orientations
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
@@ -54,11 +54,59 @@ void main() async {
   );
 }
 
-class FitCoachApp extends ConsumerWidget {
+class FitCoachApp extends ConsumerStatefulWidget {
   const FitCoachApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<FitCoachApp> createState() => _FitCoachAppState();
+}
+
+class _FitCoachAppState extends ConsumerState<FitCoachApp> {
+  @override
+  void initState() {
+    super.initState();
+    _setupNotifications();
+  }
+
+  void _setupNotifications() {
+    // ── Local notification tap (app in foreground) ──────────────────────────
+    NotificationService.onLocalNotificationTap = (route) {
+      navigatorKey.currentContext?.go(route);
+    };
+
+    // ── Foreground FCM message → increment badge ────────────────────────────
+    NotificationService.onForegroundMessage = (type) {
+      final source = notificationSourceFromType(type);
+      if (source != null) {
+        ref.read(notificationBadgeProvider.notifier).increment(source);
+      }
+    };
+
+    // ── Background tap: app was in background, user tapped notification ─────
+    FirebaseMessaging.onMessageOpenedApp.listen((message) {
+      final route = message.data['route'] as String?;
+      if (route != null) {
+        Future.delayed(const Duration(milliseconds: 300), () {
+          navigatorKey.currentContext?.go(route);
+        });
+      }
+    });
+
+    // ── Terminated tap: app was closed, user tapped notification ───────────
+    FirebaseMessaging.instance.getInitialMessage().then((message) {
+      if (message != null) {
+        final route = message.data['route'] as String?;
+        if (route != null) {
+          Future.delayed(const Duration(milliseconds: 1000), () {
+            navigatorKey.currentContext?.go(route);
+          });
+        }
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final router = ref.watch(routerProvider);
     final themeMode = ref.watch(themeModeProvider);
     final locale = ref.watch(localeProvider);
@@ -70,7 +118,6 @@ class FitCoachApp extends ConsumerWidget {
     ref.listen(currentUserProvider, (_, userAsync) {
       userAsync.whenData((user) async {
         if (user != null) {
-          // Update FCM token
           final token = await NotificationService().getToken();
           if (token != null) {
             await ref

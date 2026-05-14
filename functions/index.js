@@ -18,38 +18,33 @@ async function getFcmToken(uid) {
   return data.fcmToken ?? null;
 }
 
-async function sendNotification(token, title, body) {
+// data: { route, type } — route = GoRouter path, type = badge source key
+async function sendNotification(token, title, body, data = {}) {
   if (!token) return;
   try {
     await messaging.send({
       token,
       notification: { title, body },
-      // iOS (APNs) — sound + high priority required for visible notification
-      apns: {
-        headers: {
-          'apns-priority': '10',
-        },
-        payload: {
-          aps: {
-            sound: 'default',
-            badge: 1,
-          },
-        },
+      data: {
+        click_action: 'FLUTTER_NOTIFICATION_CLICK',
+        ...Object.fromEntries(Object.entries(data).map(([k, v]) => [k, String(v)])),
       },
-      // Android — high priority channel
+      apns: {
+        headers: { 'apns-priority': '10' },
+        payload: { aps: { sound: 'default', badge: 1 } },
+      },
       android: {
         priority: 'high',
-        notification: {
-          sound: 'default',
-          channelId: 'bookmypt_default',
-        },
+        notification: { sound: 'default', channelId: 'bookmypt_default' },
       },
     });
     console.log('Notification sent to', token.substring(0, 20) + '...');
   } catch (e) {
-    console.error('FCM send error:', e.message, '| code:', e.code, '| token prefix:', token.substring(0, 15));
+    console.error('FCM send error:', e.message, '| code:', e.code);
   }
 }
+
+// ─── Payment events ───────────────────────────────────────────────────────────
 
 exports.paymentCreated = functions.firestore
   .document('payments/{paymentId}')
@@ -57,15 +52,17 @@ exports.paymentCreated = functions.firestore
     const payment = snap.data();
     if (!payment) return;
 
-    const { ptId, memberId, packageName, sessionCount } = payment;
+    const { ptId, memberId, packageName, sessionCount, isGroup, groupName } = payment;
     const memberData = await getUserData(memberId);
     const memberName = memberData.name || memberData.displayName || 'Bir üye';
 
     const ptToken = await getFcmToken(ptId);
+    const label = isGroup ? `"${groupName}" grubu için ` : '';
     await sendNotification(
       ptToken,
       'Yeni Paket Satın Alındı',
-      `${memberName} "${packageName}" paketini (${sessionCount} seans) satın aldı`
+      `${memberName} ${label}"${packageName}" paketini (${sessionCount} seans) satın aldı`,
+      { route: '/pt/earnings', type: 'earnings' }
     );
   });
 
@@ -84,10 +81,13 @@ exports.paymentUpdated = functions.firestore
       await sendNotification(
         memberToken,
         'Paketiniz Onaylandı',
-        `"${packageName}" paketi (${sessionCount} seans) onaylandı ve hesabınıza eklendi`
+        `"${packageName}" paketi (${sessionCount} seans) onaylandı ve hesabınıza eklendi`,
+        { route: '/member/payment', type: 'payment' }
       );
     }
   });
+
+// ─── Session events ───────────────────────────────────────────────────────────
 
 exports.sessionCreated = functions.firestore
   .document('sessions/{sessionId}')
@@ -95,10 +95,24 @@ exports.sessionCreated = functions.firestore
     const session = snap.data();
     if (!session) return;
 
-    const { ptId, memberId, memberName } = session;
+    const { ptId, memberId, memberName, isGroup, groupName } = session;
+    const label = isGroup ? `"${groupName}" grubu` : (memberName || 'Bir üye');
     const [ptToken, memberToken] = await Promise.all([getFcmToken(ptId), getFcmToken(memberId)]);
-    await sendNotification(ptToken, 'Yeni Randevu Talebi', `${memberName || 'Bir üye'} randevu talep etti`);
-    await sendNotification(memberToken, 'Randevu Talebiniz Alındı', 'Eğitmeniniz talebinizi inceleyecek');
+
+    await sendNotification(
+      ptToken,
+      'Yeni Randevu Talebi',
+      `${label} randevu talep etti`,
+      { route: '/pt/members', type: 'members' }
+    );
+    if (!isGroup) {
+      await sendNotification(
+        memberToken,
+        'Randevu Talebiniz Alındı',
+        'Eğitmeniniz talebinizi inceleyecek',
+        { route: '/member/calendar', type: 'calendar' }
+      );
+    }
   });
 
 exports.sessionUpdated = functions.firestore
@@ -108,9 +122,9 @@ exports.sessionUpdated = functions.firestore
     const after = change.after.data();
     if (!before || !after) return;
 
-    const { memberId, ptId, memberName } = after;
+    const { memberId, ptId, memberName, groupId } = after;
 
-    // Member updated their pending request (date/time or duration changed)
+    // Pending→pending: date/duration changed
     if (before.status === 'pending' && after.status === 'pending') {
       const beforeMs = before.dateTime ? before.dateTime.toMillis() : 0;
       const afterMs  = after.dateTime  ? after.dateTime.toMillis()  : 0;
@@ -127,7 +141,8 @@ exports.sessionUpdated = functions.firestore
         await sendNotification(
           ptToken,
           'Randevu Talebi Güncellendi',
-          `${memberName || 'Üye'} talebini ${dateStr} olarak değiştirdi`
+          `${memberName || 'Üye'} talebini ${dateStr} olarak değiştirdi`,
+          { route: '/pt/members', type: 'members' }
         );
       }
       return;
@@ -136,15 +151,137 @@ exports.sessionUpdated = functions.firestore
     if (before.status === after.status) return;
 
     if (after.status === 'confirmed' && before.status === 'pending') {
+      const route = groupId ? `/member/calendar` : '/member/calendar';
       const token = await getFcmToken(memberId);
-      await sendNotification(token, 'Randevunuz Onaylandı', 'Eğitmeniniz randevunuzu onayladı');
+      await sendNotification(
+        token,
+        'Randevunuz Onaylandı',
+        'Eğitmeniniz randevunuzu onayladı',
+        { route, type: 'calendar' }
+      );
     } else if (after.status === 'cancelled') {
-      const memberToken = await getFcmToken(memberId);
-      const ptToken = await getFcmToken(ptId);
-      await sendNotification(memberToken, 'Randevu İptal Edildi', 'Bir randevunuz iptal edildi');
-      await sendNotification(ptToken, 'Randevu İptal Edildi', `${memberName || 'Üye'} randevusunu iptal etti`);
+      const [memberToken, ptToken] = await Promise.all([getFcmToken(memberId), getFcmToken(ptId)]);
+      await sendNotification(memberToken, 'Randevu İptal Edildi', 'Bir randevunuz iptal edildi',
+        { route: '/member/calendar', type: 'calendar' });
+      await sendNotification(ptToken, 'Randevu İptal Edildi', `${memberName || 'Üye'} randevusunu iptal etti`,
+        { route: '/pt/calendar', type: 'calendar' });
     } else if (after.status === 'completed') {
       const token = await getFcmToken(memberId);
-      await sendNotification(token, 'Seans Tamamlandı', 'Seansınız tamamlandı. Harika iş!');
+      await sendNotification(token, 'Seans Tamamlandı', 'Seansınız tamamlandı. Harika iş!',
+        { route: '/member/calendar', type: 'calendar' });
+    }
+  });
+
+// ─── Group session events ─────────────────────────────────────────────────────
+
+exports.groupSessionCreated = functions.firestore
+  .document('group_sessions/{sessionId}')
+  .onCreate(async (snap) => {
+    const session = snap.data();
+    if (!session) return;
+
+    const { ptId, memberIds, groupName } = session;
+    if (!Array.isArray(memberIds)) return;
+
+    const tokens = await Promise.all(memberIds.map(uid => getFcmToken(uid)));
+    const dateObj = session.dateTime ? session.dateTime.toDate() : new Date();
+    const dateStr = dateObj.toLocaleDateString('tr-TR', {
+      day: 'numeric', month: 'long',
+      hour: '2-digit', minute: '2-digit',
+      timeZone: 'Europe/Istanbul',
+    });
+
+    await Promise.all(tokens.map(token =>
+      sendNotification(
+        token,
+        'Yeni Grup Seansı',
+        `"${groupName}" grubu ${dateStr} tarihinde seans planlandı`,
+        { route: '/member/calendar', type: 'calendar' }
+      )
+    ));
+  });
+
+exports.groupSessionUpdated = functions.firestore
+  .document('group_sessions/{sessionId}')
+  .onUpdate(async (change) => {
+    const before = change.before.data();
+    const after = change.after.data();
+    if (!before || !after) return;
+    if (before.status === after.status) return;
+
+    const { memberIds, groupName } = after;
+    if (!Array.isArray(memberIds)) return;
+
+    const tokens = await Promise.all(memberIds.map(uid => getFcmToken(uid)));
+
+    if (after.status === 'cancelled') {
+      await Promise.all(tokens.map(token =>
+        sendNotification(token, 'Grup Seansı İptal', `"${groupName}" grubu seansı iptal edildi`,
+          { route: '/member/calendar', type: 'calendar' })
+      ));
+    } else if (after.status === 'completed') {
+      await Promise.all(tokens.map(token =>
+        sendNotification(token, 'Grup Seansı Tamamlandı', `"${groupName}" grup seansınız tamamlandı!`,
+          { route: '/member/calendar', type: 'calendar' })
+      ));
+    }
+  });
+
+// ─── Chat message event ───────────────────────────────────────────────────────
+
+exports.chatMessageCreated = functions.firestore
+  .document('chats/{chatId}/messages/{messageId}')
+  .onCreate(async (snap, context) => {
+    const message = snap.data();
+    if (!message) return;
+    if (message.deletedForEveryone) return;
+
+    const { chatId } = context.params;
+    const chatSnap = await db.collection('chats').doc(chatId).get();
+    const chat = chatSnap.data();
+    if (!chat) return;
+
+    const senderId = message.senderId;
+    const text = message.text || '📷 Görsel';
+
+    if (chat.isGroup) {
+      // Group chat: notify all participants except sender
+      const participants = chat.participants || [];
+      const recipients = participants.filter(uid => uid !== senderId);
+      const tokens = await Promise.all(recipients.map(uid => getFcmToken(uid)));
+      const senderData = await getUserData(senderId);
+      const senderName = senderData.name || senderData.displayName || 'Biri';
+      const groupName = chat.groupName || 'Grup';
+
+      await Promise.all(tokens.map(token =>
+        sendNotification(
+          token,
+          `${groupName}: ${senderName}`,
+          text,
+          {
+            route: recipients.includes(chat.ptId)
+              ? `/pt/chat/${chatId}`
+              : `/member/chat/${chatId}`,
+            type: 'chat',
+          }
+        )
+      ));
+    } else {
+      // 1:1 chat
+      const recipientId = senderId === chat.ptId ? chat.memberId : chat.ptId;
+      const isPtRecipient = recipientId === chat.ptId;
+      const senderData = await getUserData(senderId);
+      const senderName = senderData.name || senderData.displayName || 'Biri';
+      const token = await getFcmToken(recipientId);
+
+      await sendNotification(
+        token,
+        senderName,
+        text,
+        {
+          route: isPtRecipient ? `/pt/chat/${chatId}` : `/member/chat/${chatId}`,
+          type: 'chat',
+        }
+      );
     }
   });

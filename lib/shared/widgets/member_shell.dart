@@ -1,11 +1,12 @@
+import 'package:badges/badges.dart' as badges;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:badges/badges.dart' as badges;
 
 import '../../core/l10n/extensions.dart';
 import '../../core/router/app_router.dart';
 import '../../features/m_calendar/providers/invitation_provider.dart';
+import '../../shared/services/notification_badge_service.dart';
 
 class MemberShell extends ConsumerWidget {
   final Widget child;
@@ -22,11 +23,34 @@ class MemberShell extends ConsumerWidget {
     return 0;
   }
 
+  Widget _badgedIcon(Widget icon, int count) {
+    if (count == 0) return icon;
+    return badges.Badge(
+      badgeContent: Text(
+        count > 9 ? '9+' : '$count',
+        style: const TextStyle(color: Colors.white, fontSize: 9),
+      ),
+      badgeStyle: const badges.BadgeStyle(badgeColor: Colors.red),
+      child: icon,
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedIndex = _getSelectedIndex(context);
     final pendingCount = ref.watch(pendingInvitationsCountProvider);
+    final badgeMap = ref.watch(notificationBadgeProvider);
     final l10n = context.l10n;
+
+    void go(String route, [NotificationSource? source]) {
+      if (source != null) {
+        ref.read(notificationBadgeProvider.notifier).clear(source);
+      }
+      context.go(route);
+    }
+
+    // Home badge = invitations (existing) OR calendar notifications
+    final homeBadge = pendingCount + (badgeMap[NotificationSource.calendar] ?? 0);
 
     return Scaffold(
       body: child,
@@ -45,38 +69,17 @@ class MemberShell extends ConsumerWidget {
           labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
           onDestinationSelected: (index) {
             switch (index) {
-              case 0:
-                context.go(AppRoutes.memberDashboard);
-                break;
-              case 1:
-                context.go(AppRoutes.memberCalendar);
-                break;
-              case 2:
-                context.go(AppRoutes.memberPrograms);
-                break;
-              case 3:
-                context.go(AppRoutes.progress);
-                break;
-              case 4:
-                context.go(AppRoutes.payment);
-                break;
-              case 5:
-                context.go(AppRoutes.chatList);
-                break;
+              case 0: go(AppRoutes.memberDashboard); break;
+              case 1: go(AppRoutes.memberCalendar, NotificationSource.calendar); break;
+              case 2: go(AppRoutes.memberPrograms); break;
+              case 3: go(AppRoutes.progress); break;
+              case 4: go(AppRoutes.payment, NotificationSource.payment); break;
+              case 5: go(AppRoutes.chatList, NotificationSource.chat); break;
             }
           },
           destinations: [
             NavigationDestination(
-              icon: pendingCount > 0
-                  ? badges.Badge(
-                      badgeContent: Text(
-                        '$pendingCount',
-                        style: const TextStyle(
-                            color: Colors.white, fontSize: 10),
-                      ),
-                      child: const Icon(Icons.home_outlined),
-                    )
-                  : const Icon(Icons.home_outlined),
+              icon: _badgedIcon(const Icon(Icons.home_outlined), homeBadge),
               selectedIcon: const Icon(Icons.home),
               label: l10n.navHome,
             ),
@@ -96,12 +99,14 @@ class MemberShell extends ConsumerWidget {
               label: l10n.navProgress,
             ),
             NavigationDestination(
-              icon: const Icon(Icons.inventory_2_outlined),
+              icon: _badgedIcon(const Icon(Icons.inventory_2_outlined),
+                  badgeMap[NotificationSource.payment] ?? 0),
               selectedIcon: const Icon(Icons.inventory_2),
               label: l10n.navPackages,
             ),
             NavigationDestination(
-              icon: const Icon(Icons.chat_outlined),
+              icon: _badgedIcon(const Icon(Icons.chat_outlined),
+                  badgeMap[NotificationSource.chat] ?? 0),
               selectedIcon: const Icon(Icons.chat),
               label: l10n.navChat,
             ),

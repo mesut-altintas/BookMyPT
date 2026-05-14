@@ -1562,5 +1562,157 @@
   "@colorSchemeSport": { "description": "Sport color scheme name" },
 
   "colorSchemeSportSub": "Canlı ve enerjik renkler",
-  "@colorSchemeSportSub": { "description": "Sport color scheme subtitle" }
+  "@colorSchemeSportSub": { "description": "Sport color scheme subtitle" },
+
+  "deleteForMe": "Benden Sil",
+  "@deleteForMe": { "description": "Delete message for me only" },
+
+  "deleteForEveryone": "Herkesten Sil",
+  "@deleteForEveryone": { "description": "Delete message for everyone" },
+
+  "messageDeleted": "Bu mesaj silindi",
+  "@messageDeleted": { "description": "Deleted message placeholder text" },
+
+  "groups": "Gruplar",
+  "@groups": { "description": "Groups tab/nav label" },
+
+  "group": "Grup",
+  "@group": { "description": "Group singular label" },
+
+  "noGroupsYet": "Henüz grup yok",
+  "@noGroupsYet": { "description": "No groups yet empty state" },
+
+  "createGroupHint": "Grup oluşturmak için + butonuna tıklayın",
+  "@createGroupHint": { "description": "Create group hint subtitle" },
+
+  "createGroup": "Grup Oluştur",
+  "@createGroup": { "description": "Create group button / screen title" },
+
+  "editGroup": "Grubu Düzenle",
+  "@editGroup": { "description": "Edit group screen title" },
+
+  "deleteGroup": "Grubu Sil",
+  "@deleteGroup": { "description": "Delete group menu item" },
+
+  "deleteGroupConfirm": "Bu grubu silmek istiyor musunuz? Geçmiş seans kayıtları korunur.",
+  "@deleteGroupConfirm": { "description": "Delete group confirmation message" },
+
+  "groupName": "Grup Adı",
+  "@groupName": { "description": "Group name field label" },
+
+  "groupNameHint": "Sabah Grubu, Kilo Verme Grubu...",
+  "@groupNameHint": { "description": "Group name field hint" },
+
+  "groupDescription": "Açıklama",
+  "@groupDescription": { "description": "Group description field label" },
+
+  "groupDescriptionHint": "Grup hakkında kısa bilgi",
+  "@groupDescriptionHint": { "description": "Group description field hint" },
+
+  "groupColor": "Grup Rengi",
+  "@groupColor": { "description": "Group color picker label" },
+
+  "groupNeedMembers": "En az bir üye seçmelisiniz",
+  "@groupNeedMembers": { "description": "Validation: group needs at least one member" },
+
+  "selectMembers": "Üye Seç",
+  "@selectMembers": { "description": "Select members section label" },
+
+  "selected": "seçili",
+  "@selected": { "description": "Selected count suffix (e.g. '3 seçili')" },
+
+  "noActiveMembers": "Aktif üye bulunamadı",
+  "@noActiveMembers": { "description": "No active members to select" },
+
+  "members": "Üyeler",
+  "@members": { "description": "Members tab label" },
+
+  "noMembersInGroup": "Grupta henüz üye yok",
+  "@noMembersInGroup": { "description": "No members in group empty state" },
+
+  "packages": "Paketler",
+  "@packages": { "description": "Packages tab label" },
+
+  "perMember": "üye başına",
+  "@perMember": { "description": "Per member price suffix" },
+
+  "inactive": "Pasif",
+  "@inactive": { "description": "Inactive status chip label" },
+
+  "required": "Zorunlu alan",
+  "@required": { "description": "Required field validation message" },
+
+  "price": "Fiyat",
+  "@price": { "description": "Price field label" },
+
+  "sessionCount": "Seans Sayısı",
+  "@sessionCount": { "description": "Session count field label" },
+
+  "newSession": "Yeni Seans",
+  "@newSession": { "description": "New session screen title" },
+
+  "sessionDetail": "Seans Detayı",
+  "@sessionDetail": { "description": "Session detail screen title" },
+
+  "dateTime": "Tarih & Saat",
+  "@dateTime": { "description": "Date and time field label" },
+
+  "attendance": "Katılım",
+  "@attendance": { "description": "Attendance section label" },
+
+  "attended": "katıldı",
+  "@attended": { "description": "Attended count suffix (e.g. '3/5 katıldı')" },
+
+  "scheduled": "Planlandı",
+  "@scheduled": { "description": "Scheduled session status chip" },
+
+  "completed": "Tamamlandı",
+  "@completed": { "description": "Completed status chip label" },
+
+  "cancelled": "İptal Edildi",
+  "@cancelled": { "description": "Cancelled status chip label" },
+
+  "sessionCompleted": "Seans Tamamlandı",
+  "@sessionCompleted": { "description": "Session completed chip label" },
+
+  "cancelSessionConfirm": "Bu seansı iptal etmek istiyor musunuz?",
+  "@cancelSessionConfirm": { "description": "Cancel session confirmation message" },
+
+  "noSessionsYet": "Henüz seans yok",
+  "@noSessionsYet": { "description": "No group sessions yet empty state" },
+
+  "optionalNotes": "Notlar (İsteğe bağlı)",
+  "@optionalNotes": { "description": "Notes optional hint text" },
+
+  "participants": "katılımcı",
+  "@participants": { "description": "Participants count suffix" },
+
+  "openChat": "Sohbeti Aç",
+  "@openChat": { "description": "Open chat button in group detail" },
+
+  "individual": "Bireysel",
+  "@individual": { "description": "Individual packages tab label" },
+
+  "groupPackages": "Grup Paketleri",
+  "@groupPackages": { "description": "Group packages tab label" },
+
+  "notInAnyGroup": "Herhangi bir gruba üye değilsiniz",
+  "@notInAnyGroup": { "description": "Member not in any group empty state" },
+
+  "noGroupPackagesYet": "Henüz grup paketi bulunmuyor",
+  "@noGroupPackagesYet": { "description": "No group packages available empty state" },
+
+  "alreadyPurchased": "Satın Alındı",
+  "@alreadyPurchased": { "description": "Already purchased button label (disabled)" },
+
+  "groupPurchaseConfirm": "{name} paketini {groupName} grubu için {price} karşılığında satın almak istiyor musunuz?\n\n{count} seans hakkı PT onayından sonra hesabınıza yüklenecektir.",
+  "@groupPurchaseConfirm": {
+    "description": "Group package purchase confirmation dialog content",
+    "placeholders": {
+      "name": { "type": "String" },
+      "groupName": { "type": "String" },
+      "price": { "type": "String" },
+      "count": { "type": "int" }
+    }
+  }
 }

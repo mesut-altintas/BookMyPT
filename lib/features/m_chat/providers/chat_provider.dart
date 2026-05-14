@@ -5,15 +5,16 @@ import '../../../core/constants/app_constants.dart';
 import '../../../features/auth/providers/auth_provider.dart';
 import '../../../shared/models/chat_model.dart';
 
+/// All chat rooms where the current user is a participant.
+/// Works for both 1:1 and group chats via the `participants` array field.
 final chatRoomsProvider =
     StreamProvider.family<List<ChatRoom>, String>((ref, userId) {
-  if (ref.watch(currentUserProvider).valueOrNull == null) return Stream.value(const <ChatRoom>[]);
+  if (ref.watch(currentUserProvider).valueOrNull == null) {
+    return Stream.value(const <ChatRoom>[]);
+  }
   return FirebaseFirestore.instance
       .collection(AppConstants.chatsCollection)
-      .where(Filter.or(
-        Filter('ptId', isEqualTo: userId),
-        Filter('memberId', isEqualTo: userId),
-      ))
+      .where('participants', arrayContains: userId)
       .snapshots()
       .map((snap) {
         final rooms = snap.docs.map((d) => ChatRoom.fromFirestore(d)).toList();
@@ -31,7 +32,9 @@ final chatRoomsProvider =
 
 final chatMessagesProvider =
     StreamProvider.family<List<ChatMessage>, String>((ref, chatId) {
-  if (ref.watch(currentUserProvider).valueOrNull == null) return Stream.value(const <ChatMessage>[]);
+  if (ref.watch(currentUserProvider).valueOrNull == null) {
+    return Stream.value(const <ChatMessage>[]);
+  }
   return FirebaseFirestore.instance
       .collection(AppConstants.chatsCollection)
       .doc(chatId)
@@ -53,6 +56,9 @@ class ChatRepository {
   final FirebaseFirestore _firestore;
 
   String getChatId(String ptId, String memberId) => '${ptId}_$memberId';
+  String getGroupChatId(String groupId) => '${groupId}_group';
+
+  // ── Send message ───────────────────────────────────────────────────────────
 
   Future<void> sendMessage({
     required String chatId,
@@ -88,6 +94,37 @@ class ChatRepository {
     await batch.commit();
   }
 
+  // ── Delete message ─────────────────────────────────────────────────────────
+
+  /// Delete only for the current user — message stays for others.
+  Future<void> deleteMessageForMe(
+      String chatId, String messageId, String userId) async {
+    await _firestore
+        .collection(AppConstants.chatsCollection)
+        .doc(chatId)
+        .collection(AppConstants.messagesSubCollection)
+        .doc(messageId)
+        .update({
+      'deletedFor': FieldValue.arrayUnion([userId]),
+    });
+  }
+
+  /// Delete for everyone — replaces content with deleted placeholder.
+  Future<void> deleteMessageForEveryone(
+      String chatId, String messageId) async {
+    await _firestore
+        .collection(AppConstants.chatsCollection)
+        .doc(chatId)
+        .collection(AppConstants.messagesSubCollection)
+        .doc(messageId)
+        .update({
+      'deletedForEveryone': true,
+      'text': '',
+    });
+  }
+
+  // ── Read receipts ──────────────────────────────────────────────────────────
+
   Future<void> markMessagesAsRead(String chatId, String userId) async {
     final unread = await _firestore
         .collection(AppConstants.chatsCollection)
@@ -109,6 +146,8 @@ class ChatRepository {
     await batch.commit();
   }
 
+  // ── Create / get 1:1 chat room ─────────────────────────────────────────────
+
   Future<String> createOrGetChatRoom({
     required String ptId,
     required String memberId,
@@ -122,8 +161,6 @@ class ChatRepository {
         .collection(AppConstants.chatsCollection)
         .doc(chatId);
 
-    // Use merge so existing lastMessage/lastMessageAt/unreadCount are preserved.
-    // Avoids reading a non-existent document (which would fail the read rule).
     await docRef.set({
       'id': chatId,
       'ptId': ptId,
@@ -131,8 +168,38 @@ class ChatRepository {
       'participants': [ptId, memberId],
       'ptName': ptName,
       'memberName': memberName,
+      'isGroup': false,
       if (ptPhotoUrl != null) 'ptPhotoUrl': ptPhotoUrl,
       if (memberPhotoUrl != null) 'memberPhotoUrl': memberPhotoUrl,
+    }, SetOptions(merge: true));
+
+    return chatId;
+  }
+
+  // ── Create / update group chat room ───────────────────────────────────────
+
+  Future<String> createOrUpdateGroupChatRoom({
+    required String groupId,
+    required String groupName,
+    required String ptId,
+    required List<String> memberIds,
+  }) async {
+    final chatId = getGroupChatId(groupId);
+    final participants = [ptId, ...memberIds];
+    final docRef = _firestore
+        .collection(AppConstants.chatsCollection)
+        .doc(chatId);
+
+    await docRef.set({
+      'id': chatId,
+      'ptId': ptId,
+      'memberId': '',       // not used for group chats
+      'ptName': '',         // not used for group chats
+      'memberName': '',     // not used for group chats
+      'isGroup': true,
+      'groupId': groupId,
+      'groupName': groupName,
+      'participants': participants,
     }, SetOptions(merge: true));
 
     return chatId;

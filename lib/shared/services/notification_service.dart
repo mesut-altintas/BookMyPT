@@ -22,6 +22,12 @@ class NotificationService {
     importance: Importance.high,
   );
 
+  /// Called when user taps a local notification (app in foreground).
+  static void Function(String route)? onLocalNotificationTap;
+
+  /// Called when a foreground FCM message arrives — pass the `type` value.
+  static void Function(String type)? onForegroundMessage;
+
   Future<void> initialize() async {
     await _requestPermission();
     await _initLocalNotifications();
@@ -35,9 +41,12 @@ class NotificationService {
 
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-    // Foreground: show local notification
+    // Foreground: show local notification + fire badge callback
     FirebaseMessaging.onMessage.listen((message) {
       final notification = message.notification;
+      final route = message.data['route'] as String?;
+      final type  = message.data['type']  as String?;
+
       if (notification != null) {
         _localNotifications.show(
           notification.hashCode,
@@ -58,7 +67,12 @@ class NotificationService {
               presentSound: true,
             ),
           ),
+          payload: route, // passed to onDidReceiveNotificationResponse
         );
+      }
+
+      if (type != null) {
+        onForegroundMessage?.call(type);
       }
     });
   }
@@ -76,11 +90,18 @@ class NotificationService {
     const ios = DarwinInitializationSettings();
     await _localNotifications.initialize(
       const InitializationSettings(android: android, iOS: ios),
+      onDidReceiveNotificationResponse: (response) {
+        final route = response.payload;
+        if (route != null && route.isNotEmpty) {
+          onLocalNotificationTap?.call(route);
+        }
+      },
     );
 
     // Create Android channel
     final androidPlugin = _localNotifications
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>();
     await androidPlugin?.createNotificationChannel(_androidChannel);
   }
 
