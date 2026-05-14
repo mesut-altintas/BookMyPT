@@ -68,6 +68,20 @@ class _FitCoachAppState extends ConsumerState<FitCoachApp> {
     _setupNotifications();
   }
 
+  /// Retries navigation every 200 ms until the router context is ready.
+  /// Needed when the app starts from a terminated state via a notification tap.
+  void _navigateWhenReady(String route, {int attempt = 0}) {
+    final ctx = navigatorKey.currentContext;
+    if (ctx != null) {
+      ctx.go(route);
+    } else if (attempt < 25) {
+      // Try for up to 5 seconds (25 × 200 ms)
+      Future.delayed(const Duration(milliseconds: 200), () {
+        _navigateWhenReady(route, attempt: attempt + 1);
+      });
+    }
+  }
+
   void _setupNotifications() {
     // ── Local notification tap (app in foreground) ──────────────────────────
     NotificationService.onLocalNotificationTap = (route) {
@@ -97,9 +111,7 @@ class _FitCoachAppState extends ConsumerState<FitCoachApp> {
       if (message != null) {
         final route = message.data['route'] as String?;
         if (route != null) {
-          Future.delayed(const Duration(milliseconds: 1000), () {
-            navigatorKey.currentContext?.go(route);
-          });
+          _navigateWhenReady(route);
         }
       }
     });

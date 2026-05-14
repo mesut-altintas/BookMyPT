@@ -245,29 +245,28 @@ exports.chatMessageCreated = functions.firestore
     const text = message.text || '📷 Görsel';
 
     if (chat.isGroup) {
-      // Group chat: notify all participants except sender
+      // Group chat: notify each participant except sender with their correct route
       const participants = chat.participants || [];
       const recipients = participants.filter(uid => uid !== senderId);
-      const tokens = await Promise.all(recipients.map(uid => getFcmToken(uid)));
       const senderData = await getUserData(senderId);
       const senderName = senderData.name || senderData.displayName || 'Biri';
       const groupName = chat.groupName || 'Grup';
 
-      await Promise.all(tokens.map(token =>
-        sendNotification(
+      await Promise.all(recipients.map(async uid => {
+        const token = await getFcmToken(uid);
+        // PT gets /pt/chat/..., members get /member/chat/...
+        const route = uid === chat.ptId
+          ? `/pt/chat/${chatId}`
+          : `/member/chat/${chatId}`;
+        return sendNotification(
           token,
           `${groupName}: ${senderName}`,
           text,
-          {
-            route: recipients.includes(chat.ptId)
-              ? `/pt/chat/${chatId}`
-              : `/member/chat/${chatId}`,
-            type: 'chat',
-          }
-        )
-      ));
+          { route, type: 'chat' }
+        );
+      }));
     } else {
-      // 1:1 chat
+      // 1:1 chat: notify the other party
       const recipientId = senderId === chat.ptId ? chat.memberId : chat.ptId;
       const isPtRecipient = recipientId === chat.ptId;
       const senderData = await getUserData(senderId);
