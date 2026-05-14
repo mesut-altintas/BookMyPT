@@ -15,13 +15,14 @@ service cloud.firestore {
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'pt';
     }
 
-    // Returns true if the current user is ptId or memberId of the given chat.
-    // Uses a single get() call and guards against non-existent documents.
+    // Returns true if the current user is a participant of the given chat.
+    // Supports both 1:1 chats (ptId / memberId) and group chats (participants array).
     function isChatParticipant(chatId) {
       let chat = get(/databases/$(database)/documents/chats/$(chatId));
       return chat != null &&
         (chat.data.ptId == request.auth.uid ||
-         chat.data.memberId == request.auth.uid);
+         chat.data.memberId == request.auth.uid ||
+         request.auth.uid in chat.data.get('participants', []));
     }
 
     // Users collection
@@ -37,7 +38,6 @@ service cloud.firestore {
     match /pts/{ptId}/members/{memberId} {
       allow read: if isAuthenticated() &&
         (isOwner(ptId) || isOwner(memberId));
-      // PT can add members directly; member can add themselves (invitation acceptance / PT Bul flow)
       allow create: if isAuthenticated() && (isOwner(ptId) || isOwner(memberId));
       allow update: if isAuthenticated() && (isOwner(ptId) || isOwner(memberId));
       allow delete: if isAuthenticated() && isOwner(ptId);
@@ -82,7 +82,7 @@ service cloud.firestore {
         resource.data.ptId == request.auth.uid;
     }
 
-    // Payments collection
+    // Payments collection (individual + group)
     match /payments/{paymentId} {
       allow read: if isAuthenticated() &&
         (resource.data.memberId == request.auth.uid ||
@@ -112,7 +112,6 @@ service cloud.firestore {
       allow read: if isAuthenticated() &&
         (resource.data.ptId == request.auth.uid ||
          resource.data.memberId == request.auth.uid);
-      // PT can invite members; members can send join requests to PT
       allow create: if isAuthenticated() && (
         (isPt() && request.resource.data.ptId == request.auth.uid) ||
         (request.resource.data.memberId == request.auth.uid)
@@ -137,21 +136,24 @@ service cloud.firestore {
         resource.data.memberId == request.auth.uid;
     }
 
-    // Chats collection
+    // Chats collection (1:1 and group)
     match /chats/{chatId} {
       allow read: if isAuthenticated() &&
         (resource == null ||
          resource.data.ptId == request.auth.uid ||
-         resource.data.memberId == request.auth.uid);
+         resource.data.memberId == request.auth.uid ||
+         request.auth.uid in resource.data.get('participants', []));
       allow create: if isAuthenticated() &&
         (request.resource.data.ptId == request.auth.uid ||
-         request.resource.data.memberId == request.auth.uid);
+         request.resource.data.memberId == request.auth.uid ||
+         request.auth.uid in request.resource.data.get('participants', []));
       allow update: if isAuthenticated() &&
         (resource.data.ptId == request.auth.uid ||
-         resource.data.memberId == request.auth.uid);
+         resource.data.memberId == request.auth.uid ||
+         request.auth.uid in resource.data.get('participants', []));
       allow delete: if false;
 
-      // Messages subcollection — single get() via helper to avoid null errors
+      // Messages subcollection
       match /messages/{messageId} {
         allow read: if isAuthenticated() && isChatParticipant(chatId);
         allow create: if isAuthenticated() &&
@@ -160,6 +162,48 @@ service cloud.firestore {
         allow update: if isAuthenticated() && isChatParticipant(chatId);
         allow delete: if false;
       }
+    }
+
+    // Groups collection
+    match /groups/{groupId} {
+      allow read: if isAuthenticated() &&
+        (resource == null ||
+         resource.data.ptId == request.auth.uid ||
+         request.auth.uid in resource.data.get('memberIds', []));
+      allow create: if isAuthenticated() &&
+        request.resource.data.ptId == request.auth.uid;
+      allow update: if isAuthenticated() &&
+        resource.data.ptId == request.auth.uid;
+      allow delete: if isAuthenticated() &&
+        resource.data.ptId == request.auth.uid;
+    }
+
+    // Group packages collection
+    match /group_packages/{packageId} {
+      allow read: if isAuthenticated() &&
+        (resource == null ||
+         resource.data.ptId == request.auth.uid ||
+         exists(/databases/$(database)/documents/groups/$(resource.data.groupId)) &&
+         request.auth.uid in get(/databases/$(database)/documents/groups/$(resource.data.groupId)).data.get('memberIds', []));
+      allow create: if isAuthenticated() &&
+        resource == null &&
+        request.resource.data.ptId == request.auth.uid;
+      allow update: if isAuthenticated() &&
+        resource.data.ptId == request.auth.uid;
+      allow delete: if false;
+    }
+
+    // Group sessions collection
+    match /group_sessions/{sessionId} {
+      allow read: if isAuthenticated() &&
+        (resource == null ||
+         resource.data.ptId == request.auth.uid ||
+         request.auth.uid in resource.data.get('memberIds', []));
+      allow create: if isAuthenticated() &&
+        request.resource.data.ptId == request.auth.uid;
+      allow update: if isAuthenticated() &&
+        resource.data.ptId == request.auth.uid;
+      allow delete: if false;
     }
   }
 }
