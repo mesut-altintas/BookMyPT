@@ -16,9 +16,12 @@ final ptGroupsProvider =
   return FirebaseFirestore.instance
       .collection(AppConstants.groupsCollection)
       .where('ptId', isEqualTo: ptId)
-      .orderBy('createdAt', descending: true)
       .snapshots()
-      .map((snap) => snap.docs.map((d) => GroupModel.fromFirestore(d)).toList())
+      .map((snap) {
+        final list = snap.docs.map((d) => GroupModel.fromFirestore(d)).toList();
+        list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        return list;
+      })
       .handleError((_, __) {});
 });
 
@@ -30,10 +33,13 @@ final groupPackagesProvider =
   return FirebaseFirestore.instance
       .collection(AppConstants.groupPackagesCollection)
       .where('groupId', isEqualTo: groupId)
-      .orderBy('createdAt', descending: true)
       .snapshots()
-      .map((snap) =>
-          snap.docs.map((d) => GroupPackage.fromFirestore(d)).toList())
+      .map((snap) {
+        final list =
+            snap.docs.map((d) => GroupPackage.fromFirestore(d)).toList();
+        list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        return list;
+      })
       .handleError((_, __) {});
 });
 
@@ -46,10 +52,11 @@ final allActiveGroupPackagesProvider =
   return FirebaseFirestore.instance
       .collection(AppConstants.groupPackagesCollection)
       .where('ptId', isEqualTo: ptId)
-      .where('isActive', isEqualTo: true)
       .snapshots()
-      .map((snap) =>
-          snap.docs.map((d) => GroupPackage.fromFirestore(d)).toList())
+      .map((snap) => snap.docs
+          .map((d) => GroupPackage.fromFirestore(d))
+          .where((p) => p.isActive)
+          .toList())
       .handleError((_, __) {});
 });
 
@@ -61,10 +68,13 @@ final groupSessionsProvider =
   return FirebaseFirestore.instance
       .collection(AppConstants.groupSessionsCollection)
       .where('groupId', isEqualTo: groupId)
-      .orderBy('dateTime', descending: true)
       .snapshots()
-      .map((snap) =>
-          snap.docs.map((d) => GroupSession.fromFirestore(d)).toList())
+      .map((snap) {
+        final list =
+            snap.docs.map((d) => GroupSession.fromFirestore(d)).toList();
+        list.sort((a, b) => b.dateTime.compareTo(a.dateTime));
+        return list;
+      })
       .handleError((_, __) {});
 });
 
@@ -77,11 +87,15 @@ final memberGroupPaymentsProvider =
   return FirebaseFirestore.instance
       .collection(AppConstants.paymentsCollection)
       .where('memberId', isEqualTo: memberId)
-      .where('isGroup', isEqualTo: true)
-      .orderBy('createdAt', descending: true)
       .snapshots()
-      .map((snap) =>
-          snap.docs.map((d) => GroupPayment.fromFirestore(d)).toList())
+      .map((snap) {
+        final list = snap.docs
+            .map((d) => GroupPayment.fromFirestore(d))
+            .where((p) => p.groupId.isNotEmpty)
+            .toList();
+        list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        return list;
+      })
       .handleError((_, __) {});
 });
 
@@ -94,10 +108,13 @@ final memberGroupSessionsProvider =
   return FirebaseFirestore.instance
       .collection(AppConstants.groupSessionsCollection)
       .where('memberIds', arrayContains: memberId)
-      .orderBy('dateTime', descending: false)
       .snapshots()
-      .map((snap) =>
-          snap.docs.map((d) => GroupSession.fromFirestore(d)).toList())
+      .map((snap) {
+        final list =
+            snap.docs.map((d) => GroupSession.fromFirestore(d)).toList();
+        list.sort((a, b) => a.dateTime.compareTo(b.dateTime));
+        return list;
+      })
       .handleError((_, __) {});
 });
 
@@ -110,11 +127,11 @@ final ptPendingGroupPaymentsProvider =
   return FirebaseFirestore.instance
       .collection(AppConstants.paymentsCollection)
       .where('ptId', isEqualTo: ptId)
-      .where('isGroup', isEqualTo: true)
-      .where('status', isEqualTo: 'pending')
       .snapshots()
-      .map((snap) =>
-          snap.docs.map((d) => GroupPayment.fromFirestore(d)).toList())
+      .map((snap) => snap.docs
+          .map((d) => GroupPayment.fromFirestore(d))
+          .where((p) => p.groupId.isNotEmpty && p.status == 'pending')
+          .toList())
       .handleError((_, __) {});
 });
 
