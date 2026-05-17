@@ -233,8 +233,7 @@ class _GroupPackagesTab extends ConsumerWidget {
 
     final groupsAsync = ref.watch(ptGroupsProvider(ptId!));
     final packagesAsync = ref.watch(allActiveGroupPackagesProvider(ptId!));
-    final groupPaymentsAsync =
-        ref.watch(memberGroupPaymentsProvider(memberId));
+    final groupPaymentsAsync = ref.watch(memberGroupPaymentsProvider(memberId));
 
     if (groupsAsync.isLoading || packagesAsync.isLoading) {
       return const AppLoading();
@@ -260,17 +259,15 @@ class _GroupPackagesTab extends ConsumerWidget {
     final myGroupPackages =
         allPackages.where((p) => myGroupIds.contains(p.groupId)).toList();
 
-    if (myGroupPackages.isEmpty) {
-      return AppEmpty(
-        message: l10n.noGroupPackagesYet,
-        icon: Icons.inventory_2_outlined,
-      );
+    // Payments by groupId for quick lookup
+    final paymentsByGroup = <String, List<GroupPayment>>{};
+    for (final p in myPayments) {
+      paymentsByGroup.putIfAbsent(p.groupId, () => []).add(p);
     }
 
-    // Build a map of purchased (pending/completed) package IDs for quick lookup
+    // Build a set of purchased (pending/completed) package IDs
     final purchasedIds = myPayments
-        .where((p) =>
-            p.status == 'pending' || p.status == 'completed')
+        .where((p) => p.status == 'pending' || p.status == 'completed')
         .map((p) => p.groupPackageId)
         .toSet();
 
@@ -281,51 +278,299 @@ class _GroupPackagesTab extends ConsumerWidget {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
       itemCount: myGroups.length,
       itemBuilder: (context, i) {
         final group = myGroups[i];
         final groupPkgs = packagesByGroup[group.id] ?? [];
-        if (groupPkgs.isEmpty) return const SizedBox.shrink();
+        final groupPayments = paymentsByGroup[group.id] ?? [];
+        final groupColor = Color(group.colorValue);
+
+        // Remaining sessions = sum of remainingSessions from completed payments
+        final remainingSessions = groupPayments
+            .where((p) => p.status == 'completed')
+            .fold<int>(0, (sum, p) => sum + p.remainingSessions);
+
+        // Pending payments for this group
+        final pendingPayments =
+            groupPayments.where((p) => p.status == 'pending').toList();
+
+        // Recent completed/rejected payments (last 3)
+        final recentPayments = groupPayments
+            .where((p) => p.status != 'pending')
+            .take(3)
+            .toList();
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Group header
+            // ── Group header ────────────────────────────────────────────
             Padding(
-              padding: EdgeInsets.only(bottom: 8, top: i == 0 ? 0 : 16),
+              padding: EdgeInsets.only(bottom: 12, top: i == 0 ? 0 : 24),
               child: Row(
                 children: [
                   CircleAvatar(
-                    radius: 14,
-                    backgroundColor: Color(group.colorValue),
+                    radius: 16,
+                    backgroundColor: groupColor,
                     child: const Icon(Icons.groups,
-                        color: Colors.white, size: 16),
+                        color: Colors.white, size: 18),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 10),
                   Text(
                     group.name,
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w700,
                         ),
                   ),
                 ],
               ),
             ),
-            // Packages for this group
-            ...groupPkgs.map((pkg) => Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: _GroupPackageCard(
-                    package: pkg,
-                    group: group,
-                    memberId: memberId,
-                    memberName: memberName,
-                    alreadyPurchased: purchasedIds.contains(pkg.id),
-                  ),
-                )),
+
+            // ── Kalan Seans Hakkı ───────────────────────────────────────
+            _GroupSessionStatusCard(
+              remainingSessions: remainingSessions,
+              groupColor: groupColor,
+              hasPurchase: groupPayments
+                  .any((p) => p.status == 'completed'),
+            ),
+            const SizedBox(height: 12),
+
+            // ── Pending payments ────────────────────────────────────────
+            if (pendingPayments.isNotEmpty) ...[
+              _SmallSectionHeader(
+                title: context.l10n.pendingApproval,
+                icon: Icons.hourglass_top_outlined,
+                color: Colors.orange,
+              ),
+              ...pendingPayments.map((p) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: _GroupPaymentCard(payment: p),
+                  )),
+              const SizedBox(height: 4),
+            ],
+
+            // ── Recent payment history ──────────────────────────────────
+            if (recentPayments.isNotEmpty) ...[
+              _SmallSectionHeader(
+                title: context.l10n.recentTransactions,
+                icon: Icons.history,
+              ),
+              ...recentPayments.map((p) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: _GroupPaymentCard(payment: p),
+                  )),
+              const SizedBox(height: 4),
+            ],
+
+            // ── Available packages ──────────────────────────────────────
+            if (groupPkgs.isNotEmpty) ...[
+              _SmallSectionHeader(
+                title: context.l10n.buyPackage,
+                icon: Icons.inventory_2_outlined,
+              ),
+              ...groupPkgs.map((pkg) => Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: _GroupPackageCard(
+                      package: pkg,
+                      group: group,
+                      memberId: memberId,
+                      memberName: memberName,
+                      alreadyPurchased: purchasedIds.contains(pkg.id),
+                    ),
+                  )),
+            ],
           ],
         );
       },
+    );
+  }
+}
+
+// ─── Group Session Status Card ────────────────────────────────────────────────
+
+class _GroupSessionStatusCard extends StatelessWidget {
+  final int remainingSessions;
+  final Color groupColor;
+  final bool hasPurchase;
+
+  const _GroupSessionStatusCard({
+    required this.remainingSessions,
+    required this.groupColor,
+    required this.hasPurchase,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final color = !hasPurchase
+        ? theme.colorScheme.onSurfaceVariant
+        : remainingSessions > 0
+            ? groupColor
+            : theme.colorScheme.error;
+
+    return Card(
+      color: color.withValues(alpha: 0.07),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(color: color.withValues(alpha: 0.25)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.fitness_center, color: color, size: 24),
+            ),
+            const SizedBox(width: 14),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  hasPurchase ? '$remainingSessions' : '—',
+                  style: TextStyle(
+                    fontSize: 34,
+                    fontWeight: FontWeight.w800,
+                    color: color,
+                    height: 1,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  context.l10n.remainingSessionRights,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                if (!hasPurchase)
+                  Text(
+                    context.l10n.noGroupPackagesYet,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Group Payment History Card ───────────────────────────────────────────────
+
+class _GroupPaymentCard extends StatelessWidget {
+  final GroupPayment payment;
+  const _GroupPaymentCard({required this.payment});
+
+  @override
+  Widget build(BuildContext context) {
+    final isPending = payment.status == 'pending';
+    final isCompleted = payment.status == 'completed';
+    final statusColor = isPending
+        ? Colors.orange
+        : isCompleted
+            ? Colors.green
+            : Colors.red;
+
+    return Card(
+      child: ListTile(
+        leading: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: statusColor.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(
+            isPending
+                ? Icons.hourglass_top
+                : isCompleted
+                    ? Icons.check_circle_outline
+                    : Icons.cancel_outlined,
+            color: statusColor,
+            size: 22,
+          ),
+        ),
+        title: Text(payment.groupPackageName,
+            style: const TextStyle(fontWeight: FontWeight.w600)),
+        subtitle: Text(
+          '${payment.sessionCount} seans'
+          '${isCompleted ? ' • ${payment.remainingSessions} kalan' : ''}'
+          ' • ${DateFormat('d MMM y', 'tr').format(payment.createdAt)}',
+        ),
+        trailing: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              payment.price.formattedCurrency,
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+            Container(
+              margin: const EdgeInsets.only(top: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: statusColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                isPending
+                    ? context.l10n.statusPending
+                    : isCompleted
+                        ? context.l10n.statusCompleted
+                        : context.l10n.cancelled,
+                style: TextStyle(
+                    fontSize: 10,
+                    color: statusColor,
+                    fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Small Section Header (non-sliver, for use inside ListView) ───────────────
+
+class _SmallSectionHeader extends StatelessWidget {
+  final String title;
+  final IconData? icon;
+  final Color? color;
+
+  const _SmallSectionHeader({required this.title, this.icon, this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final c = color ?? theme.colorScheme.onSurfaceVariant;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8, top: 4),
+      child: Row(
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 14, color: c),
+            const SizedBox(width: 5),
+          ],
+          Text(
+            title,
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: c,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
