@@ -682,13 +682,17 @@ class _RequestSessionSheetState extends State<_RequestSessionSheet> {
   @override
   void initState() {
     super.initState();
-    _selectedDateTime = DateTime(
+    // Default to 09:00 on the selected day, but never in the past:
+    // if that would be past, round up to next full hour + 30 min buffer.
+    final base = DateTime(
       widget.initialDate.year,
       widget.initialDate.month,
       widget.initialDate.day,
       9,
       0,
     );
+    final earliest = DateTime.now().add(const Duration(minutes: 30));
+    _selectedDateTime = base.isAfter(earliest) ? base : earliest;
     _duration = widget.sessionDurationMinutes ?? 60;
     _findPt();
   }
@@ -818,14 +822,20 @@ class _RequestSessionSheetState extends State<_RequestSessionSheet> {
   bool get _ptPersonalConflict =>
       widget.ptPersonalEvents.any(_overlapsEvent);
 
+  /// True when the selected date+time is in the past (or within 5 min).
+  bool get _isPast =>
+      _selectedDateTime.isBefore(DateTime.now().add(const Duration(minutes: 5)));
+
   bool get _isConflict => _memberConflict || _ptConflict || _ptPersonalConflict;
 
   Future<void> _pickDateTime() async {
+    final now = DateTime.now();
+    // Date picker: today or later
     final pickedDate = await showDatePicker(
       context: context,
-      initialDate: _selectedDateTime,
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 90)),
+      initialDate: _selectedDateTime.isBefore(now) ? now : _selectedDateTime,
+      firstDate: now,
+      lastDate: now.add(const Duration(days: 90)),
     );
     if (pickedDate == null || !mounted) return;
     final pickedTime = await showTimePicker(
@@ -833,19 +843,31 @@ class _RequestSessionSheetState extends State<_RequestSessionSheet> {
       initialTime: TimeOfDay.fromDateTime(_selectedDateTime),
     );
     if (pickedTime == null || !mounted) return;
-    setState(() {
-      _selectedDateTime = DateTime(
-        pickedDate.year,
-        pickedDate.month,
-        pickedDate.day,
-        pickedTime.hour,
-        pickedTime.minute,
-      );
-    });
+
+    final picked = DateTime(
+      pickedDate.year,
+      pickedDate.month,
+      pickedDate.day,
+      pickedTime.hour,
+      pickedTime.minute,
+    );
+    // If the user picked a past time on today, show a snackbar and don't update.
+    if (picked.isBefore(DateTime.now().add(const Duration(minutes: 5)))) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Geçmiş bir saat seçildi. Lütfen ileriki bir saat seçin.'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
+    }
+    setState(() => _selectedDateTime = picked);
   }
 
   Future<void> _submit() async {
-    if (_ptId.isEmpty || _isConflict) return;
+    if (_ptId.isEmpty || _isConflict || _isPast) return;
     setState(() => _isLoading = true);
     final session = SessionModel(
       id: '',
@@ -965,11 +987,13 @@ class _RequestSessionSheetState extends State<_RequestSessionSheet> {
                 decoration: InputDecoration(
                   labelText: context.l10n.dateAndTime,
                   prefixIcon: const Icon(Icons.access_time),
-                  errorText: _memberConflict
-                      ? context.l10n.timeConflict
-                      : (_ptConflict || _ptPersonalConflict)
-                          ? context.l10n.ptNotAvailable
-                          : null,
+                  errorText: _isPast
+                      ? 'Geçmiş bir tarih/saat seçildi'
+                      : _memberConflict
+                          ? context.l10n.timeConflict
+                          : (_ptConflict || _ptPersonalConflict)
+                              ? context.l10n.ptNotAvailable
+                              : null,
                 ),
                 child: Text(
                   '${_selectedDateTime.formattedDate} ${_selectedDateTime.formattedTime}',
@@ -1018,7 +1042,7 @@ class _RequestSessionSheetState extends State<_RequestSessionSheet> {
             ],
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: _isConflict || _isLoading ? null : _submit,
+              onPressed: _isConflict || _isPast || _isLoading ? null : _submit,
               child: _isLoading
                   ? const SizedBox(
                       height: 20,
@@ -1088,17 +1112,20 @@ class _EditSessionSheetState extends State<_EditSessionSheet> {
   bool get _ptConflict => widget.ptSessions.any(_overlapsSession);
   bool get _ptPersonalConflict => widget.ptPersonalEvents.any(_overlapsEvent);
   bool get _isConflict => _memberConflict || _ptConflict || _ptPersonalConflict;
+  bool get _isPast =>
+      _selectedDateTime.isBefore(DateTime.now().add(const Duration(minutes: 5)));
 
   bool get _unchanged =>
       _selectedDateTime == widget.session.dateTime &&
       _duration == widget.session.durationMinutes;
 
   Future<void> _pickDateTime() async {
+    final now = DateTime.now();
     final pickedDate = await showDatePicker(
       context: context,
-      initialDate: _selectedDateTime,
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 90)),
+      initialDate: _selectedDateTime.isBefore(now) ? now : _selectedDateTime,
+      firstDate: now,
+      lastDate: now.add(const Duration(days: 90)),
     );
     if (pickedDate == null || !mounted) return;
     final pickedTime = await showTimePicker(
@@ -1106,16 +1133,26 @@ class _EditSessionSheetState extends State<_EditSessionSheet> {
       initialTime: TimeOfDay.fromDateTime(_selectedDateTime),
     );
     if (pickedTime == null || !mounted) return;
-    setState(() {
-      _selectedDateTime = DateTime(
-        pickedDate.year, pickedDate.month, pickedDate.day,
-        pickedTime.hour, pickedTime.minute,
-      );
-    });
+    final picked = DateTime(
+      pickedDate.year, pickedDate.month, pickedDate.day,
+      pickedTime.hour, pickedTime.minute,
+    );
+    if (picked.isBefore(DateTime.now().add(const Duration(minutes: 5)))) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Geçmiş bir saat seçildi. Lütfen ileriki bir saat seçin.'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
+    }
+    setState(() => _selectedDateTime = picked);
   }
 
   Future<void> _save() async {
-    if (_isConflict || _unchanged) return;
+    if (_isConflict || _isPast || _unchanged) return;
     setState(() => _isLoading = true);
     try {
       await widget.repo.updateSession(widget.session.id, {
@@ -1182,11 +1219,13 @@ class _EditSessionSheetState extends State<_EditSessionSheet> {
               decoration: InputDecoration(
                 labelText: context.l10n.dateAndTime,
                 prefixIcon: const Icon(Icons.access_time),
-                errorText: _memberConflict
-                    ? context.l10n.timeConflict
-                    : (_ptConflict || _ptPersonalConflict)
-                        ? context.l10n.ptNotAvailable
-                        : null,
+                errorText: _isPast
+                    ? 'Geçmiş bir tarih/saat seçildi'
+                    : _memberConflict
+                        ? context.l10n.timeConflict
+                        : (_ptConflict || _ptPersonalConflict)
+                            ? context.l10n.ptNotAvailable
+                            : null,
               ),
               child: Text(
                 '${_selectedDateTime.formattedDate} ${_selectedDateTime.formattedTime}',
@@ -1236,7 +1275,7 @@ class _EditSessionSheetState extends State<_EditSessionSheet> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: _isConflict || _unchanged || _isLoading ? null : _save,
+              onPressed: _isConflict || _isPast || _unchanged || _isLoading ? null : _save,
               child: _isLoading
                   ? const SizedBox(
                       height: 20, width: 20,
