@@ -1714,5 +1714,29 @@
       "price": { "type": "String" },
       "count": { "type": "int" }
     }
-  }
+  },
+
+  "sendCancellationRequest": "İptal Talebi Gönder",
+  "@sendCancellationRequest": { "description": "Button to send a cancellation request for a confirmed session" },
+
+  "cancellationRequestSent": "İptal Talebiniz Gönderildi",
+  "@cancellationRequestSent": { "description": "Label shown when the current user already sent a cancellation request" },
+
+  "memberRequestedCancellation": "Üye İptal Talep Etti",
+  "@memberRequestedCancellation": { "description": "Label shown to PT when member sent a cancellation request" },
+
+  "ptRequestedCancellation": "Eğitmen İptal Talep Etti",
+  "@ptRequestedCancellation": { "description": "Label shown to member when PT sent a cancellation request" },
+
+  "acceptCancellation": "İptali Onayla",
+  "@acceptCancellation": { "description": "Accept a cancellation request button" },
+
+  "rejectCancellation": "Reddet",
+  "@rejectCancellation": { "description": "Reject a cancellation request button" },
+
+  "cancellationRequestConfirm": "İptal talebiniz karşı tarafa iletilecek. Devam etmek istiyor musunuz?",
+  "@cancellationRequestConfirm": { "description": "Confirmation dialog for sending a cancellation request" },
+
+  "sessionInFutureWarning": "Gelecekteki bir seans tamamlanamaz",
+  "@sessionInFutureWarning": { "description": "Tooltip shown when mark-as-completed is disabled for a future session" }
 }

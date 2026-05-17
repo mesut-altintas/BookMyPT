@@ -6,6 +6,7 @@ import 'package:table_calendar/table_calendar.dart';
 
 import '../../../../core/l10n/extensions.dart';
 import '../../../../core/router/app_router.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../features/auth/providers/auth_provider.dart';
 import '../../../../features/pt_calendar/providers/pt_calendar_provider.dart';
 import '../../../../features/pt_groups/presentation/screens/group_session_screen.dart';
@@ -246,7 +247,7 @@ class _CalendarContent extends ConsumerWidget {
                 : ListView(
                     padding: const EdgeInsets.all(12),
                     children: [
-                      ...daySessions.map((s) => _SessionTile(session: s)),
+                      ...daySessions.map((s) => _SessionTile(session: s, memberId: memberId)),
                       ...dayGroupSessions.map(
                           (s) => _MemberGroupSessionTile(groupSession: s)),
                       ...dayPersonalEvents.map((e) => _PersonalEventTile(
@@ -262,14 +263,32 @@ class _CalendarContent extends ConsumerWidget {
   }
 }
 
-class _SessionTile extends StatelessWidget {
+class _SessionTile extends ConsumerWidget {
   final SessionModel session;
+  final String memberId;
 
-  const _SessionTile({required this.session});
+  const _SessionTile({required this.session, required this.memberId});
+
+  void _showDetail(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => _SessionDetailSheet(
+        session: session,
+        memberId: memberId,
+        ref: ref,
+      ),
+    );
+  }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final timeStr = DateFormat('HH:mm').format(session.dateTime);
+    final hasPendingRequest =
+        session.cancellationRequestedBy != null;
     final statusColor = switch (session.status) {
       SessionStatus.confirmed => Colors.green,
       SessionStatus.pending => Colors.orange,
@@ -285,6 +304,9 @@ class _SessionTile extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
+        onTap: session.status == SessionStatus.confirmed
+            ? () => _showDetail(context, ref)
+            : null,
         leading: Container(
           width: 40,
           height: 40,
@@ -299,11 +321,10 @@ class _SessionTile extends StatelessWidget {
           context.l10n.ptAppointment,
           style: const TextStyle(fontWeight: FontWeight.w600),
         ),
-        subtitle: Text(
-            '$timeStr • ${session.durationMinutes} dk'),
+        subtitle: Text('$timeStr • ${session.durationMinutes} dk'
+            '${hasPendingRequest ? ' • ⚠️ İptal Talebi' : ''}'),
         trailing: Container(
-          padding:
-              const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
             color: statusColor.withOpacity(0.1),
             borderRadius: BorderRadius.circular(12),
@@ -314,6 +335,208 @@ class _SessionTile extends StatelessWidget {
                   fontSize: 12,
                   fontWeight: FontWeight.w600)),
         ),
+      ),
+    );
+  }
+}
+
+class _SessionDetailSheet extends StatelessWidget {
+  final SessionModel session;
+  final String memberId;
+  final WidgetRef ref;
+
+  const _SessionDetailSheet({
+    required this.session,
+    required this.memberId,
+    required this.ref,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final repo = ref.read(sessionRepositoryProvider);
+    final timeStr = DateFormat('HH:mm, d MMMM', 'tr').format(session.dateTime);
+
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: 20,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Handle
+          Center(
+            child: Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Header
+          Text(context.l10n.ptAppointment,
+              style: theme.textTheme.titleLarge
+                  ?.copyWith(fontWeight: FontWeight.w700)),
+          const SizedBox(height: 4),
+          Text('$timeStr • ${session.durationMinutes} dk',
+              style: theme.textTheme.bodyMedium
+                  ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+          const SizedBox(height: 20),
+
+          // Cancellation request section for confirmed sessions
+          _MemberCancellationWidget(
+            session: session,
+            memberId: memberId,
+            repo: repo,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MemberCancellationWidget extends StatelessWidget {
+  final SessionModel session;
+  final String memberId;
+  final SessionRepository repo;
+
+  const _MemberCancellationWidget({
+    required this.session,
+    required this.memberId,
+    required this.repo,
+  });
+
+  Future<void> _sendRequest(BuildContext context) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(context.l10n.sendCancellationRequest),
+        content: Text(context.l10n.cancellationRequestConfirm),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(context.l10n.cancel),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.error,
+                foregroundColor: Colors.white),
+            child: Text(context.l10n.sendCancellationRequest),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) {
+      await repo.requestCancellation(session.id, 'member');
+      if (context.mounted) Navigator.pop(context);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final requested = session.cancellationRequestedBy;
+
+    // PT sent a request → member can Accept or Reject
+    if (requested == 'pt') {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppColors.error.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(8),
+              border:
+                  Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.warning_amber_rounded,
+                    color: AppColors.error, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(context.l10n.ptRequestedCancellation,
+                      style: TextStyle(
+                          color: AppColors.error,
+                          fontWeight: FontWeight.w600)),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () {
+                    repo.rejectCancellationRequest(session.id);
+                    Navigator.pop(context);
+                  },
+                  style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.error,
+                      side: BorderSide(color: AppColors.error)),
+                  child: Text(context.l10n.rejectCancellation),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    repo.acceptCancellationRequest(session.id);
+                    Navigator.pop(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.error,
+                      foregroundColor: Colors.white),
+                  child: Text(context.l10n.acceptCancellation),
+                ),
+              ),
+            ],
+          ),
+        ],
+      );
+    }
+
+    // Member already sent a request
+    if (requested == 'member') {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.orange.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(8),
+          border:
+              Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.hourglass_top,
+                color: Colors.orange, size: 18),
+            const SizedBox(width: 8),
+            Text(context.l10n.cancellationRequestSent,
+                style: const TextStyle(
+                    color: Colors.orange, fontWeight: FontWeight.w600)),
+          ],
+        ),
+      );
+    }
+
+    // No pending request
+    return OutlinedButton.icon(
+      onPressed: () => _sendRequest(context),
+      icon: const Icon(Icons.cancel_schedule_send_outlined),
+      label: Text(context.l10n.sendCancellationRequest),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: AppColors.error,
+        side: BorderSide(color: AppColors.error),
       ),
     );
   }

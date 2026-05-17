@@ -124,6 +124,30 @@ exports.sessionUpdated = functions.firestore
 
     const { memberId, ptId, memberName, groupId } = after;
 
+    // Cancellation request: cancellationRequestedBy changed null → 'pt'|'member'
+    const prevRequested = before.cancellationRequestedBy ?? null;
+    const nowRequested  = after.cancellationRequestedBy  ?? null;
+    if (!prevRequested && nowRequested) {
+      if (nowRequested === 'pt') {
+        const memberToken = await getFcmToken(memberId);
+        await sendNotification(
+          memberToken,
+          'İptal Talebi',
+          'Eğitmeniniz seansı iptal etmek istiyor',
+          { route: '/member/calendar', type: 'calendar' }
+        );
+      } else {
+        const ptToken = await getFcmToken(ptId);
+        await sendNotification(
+          ptToken,
+          'İptal Talebi',
+          `${memberName || 'Üye'} seansı iptal etmek istiyor`,
+          { route: '/pt/members', type: 'members' }
+        );
+      }
+      return;
+    }
+
     // Pending→pending: date/duration changed
     if (before.status === 'pending' && after.status === 'pending') {
       const beforeMs = before.dateTime ? before.dateTime.toMillis() : 0;

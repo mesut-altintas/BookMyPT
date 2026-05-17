@@ -52,6 +52,8 @@ class SessionModel {
   final SessionStatus status;
   final String? notes;
   final int durationMinutes;
+  /// 'pt' | 'member' | null — who sent a cancellation request (if any)
+  final String? cancellationRequestedBy;
 
   const SessionModel({
     required this.id,
@@ -62,7 +64,10 @@ class SessionModel {
     required this.status,
     this.notes,
     this.durationMinutes = 60,
+    this.cancellationRequestedBy,
   });
+
+  bool get isPast => dateTime.isBefore(DateTime.now());
 
   factory SessionModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
@@ -75,6 +80,8 @@ class SessionModel {
       status: SessionStatusX.fromString(data['status'] as String? ?? 'pending'),
       notes: data['notes'] as String?,
       durationMinutes: data['durationMinutes'] as int? ?? 60,
+      cancellationRequestedBy:
+          data['cancellationRequestedBy'] as String?,
     );
   }
 
@@ -86,6 +93,7 @@ class SessionModel {
         'status': status.value,
         if (notes != null) 'notes': notes,
         'durationMinutes': durationMinutes,
+        'cancellationRequestedBy': cancellationRequestedBy,
       };
 
   SessionModel copyWith({
@@ -97,6 +105,7 @@ class SessionModel {
     SessionStatus? status,
     String? notes,
     int? durationMinutes,
+    Object? cancellationRequestedBy = _sentinel,
   }) =>
       SessionModel(
         id: id ?? this.id,
@@ -107,5 +116,10 @@ class SessionModel {
         status: status ?? this.status,
         notes: notes ?? this.notes,
         durationMinutes: durationMinutes ?? this.durationMinutes,
+        cancellationRequestedBy: cancellationRequestedBy == _sentinel
+            ? this.cancellationRequestedBy
+            : cancellationRequestedBy as String?,
       );
 }
+
+const _sentinel = Object();

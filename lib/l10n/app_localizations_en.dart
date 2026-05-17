@@ -1730,4 +1730,29 @@ class AppLocalizationsEn extends AppLocalizations {
       String name, String groupName, String price, int count) {
     return 'Would you like to purchase the $name package for $groupName for $price?\n\n$count session credits will be added to your account after PT approval.';
   }
+
+  @override
+  String get sendCancellationRequest => 'Request Cancellation';
+
+  @override
+  String get cancellationRequestSent => 'Cancellation Request Sent';
+
+  @override
+  String get memberRequestedCancellation => 'Member Requested Cancellation';
+
+  @override
+  String get ptRequestedCancellation => 'Trainer Requested Cancellation';
+
+  @override
+  String get acceptCancellation => 'Accept Cancellation';
+
+  @override
+  String get rejectCancellation => 'Reject';
+
+  @override
+  String get cancellationRequestConfirm =>
+      'Your cancellation request will be sent to the other party. Do you want to proceed?';
+
+  @override
+  String get sessionInFutureWarning => 'Cannot complete a future session';
 }

@@ -158,6 +158,32 @@ class SessionRepository {
           .doc(id)
           .delete();
 
+  /// Sets cancellationRequestedBy = 'pt' or 'member'. Cloud Function
+  /// detects this and sends a notification to the other party.
+  Future<void> requestCancellation(String sessionId, String role) =>
+      _firestore
+          .collection(AppConstants.sessionsCollection)
+          .doc(sessionId)
+          .update({'cancellationRequestedBy': role});
+
+  /// Clears the cancellation request (rejected by other party).
+  Future<void> rejectCancellationRequest(String sessionId) =>
+      _firestore
+          .collection(AppConstants.sessionsCollection)
+          .doc(sessionId)
+          .update({'cancellationRequestedBy': null});
+
+  /// Accepts the cancellation request: marks session as cancelled and
+  /// clears the pending request field.
+  Future<void> acceptCancellationRequest(String sessionId) =>
+      _firestore
+          .collection(AppConstants.sessionsCollection)
+          .doc(sessionId)
+          .update({
+        'status': SessionStatus.cancelled.value,
+        'cancellationRequestedBy': null,
+      });
+
   Future<List<SessionModel>> getSessionsByDate(
       String ptId, DateTime date) async {
     final start = DateTime(date.year, date.month, date.day);

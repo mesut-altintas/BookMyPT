@@ -1730,4 +1730,29 @@ class AppLocalizationsTr extends AppLocalizations {
       String name, String groupName, String price, int count) {
     return '$name paketini $groupName grubu için $price karşılığında satın almak istiyor musunuz?\n\n$count seans hakkı PT onayından sonra hesabınıza yüklenecektir.';
   }
+
+  @override
+  String get sendCancellationRequest => 'İptal Talebi Gönder';
+
+  @override
+  String get cancellationRequestSent => 'İptal Talebiniz Gönderildi';
+
+  @override
+  String get memberRequestedCancellation => 'Üye İptal Talep Etti';
+
+  @override
+  String get ptRequestedCancellation => 'Eğitmen İptal Talep Etti';
+
+  @override
+  String get acceptCancellation => 'İptali Onayla';
+
+  @override
+  String get rejectCancellation => 'Reddet';
+
+  @override
+  String get cancellationRequestConfirm =>
+      'İptal talebiniz karşı tarafa iletilecek. Devam etmek istiyor musunuz?';
+
+  @override
+  String get sessionInFutureWarning => 'Gelecekteki bir seans tamamlanamaz';
 }

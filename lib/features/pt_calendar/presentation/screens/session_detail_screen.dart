@@ -13,6 +13,144 @@ import '../../../../shared/widgets/status_badge.dart';
 import '../../../pt_calendar/providers/pt_calendar_provider.dart';
 import '../../../pt_members/providers/pt_members_provider.dart';
 
+// Shared cancellation-request UI — used by both PT and Member sides.
+// [role] is 'pt' or 'member' (the current user's role).
+class _CancellationRequestWidget extends StatelessWidget {
+  final SessionModel session;
+  final String role; // 'pt' | 'member'
+  final SessionRepository repo;
+
+  const _CancellationRequestWidget({
+    required this.session,
+    required this.role,
+    required this.repo,
+  });
+
+  String get _oppositeRole => role == 'pt' ? 'member' : 'pt';
+
+  Future<void> _sendRequest(BuildContext context) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(context.l10n.sendCancellationRequest),
+        content: Text(context.l10n.cancellationRequestConfirm),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(context.l10n.cancel),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.error,
+                foregroundColor: Colors.white),
+            child: Text(context.l10n.sendCancellationRequest),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) {
+      await repo.requestCancellation(session.id, role);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final requested = session.cancellationRequestedBy;
+
+    // Other side already sent a request → show Accept/Reject
+    if (requested == _oppositeRole) {
+      final label = role == 'pt'
+          ? context.l10n.memberRequestedCancellation
+          : context.l10n.ptRequestedCancellation;
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppColors.error.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.warning_amber_rounded,
+                    color: AppColors.error, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(label,
+                      style: TextStyle(
+                          color: AppColors.error,
+                          fontWeight: FontWeight.w600)),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () =>
+                      repo.rejectCancellationRequest(session.id),
+                  style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.error,
+                      side: BorderSide(color: AppColors.error)),
+                  child: Text(context.l10n.rejectCancellation),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () =>
+                      repo.acceptCancellationRequest(session.id),
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.error,
+                      foregroundColor: Colors.white),
+                  child: Text(context.l10n.acceptCancellation),
+                ),
+              ),
+            ],
+          ),
+        ],
+      );
+    }
+
+    // Current user already sent a request
+    if (requested == role) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.orange.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.hourglass_top, color: Colors.orange, size: 18),
+            const SizedBox(width: 8),
+            Text(context.l10n.cancellationRequestSent,
+                style: const TextStyle(
+                    color: Colors.orange, fontWeight: FontWeight.w600)),
+          ],
+        ),
+      );
+    }
+
+    // No pending request → show send button
+    return OutlinedButton.icon(
+      onPressed: () => _sendRequest(context),
+      icon: const Icon(Icons.cancel_schedule_send_outlined),
+      label: Text(context.l10n.sendCancellationRequest),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: AppColors.error,
+        side: BorderSide(color: AppColors.error),
+      ),
+    );
+  }
+}
+
 class SessionDetailScreen extends ConsumerWidget {
   final String sessionId;
 
@@ -226,21 +364,36 @@ class _SessionDetailContent extends ConsumerWidget {
             ],
 
             if (session.status == SessionStatus.confirmed) ...[
-              ElevatedButton.icon(
-                onPressed: () async {
-                  final memberRepo = ref.read(memberRepositoryProvider);
-                  final ptId = session.ptId;
-                  final memberId = session.memberId;
-                  await repo.updateStatus(
-                      session.id, SessionStatus.completed);
-                  await memberRepo.updateRemainingSessions(
-                        ptId: ptId,
-                        memberId: memberId,
-                        delta: -1,
-                      );
-                },
-                icon: const Icon(Icons.done_all),
-                label: Text(context.l10n.markAsCompleted),
+              // Mark as Completed — disabled for future sessions
+              Tooltip(
+                message: session.isPast
+                    ? ''
+                    : context.l10n.sessionInFutureWarning,
+                child: ElevatedButton.icon(
+                  onPressed: session.isPast
+                      ? () async {
+                          final memberRepo =
+                              ref.read(memberRepositoryProvider);
+                          await repo.updateStatus(
+                              session.id, SessionStatus.completed);
+                          await memberRepo.updateRemainingSessions(
+                            ptId: session.ptId,
+                            memberId: session.memberId,
+                            delta: -1,
+                          );
+                        }
+                      : null,
+                  icon: const Icon(Icons.done_all),
+                  label: Text(context.l10n.markAsCompleted),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Cancellation request section
+              _CancellationRequestWidget(
+                session: session,
+                role: 'pt',
+                repo: repo,
               ),
               const SizedBox(height: 16),
             ],

@@ -575,5 +575,14 @@
       "price": { "type": "String" },
       "count": { "type": "int" }
     }
-  }
+  },
+
+  "sendCancellationRequest": "Request Cancellation",
+  "cancellationRequestSent": "Cancellation Request Sent",
+  "memberRequestedCancellation": "Member Requested Cancellation",
+  "ptRequestedCancellation": "Trainer Requested Cancellation",
+  "acceptCancellation": "Accept Cancellation",
+  "rejectCancellation": "Reject",
+  "cancellationRequestConfirm": "Your cancellation request will be sent to the other party. Do you want to proceed?",
+  "sessionInFutureWarning": "Cannot complete a future session"
 }

@@ -3290,6 +3290,54 @@ abstract class AppLocalizations {
   /// **'{name} paketini {groupName} grubu için {price} karşılığında satın almak istiyor musunuz?\n\n{count} seans hakkı PT onayından sonra hesabınıza yüklenecektir.'**
   String groupPurchaseConfirm(
       String name, String groupName, String price, int count);
+
+  /// Button to send a cancellation request for a confirmed session
+  ///
+  /// In tr, this message translates to:
+  /// **'İptal Talebi Gönder'**
+  String get sendCancellationRequest;
+
+  /// Label shown when the current user already sent a cancellation request
+  ///
+  /// In tr, this message translates to:
+  /// **'İptal Talebiniz Gönderildi'**
+  String get cancellationRequestSent;
+
+  /// Label shown to PT when member sent a cancellation request
+  ///
+  /// In tr, this message translates to:
+  /// **'Üye İptal Talep Etti'**
+  String get memberRequestedCancellation;
+
+  /// Label shown to member when PT sent a cancellation request
+  ///
+  /// In tr, this message translates to:
+  /// **'Eğitmen İptal Talep Etti'**
+  String get ptRequestedCancellation;
+
+  /// Accept a cancellation request button
+  ///
+  /// In tr, this message translates to:
+  /// **'İptali Onayla'**
+  String get acceptCancellation;
+
+  /// Reject a cancellation request button
+  ///
+  /// In tr, this message translates to:
+  /// **'Reddet'**
+  String get rejectCancellation;
+
+  /// Confirmation dialog for sending a cancellation request
+  ///
+  /// In tr, this message translates to:
+  /// **'İptal talebiniz karşı tarafa iletilecek. Devam etmek istiyor musunuz?'**
+  String get cancellationRequestConfirm;
+
+  /// Tooltip shown when mark-as-completed is disabled for a future session
+  ///
+  /// In tr, this message translates to:
+  /// **'Gelecekteki bir seans tamamlanamaz'**
+  String get sessionInFutureWarning;
 }
 
 class _AppLocalizationsDelegate
