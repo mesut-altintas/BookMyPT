@@ -3428,6 +3428,192 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'© 2026 BookMyPt. Tüm hakları saklıdır.'**
   String get aboutCopyright;
+
+  /// Delete chat room dialog title and bottom-sheet option
+  ///
+  /// In tr, this message translates to:
+  /// **'Sohbeti Sil'**
+  String get deleteChatTitle;
+
+  /// Delete chat room confirmation body
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu sohbet silindiğinde her iki taraf için de listeden kalkar. Bu işlem geri alınamaz. Devam etmek istiyor musunuz?'**
+  String get deleteChatBody;
+
+  /// Snackbar shown after a chat room is deleted
+  ///
+  /// In tr, this message translates to:
+  /// **'Sohbet silindi'**
+  String get chatDeleted;
+
+  /// Help: member calendar item 5 title
+  ///
+  /// In tr, this message translates to:
+  /// **'Geçmiş Tarih Kısıtlaması'**
+  String get helpCalendarItem5Title;
+
+  /// Help: member calendar item 5 body
+  ///
+  /// In tr, this message translates to:
+  /// **'Geçmişe ait bir tarih veya saate randevu talebi oluşturamazsınız. Seçilen zamanın en az 5 dakika ileride olması gerekir.'**
+  String get helpCalendarItem5Body;
+
+  /// Help: member packages item 4 title
+  ///
+  /// In tr, this message translates to:
+  /// **'Grup Paketleri'**
+  String get helpPackagesItem4Title;
+
+  /// Help: member packages item 4 body
+  ///
+  /// In tr, this message translates to:
+  /// **'Eğitmeniniz sizi bir gruba dahil etmişse \"Gruplar\" sekmesinde o gruba ait paketleri satın alabilirsiniz. PT onayladıktan sonra seans hakkınız hesabınıza eklenir.'**
+  String get helpPackagesItem4Body;
+
+  /// Help: member programs section title
+  ///
+  /// In tr, this message translates to:
+  /// **'Programlarım'**
+  String get helpProgramsTitle;
+
+  /// Help: member programs item 1 title
+  ///
+  /// In tr, this message translates to:
+  /// **'Antrenman Programı'**
+  String get helpProgramsItem1Title;
+
+  /// Help: member programs item 1 body
+  ///
+  /// In tr, this message translates to:
+  /// **'PT\'niz size haftalık antrenman programı atayabilir. Programı hafta ve gün bazında inceleyebilir, tüm egzersiz detaylarına ulaşabilirsiniz.'**
+  String get helpProgramsItem1Body;
+
+  /// Help: member programs item 2 title
+  ///
+  /// In tr, this message translates to:
+  /// **'Egzersiz Tipleri'**
+  String get helpProgramsItem2Title;
+
+  /// Help: member programs item 2 body
+  ///
+  /// In tr, this message translates to:
+  /// **'Programlar üç farklı egzersiz tipinden oluşabilir: 💪 Güç (set/tekrar/ağırlık), 🏃 Kardio (süre/mesafe) ve 🧘 Esneme (set/tutma süresi).'**
+  String get helpProgramsItem2Body;
+
+  /// Help: member messages item 2 title
+  ///
+  /// In tr, this message translates to:
+  /// **'Grup Sohbetleri'**
+  String get helpMemberMessagesItem2Title;
+
+  /// Help: member messages item 2 body
+  ///
+  /// In tr, this message translates to:
+  /// **'Eğitmeniniz sizi bir gruba dahil ederse grup sohbet odası otomatik oluşturulur. Tüm grup üyeleri ve PT grup sohbetine katılır.'**
+  String get helpMemberMessagesItem2Body;
+
+  /// Help: member messages item 3 title
+  ///
+  /// In tr, this message translates to:
+  /// **'Sohbeti Sil'**
+  String get helpMemberMessagesItem3Title;
+
+  /// Help: member messages item 3 body
+  ///
+  /// In tr, this message translates to:
+  /// **'Sohbet listesinde herhangi bir sohbete uzun basarak silme seçeneğine ulaşabilirsiniz. Sohbet silindiğinde her iki taraf için de listeden kaybolur.'**
+  String get helpMemberMessagesItem3Body;
+
+  /// Help: PT programs section title
+  ///
+  /// In tr, this message translates to:
+  /// **'Antrenman Programları'**
+  String get helpPtProgramsTitle;
+
+  /// Help: PT programs item 1 title
+  ///
+  /// In tr, this message translates to:
+  /// **'Program Oluşturma'**
+  String get helpPtProgramsItem1Title;
+
+  /// Help: PT programs item 1 body
+  ///
+  /// In tr, this message translates to:
+  /// **'Üye seçerek haftalık antrenman programı oluşturabilirsiniz. Hafta sayısını (1–12) belirleyin ve her güne egzersiz ekleyin. Cumartesi–Pazar varsayılan olarak dinlenme günüdür.'**
+  String get helpPtProgramsItem1Body;
+
+  /// Help: PT programs item 2 title
+  ///
+  /// In tr, this message translates to:
+  /// **'Egzersiz Tipleri'**
+  String get helpPtProgramsItem2Title;
+
+  /// Help: PT programs item 2 body
+  ///
+  /// In tr, this message translates to:
+  /// **'Güç (set/tekrar/ağırlık/dinlenme), Kardio (süre/mesafe) ve Esneme (set/tutma süresi) olmak üzere 3 farklı egzersiz tipi ekleyebilirsiniz. Egzersizi eklerken tipini seçiciyle belirleyin.'**
+  String get helpPtProgramsItem2Body;
+
+  /// Help: PT programs item 3 title
+  ///
+  /// In tr, this message translates to:
+  /// **'Aktif / Pasif Yönetimi'**
+  String get helpPtProgramsItem3Title;
+
+  /// Help: PT programs item 3 body
+  ///
+  /// In tr, this message translates to:
+  /// **'Üyenin program listesinde yalnızca aktif programlar görünür. Programı pasife alarak gizleyebilir, dilediğinizde tekrar aktif edebilirsiniz.'**
+  String get helpPtProgramsItem3Body;
+
+  /// Help: PT packages item 4 title
+  ///
+  /// In tr, this message translates to:
+  /// **'Grup Yönetimi'**
+  String get helpPtPackagesItem4Title;
+
+  /// Help: PT packages item 4 body
+  ///
+  /// In tr, this message translates to:
+  /// **'\"Gruplar\" sekmesinden birden fazla üyeyi bir grupta toplayabilirsiniz. Her grup için ayrı paket ve seans tanımlayabilirsiniz; grup oluşturulduğunda otomatik sohbet odası açılır. Grup silindiğinde sohbet odası da kaldırılır.'**
+  String get helpPtPackagesItem4Body;
+
+  /// Help: PT earnings item 4 title
+  ///
+  /// In tr, this message translates to:
+  /// **'Anlık Bildirim'**
+  String get helpPtEarningsItem4Title;
+
+  /// Help: PT earnings item 4 body
+  ///
+  /// In tr, this message translates to:
+  /// **'Üye paket satın aldığında anlık push bildirimi alırsınız. Bildirme dokunarak doğrudan Kazançlar ekranına ulaşabilirsiniz.'**
+  String get helpPtEarningsItem4Body;
+
+  /// Help: PT messages item 2 title
+  ///
+  /// In tr, this message translates to:
+  /// **'Grup Sohbetleri'**
+  String get helpPtMessagesItem2Title;
+
+  /// Help: PT messages item 2 body
+  ///
+  /// In tr, this message translates to:
+  /// **'Oluşturduğunuz her grup için otomatik sohbet odası açılır. Grup silindiğinde sohbet odası da listeden kaldırılır.'**
+  String get helpPtMessagesItem2Body;
+
+  /// Help: PT messages item 3 title
+  ///
+  /// In tr, this message translates to:
+  /// **'Sohbeti Sil'**
+  String get helpPtMessagesItem3Title;
+
+  /// Help: PT messages item 3 body
+  ///
+  /// In tr, this message translates to:
+  /// **'Sohbet listesinde herhangi bir sohbete uzun basarak silebilirsiniz. Sohbet silindiğinde her iki taraf için de listeden kaybolur.'**
+  String get helpPtMessagesItem3Body;
 }
 
 class _AppLocalizationsDelegate

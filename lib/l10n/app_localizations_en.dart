@@ -1800,4 +1800,111 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aboutCopyright => '© 2026 BookMyPt. All rights reserved.';
+
+  @override
+  String get deleteChatTitle => 'Delete Conversation';
+
+  @override
+  String get deleteChatBody =>
+      'When this conversation is deleted, it disappears from the list for both parties. This action cannot be undone. Do you want to continue?';
+
+  @override
+  String get chatDeleted => 'Conversation deleted';
+
+  @override
+  String get helpCalendarItem5Title => 'Date Restriction';
+
+  @override
+  String get helpCalendarItem5Body =>
+      'You cannot request an appointment for a past date or time. The selected time must be at least 5 minutes in the future.';
+
+  @override
+  String get helpPackagesItem4Title => 'Group Packages';
+
+  @override
+  String get helpPackagesItem4Body =>
+      'If your trainer has added you to a group, you can purchase packages for that group in the Groups tab. Your session credits are added after the PT approves.';
+
+  @override
+  String get helpProgramsTitle => 'My Programs';
+
+  @override
+  String get helpProgramsItem1Title => 'Workout Program';
+
+  @override
+  String get helpProgramsItem1Body =>
+      'Your PT can assign you a weekly workout program. You can review it week by week and day by day and see all exercise details.';
+
+  @override
+  String get helpProgramsItem2Title => 'Exercise Types';
+
+  @override
+  String get helpProgramsItem2Body =>
+      'Programs can contain three exercise types: 💪 Strength (sets/reps/weight), 🏃 Cardio (duration/distance) and 🧘 Stretching (sets/hold duration).';
+
+  @override
+  String get helpMemberMessagesItem2Title => 'Group Chats';
+
+  @override
+  String get helpMemberMessagesItem2Body =>
+      'If your trainer adds you to a group, a group chat room is automatically created. All group members and the PT join the group chat.';
+
+  @override
+  String get helpMemberMessagesItem3Title => 'Delete Conversation';
+
+  @override
+  String get helpMemberMessagesItem3Body =>
+      'Long press any conversation in the chat list to access the delete option. When deleted, the conversation disappears for both parties.';
+
+  @override
+  String get helpPtProgramsTitle => 'Workout Programs';
+
+  @override
+  String get helpPtProgramsItem1Title => 'Creating a Program';
+
+  @override
+  String get helpPtProgramsItem1Body =>
+      'Select a member and create a weekly workout program. Set the number of weeks (1–12) and add daily exercises. Saturday and Sunday are rest days by default.';
+
+  @override
+  String get helpPtProgramsItem2Title => 'Exercise Types';
+
+  @override
+  String get helpPtProgramsItem2Body =>
+      'Add 3 types of exercises: Strength (sets/reps/weight/rest), Cardio (duration/distance) and Stretching (sets/hold duration). Select the type using the selector in the Add Exercise screen.';
+
+  @override
+  String get helpPtProgramsItem3Title => 'Active / Inactive';
+
+  @override
+  String get helpPtProgramsItem3Body =>
+      'Only active programs are visible to the member. You can hide a program by deactivating it and reactivate it at any time.';
+
+  @override
+  String get helpPtPackagesItem4Title => 'Group Management';
+
+  @override
+  String get helpPtPackagesItem4Body =>
+      'From the Groups tab, group multiple members together. Define packages and sessions per group; a chat room is created automatically. The chat room is removed when the group is deleted.';
+
+  @override
+  String get helpPtEarningsItem4Title => 'Instant Notification';
+
+  @override
+  String get helpPtEarningsItem4Body =>
+      'You receive an instant push notification when a member purchases a package. Tap the notification to go directly to the Earnings screen.';
+
+  @override
+  String get helpPtMessagesItem2Title => 'Group Chats';
+
+  @override
+  String get helpPtMessagesItem2Body =>
+      'A chat room is automatically created for every group you create. The chat room is removed when the group is deleted.';
+
+  @override
+  String get helpPtMessagesItem3Title => 'Delete Conversation';
+
+  @override
+  String get helpPtMessagesItem3Body =>
+      'Long press any conversation in the chat list to delete it. When deleted, the conversation disappears for both parties.';
 }

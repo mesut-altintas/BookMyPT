@@ -602,5 +602,45 @@
   "aboutReleaseDateValue": "May 2026",
   "aboutDeveloperLabel": "Developer",
   "aboutDeveloperName": "BookMyPt Team",
-  "aboutCopyright": "© 2026 BookMyPt. All rights reserved."
+  "aboutCopyright": "© 2026 BookMyPt. All rights reserved.",
+
+  "deleteChatTitle": "Delete Conversation",
+  "deleteChatBody": "When this conversation is deleted, it disappears from the list for both parties. This action cannot be undone. Do you want to continue?",
+  "chatDeleted": "Conversation deleted",
+
+  "helpCalendarItem5Title": "Date Restriction",
+  "helpCalendarItem5Body": "You cannot request an appointment for a past date or time. The selected time must be at least 5 minutes in the future.",
+
+  "helpPackagesItem4Title": "Group Packages",
+  "helpPackagesItem4Body": "If your trainer has added you to a group, you can purchase packages for that group in the Groups tab. Your session credits are added after the PT approves.",
+
+  "helpProgramsTitle": "My Programs",
+  "helpProgramsItem1Title": "Workout Program",
+  "helpProgramsItem1Body": "Your PT can assign you a weekly workout program. You can review it week by week and day by day and see all exercise details.",
+  "helpProgramsItem2Title": "Exercise Types",
+  "helpProgramsItem2Body": "Programs can contain three exercise types: 💪 Strength (sets/reps/weight), 🏃 Cardio (duration/distance) and 🧘 Stretching (sets/hold duration).",
+
+  "helpMemberMessagesItem2Title": "Group Chats",
+  "helpMemberMessagesItem2Body": "If your trainer adds you to a group, a group chat room is automatically created. All group members and the PT join the group chat.",
+  "helpMemberMessagesItem3Title": "Delete Conversation",
+  "helpMemberMessagesItem3Body": "Long press any conversation in the chat list to access the delete option. When deleted, the conversation disappears for both parties.",
+
+  "helpPtProgramsTitle": "Workout Programs",
+  "helpPtProgramsItem1Title": "Creating a Program",
+  "helpPtProgramsItem1Body": "Select a member and create a weekly workout program. Set the number of weeks (1–12) and add daily exercises. Saturday and Sunday are rest days by default.",
+  "helpPtProgramsItem2Title": "Exercise Types",
+  "helpPtProgramsItem2Body": "Add 3 types of exercises: Strength (sets/reps/weight/rest), Cardio (duration/distance) and Stretching (sets/hold duration). Select the type using the selector in the Add Exercise screen.",
+  "helpPtProgramsItem3Title": "Active / Inactive",
+  "helpPtProgramsItem3Body": "Only active programs are visible to the member. You can hide a program by deactivating it and reactivate it at any time.",
+
+  "helpPtPackagesItem4Title": "Group Management",
+  "helpPtPackagesItem4Body": "From the Groups tab, group multiple members together. Define packages and sessions per group; a chat room is created automatically. The chat room is removed when the group is deleted.",
+
+  "helpPtEarningsItem4Title": "Instant Notification",
+  "helpPtEarningsItem4Body": "You receive an instant push notification when a member purchases a package. Tap the notification to go directly to the Earnings screen.",
+
+  "helpPtMessagesItem2Title": "Group Chats",
+  "helpPtMessagesItem2Body": "A chat room is automatically created for every group you create. The chat room is removed when the group is deleted.",
+  "helpPtMessagesItem3Title": "Delete Conversation",
+  "helpPtMessagesItem3Body": "Long press any conversation in the chat list to delete it. When deleted, the conversation disappears for both parties."
 }

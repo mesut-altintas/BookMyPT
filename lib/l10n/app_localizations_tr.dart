@@ -1800,4 +1800,111 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get aboutCopyright => '© 2026 BookMyPt. Tüm hakları saklıdır.';
+
+  @override
+  String get deleteChatTitle => 'Sohbeti Sil';
+
+  @override
+  String get deleteChatBody =>
+      'Bu sohbet silindiğinde her iki taraf için de listeden kalkar. Bu işlem geri alınamaz. Devam etmek istiyor musunuz?';
+
+  @override
+  String get chatDeleted => 'Sohbet silindi';
+
+  @override
+  String get helpCalendarItem5Title => 'Geçmiş Tarih Kısıtlaması';
+
+  @override
+  String get helpCalendarItem5Body =>
+      'Geçmişe ait bir tarih veya saate randevu talebi oluşturamazsınız. Seçilen zamanın en az 5 dakika ileride olması gerekir.';
+
+  @override
+  String get helpPackagesItem4Title => 'Grup Paketleri';
+
+  @override
+  String get helpPackagesItem4Body =>
+      'Eğitmeniniz sizi bir gruba dahil etmişse \"Gruplar\" sekmesinde o gruba ait paketleri satın alabilirsiniz. PT onayladıktan sonra seans hakkınız hesabınıza eklenir.';
+
+  @override
+  String get helpProgramsTitle => 'Programlarım';
+
+  @override
+  String get helpProgramsItem1Title => 'Antrenman Programı';
+
+  @override
+  String get helpProgramsItem1Body =>
+      'PT\'niz size haftalık antrenman programı atayabilir. Programı hafta ve gün bazında inceleyebilir, tüm egzersiz detaylarına ulaşabilirsiniz.';
+
+  @override
+  String get helpProgramsItem2Title => 'Egzersiz Tipleri';
+
+  @override
+  String get helpProgramsItem2Body =>
+      'Programlar üç farklı egzersiz tipinden oluşabilir: 💪 Güç (set/tekrar/ağırlık), 🏃 Kardio (süre/mesafe) ve 🧘 Esneme (set/tutma süresi).';
+
+  @override
+  String get helpMemberMessagesItem2Title => 'Grup Sohbetleri';
+
+  @override
+  String get helpMemberMessagesItem2Body =>
+      'Eğitmeniniz sizi bir gruba dahil ederse grup sohbet odası otomatik oluşturulur. Tüm grup üyeleri ve PT grup sohbetine katılır.';
+
+  @override
+  String get helpMemberMessagesItem3Title => 'Sohbeti Sil';
+
+  @override
+  String get helpMemberMessagesItem3Body =>
+      'Sohbet listesinde herhangi bir sohbete uzun basarak silme seçeneğine ulaşabilirsiniz. Sohbet silindiğinde her iki taraf için de listeden kaybolur.';
+
+  @override
+  String get helpPtProgramsTitle => 'Antrenman Programları';
+
+  @override
+  String get helpPtProgramsItem1Title => 'Program Oluşturma';
+
+  @override
+  String get helpPtProgramsItem1Body =>
+      'Üye seçerek haftalık antrenman programı oluşturabilirsiniz. Hafta sayısını (1–12) belirleyin ve her güne egzersiz ekleyin. Cumartesi–Pazar varsayılan olarak dinlenme günüdür.';
+
+  @override
+  String get helpPtProgramsItem2Title => 'Egzersiz Tipleri';
+
+  @override
+  String get helpPtProgramsItem2Body =>
+      'Güç (set/tekrar/ağırlık/dinlenme), Kardio (süre/mesafe) ve Esneme (set/tutma süresi) olmak üzere 3 farklı egzersiz tipi ekleyebilirsiniz. Egzersizi eklerken tipini seçiciyle belirleyin.';
+
+  @override
+  String get helpPtProgramsItem3Title => 'Aktif / Pasif Yönetimi';
+
+  @override
+  String get helpPtProgramsItem3Body =>
+      'Üyenin program listesinde yalnızca aktif programlar görünür. Programı pasife alarak gizleyebilir, dilediğinizde tekrar aktif edebilirsiniz.';
+
+  @override
+  String get helpPtPackagesItem4Title => 'Grup Yönetimi';
+
+  @override
+  String get helpPtPackagesItem4Body =>
+      '\"Gruplar\" sekmesinden birden fazla üyeyi bir grupta toplayabilirsiniz. Her grup için ayrı paket ve seans tanımlayabilirsiniz; grup oluşturulduğunda otomatik sohbet odası açılır. Grup silindiğinde sohbet odası da kaldırılır.';
+
+  @override
+  String get helpPtEarningsItem4Title => 'Anlık Bildirim';
+
+  @override
+  String get helpPtEarningsItem4Body =>
+      'Üye paket satın aldığında anlık push bildirimi alırsınız. Bildirme dokunarak doğrudan Kazançlar ekranına ulaşabilirsiniz.';
+
+  @override
+  String get helpPtMessagesItem2Title => 'Grup Sohbetleri';
+
+  @override
+  String get helpPtMessagesItem2Body =>
+      'Oluşturduğunuz her grup için otomatik sohbet odası açılır. Grup silindiğinde sohbet odası da listeden kaldırılır.';
+
+  @override
+  String get helpPtMessagesItem3Title => 'Sohbeti Sil';
+
+  @override
+  String get helpPtMessagesItem3Body =>
+      'Sohbet listesinde herhangi bir sohbete uzun basarak silebilirsiniz. Sohbet silindiğinde her iki taraf için de listeden kaybolur.';
 }

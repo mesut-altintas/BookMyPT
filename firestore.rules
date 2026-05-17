@@ -157,10 +157,15 @@ service cloud.firestore {
         (resource.data.ptId == request.auth.uid ||
          resource.data.memberId == request.auth.uid ||
          request.auth.uid in resource.data.get('participants', []));
-      // Only PT can delete group chat rooms (e.g. when deleting the group)
-      allow delete: if isAuthenticated() &&
-        resource.data.ptId == request.auth.uid &&
-        resource.data.get('isGroup', false) == true;
+      // 1:1 chats: either participant may delete.
+      // Group chats: only the PT may delete (e.g. when deleting the group).
+      allow delete: if isAuthenticated() && (
+        (!resource.data.get('isGroup', false) &&
+          (resource.data.ptId == request.auth.uid ||
+           resource.data.memberId == request.auth.uid)) ||
+        (resource.data.get('isGroup', false) &&
+          resource.data.ptId == request.auth.uid)
+      );
 
       // Messages subcollection
       match /messages/{messageId} {

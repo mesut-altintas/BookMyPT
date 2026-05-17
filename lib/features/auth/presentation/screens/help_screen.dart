@@ -68,6 +68,10 @@ class HelpScreen extends StatelessWidget {
               title: context.l10n.helpCalendarItem4Title,
               body: context.l10n.helpCalendarItem4Body,
             ),
+            _HelpItem(
+              title: context.l10n.helpCalendarItem5Title,
+              body: context.l10n.helpCalendarItem5Body,
+            ),
           ],
         ),
         _section(
@@ -108,6 +112,26 @@ class HelpScreen extends StatelessWidget {
               title: context.l10n.helpPackagesItem3Title,
               body: context.l10n.helpPackagesItem3Body,
             ),
+            _HelpItem(
+              title: context.l10n.helpPackagesItem4Title,
+              body: context.l10n.helpPackagesItem4Body,
+            ),
+          ],
+        ),
+        _section(
+          context,
+          icon: Icons.fitness_center_outlined,
+          title: context.l10n.helpProgramsTitle,
+          color: Colors.deepPurple,
+          items: [
+            _HelpItem(
+              title: context.l10n.helpProgramsItem1Title,
+              body: context.l10n.helpProgramsItem1Body,
+            ),
+            _HelpItem(
+              title: context.l10n.helpProgramsItem2Title,
+              body: context.l10n.helpProgramsItem2Body,
+            ),
           ],
         ),
         _section(
@@ -139,6 +163,14 @@ class HelpScreen extends StatelessWidget {
             _HelpItem(
               title: context.l10n.helpMemberMessagesItem1Title,
               body: context.l10n.helpMemberMessagesItem1Body,
+            ),
+            _HelpItem(
+              title: context.l10n.helpMemberMessagesItem2Title,
+              body: context.l10n.helpMemberMessagesItem2Body,
+            ),
+            _HelpItem(
+              title: context.l10n.helpMemberMessagesItem3Title,
+              body: context.l10n.helpMemberMessagesItem3Body,
             ),
           ],
         ),
@@ -217,6 +249,26 @@ class HelpScreen extends StatelessWidget {
         ),
         _section(
           context,
+          icon: Icons.fitness_center_outlined,
+          title: context.l10n.helpPtProgramsTitle,
+          color: Colors.deepPurple,
+          items: [
+            _HelpItem(
+              title: context.l10n.helpPtProgramsItem1Title,
+              body: context.l10n.helpPtProgramsItem1Body,
+            ),
+            _HelpItem(
+              title: context.l10n.helpPtProgramsItem2Title,
+              body: context.l10n.helpPtProgramsItem2Body,
+            ),
+            _HelpItem(
+              title: context.l10n.helpPtProgramsItem3Title,
+              body: context.l10n.helpPtProgramsItem3Body,
+            ),
+          ],
+        ),
+        _section(
+          context,
           icon: Icons.inventory_2_outlined,
           title: context.l10n.helpPtPackagesTitle,
           color: Colors.orange,
@@ -232,6 +284,10 @@ class HelpScreen extends StatelessWidget {
             _HelpItem(
               title: context.l10n.helpPtPackagesItem3Title,
               body: context.l10n.helpPtPackagesItem3Body,
+            ),
+            _HelpItem(
+              title: context.l10n.helpPtPackagesItem4Title,
+              body: context.l10n.helpPtPackagesItem4Body,
             ),
           ],
         ),
@@ -253,6 +309,10 @@ class HelpScreen extends StatelessWidget {
               title: context.l10n.helpPtEarningsItem3Title,
               body: context.l10n.helpPtEarningsItem3Body,
             ),
+            _HelpItem(
+              title: context.l10n.helpPtEarningsItem4Title,
+              body: context.l10n.helpPtEarningsItem4Body,
+            ),
           ],
         ),
         _section(
@@ -264,6 +324,14 @@ class HelpScreen extends StatelessWidget {
             _HelpItem(
               title: context.l10n.helpPtMessagesItem1Title,
               body: context.l10n.helpPtMessagesItem1Body,
+            ),
+            _HelpItem(
+              title: context.l10n.helpPtMessagesItem2Title,
+              body: context.l10n.helpPtMessagesItem2Body,
+            ),
+            _HelpItem(
+              title: context.l10n.helpPtMessagesItem3Title,
+              body: context.l10n.helpPtMessagesItem3Body,
             ),
           ],
         ),

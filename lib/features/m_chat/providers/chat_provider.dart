@@ -58,6 +58,19 @@ class ChatRepository {
   String getChatId(String ptId, String memberId) => '${ptId}_$memberId';
   String getGroupChatId(String groupId) => '${groupId}_group';
 
+  // ── Delete chat room ───────────────────────────────────────────────────────
+
+  /// Deletes the chat room document.  Messages sub-collection is left in place
+  /// (Firestore does not auto-delete sub-collections) but becomes inaccessible
+  /// once the parent document is gone.  Both parties lose the room from their
+  /// chat list because the stream queries by the participants array.
+  Future<void> deleteChatRoom(String chatId) async {
+    await _firestore
+        .collection(AppConstants.chatsCollection)
+        .doc(chatId)
+        .delete();
+  }
+
   // ── Send message ───────────────────────────────────────────────────────────
 
   Future<void> sendMessage({

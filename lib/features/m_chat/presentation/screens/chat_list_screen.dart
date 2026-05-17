@@ -82,7 +82,9 @@ class _ChatListContent extends ConsumerWidget {
   }
 }
 
-class _ChatRoomTile extends StatelessWidget {
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ChatRoomTile extends ConsumerWidget {
   final ChatRoom room;
   final String userId;
   final String chatDetailBasePath;
@@ -93,9 +95,117 @@ class _ChatRoomTile extends StatelessWidget {
     required this.chatDetailBasePath,
   });
 
-  @override
-  Widget build(BuildContext context) {
+  // Can this user delete this chat room?
+  bool get _canDelete {
+    if (room.isGroup) {
+      // Only the PT who owns the group may delete the group chat
+      return room.ptId == userId;
+    }
+    // For 1:1 chats both parties may delete
+    return room.ptId == userId || room.memberId == userId;
+  }
+
+  void _showOptions(BuildContext context, WidgetRef ref) {
+    final l10n  = context.l10n;
     final theme = Theme.of(context);
+
+    showModalBottomSheet(
+      context: context,
+      useRootNavigator: false,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetCtx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 12),
+            Center(
+              child: Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.outlineVariant,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            ListTile(
+              leading: const Icon(Icons.delete_outline, color: Colors.red),
+              title: Text(
+                l10n.deleteChatTitle,
+                style: const TextStyle(color: Colors.red),
+              ),
+              onTap: () {
+                Navigator.pop(sheetCtx);
+                _confirmDelete(context, ref);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.close),
+              title: Text(l10n.cancel),
+              onTap: () => Navigator.pop(sheetCtx),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
+    final l10n = context.l10n;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      useRootNavigator: false,
+      barrierDismissible: false,
+      builder: (dialogCtx) => AlertDialog(
+        title: Text(l10n.deleteChatTitle),
+        content: Text(l10n.deleteChatBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx, false),
+            child: Text(l10n.cancel),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(dialogCtx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: Text(l10n.delete),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      await ref.read(chatRepositoryProvider).deleteChatRoom(room.id);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.chatDeleted),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${l10n.error(e.toString())}'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme     = Theme.of(context);
     final otherName = room.getOtherName(userId);
     final otherPhoto = room.getOtherPhoto(userId);
 
@@ -112,13 +222,13 @@ class _ChatRoomTile extends StatelessWidget {
     }
 
     String? subtitle = room.lastMessage;
-    // Show deleted placeholder if needed
     if (subtitle != null && subtitle.isEmpty) {
       subtitle = '🚫 Bu mesaj silindi';
     }
 
     return ListTile(
       onTap: () => context.push('$chatDetailBasePath/${room.id}'),
+      onLongPress: _canDelete ? () => _showOptions(context, ref) : null,
       leading: leading,
       title: Row(
         children: [
@@ -132,8 +242,7 @@ class _ChatRoomTile extends StatelessWidget {
           if (room.isGroup)
             Container(
               margin: const EdgeInsets.only(left: 6),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
                 color: theme.colorScheme.primaryContainer,
                 borderRadius: BorderRadius.circular(8),

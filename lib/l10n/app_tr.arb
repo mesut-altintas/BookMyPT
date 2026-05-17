@@ -1783,5 +1783,98 @@
   "@aboutDeveloperName": { "description": "Developer name shown in About sheet" },
 
   "aboutCopyright": "© 2026 BookMyPt. Tüm hakları saklıdır.",
-  "@aboutCopyright": { "description": "Copyright notice in About sheet" }
+  "@aboutCopyright": { "description": "Copyright notice in About sheet" },
+
+  "deleteChatTitle": "Sohbeti Sil",
+  "@deleteChatTitle": { "description": "Delete chat room dialog title and bottom-sheet option" },
+
+  "deleteChatBody": "Bu sohbet silindiğinde her iki taraf için de listeden kalkar. Bu işlem geri alınamaz. Devam etmek istiyor musunuz?",
+  "@deleteChatBody": { "description": "Delete chat room confirmation body" },
+
+  "chatDeleted": "Sohbet silindi",
+  "@chatDeleted": { "description": "Snackbar shown after a chat room is deleted" },
+
+  "helpCalendarItem5Title": "Geçmiş Tarih Kısıtlaması",
+  "@helpCalendarItem5Title": { "description": "Help: member calendar item 5 title" },
+
+  "helpCalendarItem5Body": "Geçmişe ait bir tarih veya saate randevu talebi oluşturamazsınız. Seçilen zamanın en az 5 dakika ileride olması gerekir.",
+  "@helpCalendarItem5Body": { "description": "Help: member calendar item 5 body" },
+
+  "helpPackagesItem4Title": "Grup Paketleri",
+  "@helpPackagesItem4Title": { "description": "Help: member packages item 4 title" },
+
+  "helpPackagesItem4Body": "Eğitmeniniz sizi bir gruba dahil etmişse \"Gruplar\" sekmesinde o gruba ait paketleri satın alabilirsiniz. PT onayladıktan sonra seans hakkınız hesabınıza eklenir.",
+  "@helpPackagesItem4Body": { "description": "Help: member packages item 4 body" },
+
+  "helpProgramsTitle": "Programlarım",
+  "@helpProgramsTitle": { "description": "Help: member programs section title" },
+
+  "helpProgramsItem1Title": "Antrenman Programı",
+  "@helpProgramsItem1Title": { "description": "Help: member programs item 1 title" },
+
+  "helpProgramsItem1Body": "PT'niz size haftalık antrenman programı atayabilir. Programı hafta ve gün bazında inceleyebilir, tüm egzersiz detaylarına ulaşabilirsiniz.",
+  "@helpProgramsItem1Body": { "description": "Help: member programs item 1 body" },
+
+  "helpProgramsItem2Title": "Egzersiz Tipleri",
+  "@helpProgramsItem2Title": { "description": "Help: member programs item 2 title" },
+
+  "helpProgramsItem2Body": "Programlar üç farklı egzersiz tipinden oluşabilir: 💪 Güç (set/tekrar/ağırlık), 🏃 Kardio (süre/mesafe) ve 🧘 Esneme (set/tutma süresi).",
+  "@helpProgramsItem2Body": { "description": "Help: member programs item 2 body" },
+
+  "helpMemberMessagesItem2Title": "Grup Sohbetleri",
+  "@helpMemberMessagesItem2Title": { "description": "Help: member messages item 2 title" },
+
+  "helpMemberMessagesItem2Body": "Eğitmeniniz sizi bir gruba dahil ederse grup sohbet odası otomatik oluşturulur. Tüm grup üyeleri ve PT grup sohbetine katılır.",
+  "@helpMemberMessagesItem2Body": { "description": "Help: member messages item 2 body" },
+
+  "helpMemberMessagesItem3Title": "Sohbeti Sil",
+  "@helpMemberMessagesItem3Title": { "description": "Help: member messages item 3 title" },
+
+  "helpMemberMessagesItem3Body": "Sohbet listesinde herhangi bir sohbete uzun basarak silme seçeneğine ulaşabilirsiniz. Sohbet silindiğinde her iki taraf için de listeden kaybolur.",
+  "@helpMemberMessagesItem3Body": { "description": "Help: member messages item 3 body" },
+
+  "helpPtProgramsTitle": "Antrenman Programları",
+  "@helpPtProgramsTitle": { "description": "Help: PT programs section title" },
+
+  "helpPtProgramsItem1Title": "Program Oluşturma",
+  "@helpPtProgramsItem1Title": { "description": "Help: PT programs item 1 title" },
+
+  "helpPtProgramsItem1Body": "Üye seçerek haftalık antrenman programı oluşturabilirsiniz. Hafta sayısını (1–12) belirleyin ve her güne egzersiz ekleyin. Cumartesi–Pazar varsayılan olarak dinlenme günüdür.",
+  "@helpPtProgramsItem1Body": { "description": "Help: PT programs item 1 body" },
+
+  "helpPtProgramsItem2Title": "Egzersiz Tipleri",
+  "@helpPtProgramsItem2Title": { "description": "Help: PT programs item 2 title" },
+
+  "helpPtProgramsItem2Body": "Güç (set/tekrar/ağırlık/dinlenme), Kardio (süre/mesafe) ve Esneme (set/tutma süresi) olmak üzere 3 farklı egzersiz tipi ekleyebilirsiniz. Egzersizi eklerken tipini seçiciyle belirleyin.",
+  "@helpPtProgramsItem2Body": { "description": "Help: PT programs item 2 body" },
+
+  "helpPtProgramsItem3Title": "Aktif / Pasif Yönetimi",
+  "@helpPtProgramsItem3Title": { "description": "Help: PT programs item 3 title" },
+
+  "helpPtProgramsItem3Body": "Üyenin program listesinde yalnızca aktif programlar görünür. Programı pasife alarak gizleyebilir, dilediğinizde tekrar aktif edebilirsiniz.",
+  "@helpPtProgramsItem3Body": { "description": "Help: PT programs item 3 body" },
+
+  "helpPtPackagesItem4Title": "Grup Yönetimi",
+  "@helpPtPackagesItem4Title": { "description": "Help: PT packages item 4 title" },
+
+  "helpPtPackagesItem4Body": "\"Gruplar\" sekmesinden birden fazla üyeyi bir grupta toplayabilirsiniz. Her grup için ayrı paket ve seans tanımlayabilirsiniz; grup oluşturulduğunda otomatik sohbet odası açılır. Grup silindiğinde sohbet odası da kaldırılır.",
+  "@helpPtPackagesItem4Body": { "description": "Help: PT packages item 4 body" },
+
+  "helpPtEarningsItem4Title": "Anlık Bildirim",
+  "@helpPtEarningsItem4Title": { "description": "Help: PT earnings item 4 title" },
+
+  "helpPtEarningsItem4Body": "Üye paket satın aldığında anlık push bildirimi alırsınız. Bildirme dokunarak doğrudan Kazançlar ekranına ulaşabilirsiniz.",
+  "@helpPtEarningsItem4Body": { "description": "Help: PT earnings item 4 body" },
+
+  "helpPtMessagesItem2Title": "Grup Sohbetleri",
+  "@helpPtMessagesItem2Title": { "description": "Help: PT messages item 2 title" },
+
+  "helpPtMessagesItem2Body": "Oluşturduğunuz her grup için otomatik sohbet odası açılır. Grup silindiğinde sohbet odası da listeden kaldırılır.",
+  "@helpPtMessagesItem2Body": { "description": "Help: PT messages item 2 body" },
+
+  "helpPtMessagesItem3Title": "Sohbeti Sil",
+  "@helpPtMessagesItem3Title": { "description": "Help: PT messages item 3 title" },
+
+  "helpPtMessagesItem3Body": "Sohbet listesinde herhangi bir sohbete uzun basarak silebilirsiniz. Sohbet silindiğinde her iki taraf için de listeden kaybolur.",
+  "@helpPtMessagesItem3Body": { "description": "Help: PT messages item 3 body" }
 }
