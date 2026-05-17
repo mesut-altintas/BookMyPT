@@ -317,6 +317,7 @@
   "paymentRequestCreated": "Your payment request has been created. Your sessions will be added after PT approval.",
   "noPackagesYet": "No packages created yet",
   "noPackagesYetSub": "Create session packages for your members",
+  "noPackagesAvailable": "No packages available for purchase",
   "addPackage": "Add Package",
   "editPackage": "Edit Package",
   "newPackage": "New Package",

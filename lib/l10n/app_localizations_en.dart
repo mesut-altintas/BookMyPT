@@ -911,6 +911,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noPackagesYetSub => 'Create session packages for your members';
 
   @override
+  String get noPackagesAvailable => 'No packages available for purchase';
+
+  @override
   String get addPackage => 'Add Package';
 
   @override

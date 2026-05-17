@@ -1838,6 +1838,12 @@ abstract class AppLocalizations {
   /// **'Üyeleriniz için seans paketi oluşturun'**
   String get noPackagesYetSub;
 
+  /// No packages available for purchase (member view)
+  ///
+  /// In tr, this message translates to:
+  /// **'Satın alınacak paket bulunmuyor'**
+  String get noPackagesAvailable;
+
   /// Add package button
   ///
   /// In tr, this message translates to:

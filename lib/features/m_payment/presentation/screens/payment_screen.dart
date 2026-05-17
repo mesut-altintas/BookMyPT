@@ -174,16 +174,26 @@ class _IndividualTab extends ConsumerWidget {
                 )
               else if (packagesAsync.isLoading)
                 const SliverToBoxAdapter(child: AppLoading())
-              else if (packages.isEmpty)
+              else if (packages.isEmpty) ...[
+                _SectionHeader(
+                  title: context.l10n.buyPackage,
+                  icon: Icons.inventory_2_outlined,
+                ),
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: _SectionHeader(
-                      title: context.l10n.buyPackage,
-                      icon: Icons.inventory_2_outlined,
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+                    child: Text(
+                      context.l10n.noPackagesAvailable,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurfaceVariant,
+                            fontStyle: FontStyle.italic,
+                          ),
                     ),
                   ),
-                )
+                ),
+              ]
               else ...[
                 _SectionHeader(
                   title: context.l10n.buyPackage,

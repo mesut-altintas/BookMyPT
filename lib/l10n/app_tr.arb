@@ -906,6 +906,9 @@
   "noPackagesYetSub": "Üyeleriniz için seans paketi oluşturun",
   "@noPackagesYetSub": { "description": "No packages yet subtitle" },
 
+  "noPackagesAvailable": "Satın alınacak paket bulunmuyor",
+  "@noPackagesAvailable": { "description": "No packages available for purchase (member view)" },
+
   "addPackage": "Paket Ekle",
   "@addPackage": { "description": "Add package button" },
 

@@ -912,6 +912,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get noPackagesYetSub => 'Üyeleriniz için seans paketi oluşturun';
 
   @override
+  String get noPackagesAvailable => 'Satın alınacak paket bulunmuyor';
+
+  @override
   String get addPackage => 'Paket Ekle';
 
   @override
