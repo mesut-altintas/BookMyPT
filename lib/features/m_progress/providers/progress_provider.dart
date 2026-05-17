@@ -1,7 +1,8 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+﻿import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_constants.dart';
+import '../../../core/utils/stream_utils.dart';
 import '../../../features/auth/providers/auth_provider.dart';
 import '../../../shared/models/progress_model.dart';
 
@@ -17,7 +18,7 @@ final progressListProvider =
             snap.docs.map((d) => ProgressModel.fromFirestore(d)).toList();
         list.sort((a, b) => b.date.compareTo(a.date));
         return list;
-      }).handleError((e, st) {});
+      }).transform(safeList<ProgressModel>());
 });
 
 final latestProgressProvider =
@@ -64,3 +65,4 @@ class ProgressRepository {
           .doc(id)
           .delete();
 }
+

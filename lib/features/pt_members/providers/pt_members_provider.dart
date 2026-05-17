@@ -1,9 +1,10 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+﻿import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_constants.dart';
+import '../../../core/utils/stream_utils.dart';
 import '../../../features/auth/providers/auth_provider.dart';
 import '../../../shared/models/member_model.dart';
 import '../../../shared/models/user_model.dart';
@@ -21,7 +22,7 @@ final ptMembersProvider =
             snap.docs.map((d) => MemberProfile.fromFirestore(d)).toList();
         list.sort((a, b) => b.joinedAt.compareTo(a.joinedAt));
         return list;
-      }).handleError((e, st) {});
+      }).transform(safeList<MemberProfile>());
 });
 
 final ptMemberDetailProvider =
@@ -35,7 +36,7 @@ final ptMemberDetailProvider =
       .doc(args.memberId)
       .snapshots()
       .map((d) => d.exists ? MemberProfile.fromFirestore(d) : null)
-      .handleError((e, st) {});
+      .transform(safeNullable<MemberProfile>());
 });
 
 final memberRepositoryProvider = Provider<MemberRepository>((ref) {
@@ -127,3 +128,4 @@ class MemberRepository {
           .doc(memberId)
           .update({'remainingSessions': FieldValue.increment(delta)});
 }
+

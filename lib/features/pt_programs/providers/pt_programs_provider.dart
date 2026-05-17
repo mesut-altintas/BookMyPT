@@ -1,9 +1,25 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_constants.dart';
+import '../../../core/utils/stream_utils.dart';
 import '../../../features/auth/providers/auth_provider.dart';
 import '../../../shared/models/program_model.dart';
+
+/// Safely parses Firestore documents into [ProgramModel] objects,
+/// skipping any document whose data is malformed instead of crashing the stream.
+List<ProgramModel> _parseDocs(List<QueryDocumentSnapshot> docs) {
+  final result = <ProgramModel>[];
+  for (final doc in docs) {
+    try {
+      result.add(ProgramModel.fromFirestore(doc));
+    } catch (e) {
+      debugPrint('[programs] Skipping corrupt doc ${doc.id}: $e');
+    }
+  }
+  return result;
+}
 
 final ptMemberProgramsProvider = StreamProvider.family<List<ProgramModel>,
     ({String ptId, String memberId})>((ref, params) {
@@ -14,11 +30,10 @@ final ptMemberProgramsProvider = StreamProvider.family<List<ProgramModel>,
       .where('memberId', isEqualTo: params.memberId)
       .snapshots()
       .map((snap) {
-        final list =
-            snap.docs.map((d) => ProgramModel.fromFirestore(d)).toList();
+        final list = _parseDocs(snap.docs);
         list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
         return list;
-      }).handleError((e, st) {});
+      }).transform(safeList<ProgramModel>());
 });
 
 final ptProgramsProvider =
@@ -29,11 +44,10 @@ final ptProgramsProvider =
       .where('ptId', isEqualTo: ptId)
       .snapshots()
       .map((snap) {
-        final list =
-            snap.docs.map((d) => ProgramModel.fromFirestore(d)).toList();
+        final list = _parseDocs(snap.docs);
         list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
         return list;
-      }).handleError((e, st) {});
+      }).transform(safeList<ProgramModel>());
 });
 
 final memberProgramsProvider =
@@ -44,13 +58,11 @@ final memberProgramsProvider =
       .where('memberId', isEqualTo: memberId)
       .snapshots()
       .map((snap) {
-        final list =
-            snap.docs.map((d) => ProgramModel.fromFirestore(d)).toList();
-        return list
+        return _parseDocs(snap.docs)
             .where((p) => p.isActive)
             .toList()
           ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      }).handleError((e, st) {});
+      }).transform(safeList<ProgramModel>());
 });
 
 final programDetailProvider =
@@ -61,7 +73,7 @@ final programDetailProvider =
       .doc(programId)
       .snapshots()
       .map((d) => d.exists ? ProgramModel.fromFirestore(d) : null)
-      .handleError((e, st) {});
+      .transform(safeNullable<ProgramModel>());
 });
 
 final programRepositoryProvider = Provider<ProgramRepository>((ref) {

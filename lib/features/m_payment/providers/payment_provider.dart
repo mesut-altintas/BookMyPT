@@ -1,7 +1,8 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+﻿import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_constants.dart';
+import '../../../core/utils/stream_utils.dart';
 import '../../../features/auth/providers/auth_provider.dart';
 import '../../../shared/models/payment_model.dart';
 
@@ -17,7 +18,7 @@ final memberPaymentsProvider =
             snap.docs.map((d) => PaymentModel.fromFirestore(d)).toList();
         list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
         return list;
-      }).handleError((e, st) {});
+      }).transform(safeList<PaymentModel>());
 });
 
 final paymentRepositoryProvider = Provider<PaymentRepository>((ref) {
@@ -73,3 +74,4 @@ class PaymentRepository {
     });
   }
 }
+

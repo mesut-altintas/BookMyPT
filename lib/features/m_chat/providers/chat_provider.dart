@@ -1,7 +1,8 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+﻿import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_constants.dart';
+import '../../../core/utils/stream_utils.dart';
 import '../../../features/auth/providers/auth_provider.dart';
 import '../../../shared/models/chat_model.dart';
 
@@ -27,7 +28,7 @@ final chatRoomsProvider =
           return bTime.compareTo(aTime);
         });
         return rooms;
-      }).handleError((e, st) {});
+      }).transform(safeList<ChatRoom>());
 });
 
 final chatMessagesProvider =
@@ -43,7 +44,7 @@ final chatMessagesProvider =
       .snapshots()
       .map((snap) =>
           snap.docs.map((d) => ChatMessage.fromFirestore(d)).toList())
-      .handleError((e, st) {});
+      .transform(safeList<ChatMessage>());
 });
 
 final chatRepositoryProvider = Provider<ChatRepository>((ref) {
@@ -58,7 +59,7 @@ class ChatRepository {
   String getChatId(String ptId, String memberId) => '${ptId}_$memberId';
   String getGroupChatId(String groupId) => '${groupId}_group';
 
-  // ── Delete chat room ───────────────────────────────────────────────────────
+  // â”€â”€ Delete chat room â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   /// Deletes the chat room document.  Messages sub-collection is left in place
   /// (Firestore does not auto-delete sub-collections) but becomes inaccessible
@@ -71,7 +72,7 @@ class ChatRepository {
         .delete();
   }
 
-  // ── Send message ───────────────────────────────────────────────────────────
+  // â”€â”€ Send message â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   Future<void> sendMessage({
     required String chatId,
@@ -109,9 +110,9 @@ class ChatRepository {
     await batch.commit();
   }
 
-  // ── Delete message ─────────────────────────────────────────────────────────
+  // â”€â”€ Delete message â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-  /// Delete only for the current user — message stays for others.
+  /// Delete only for the current user â€” message stays for others.
   Future<void> deleteMessageForMe(
       String chatId, String messageId, String userId) async {
     await _firestore
@@ -124,7 +125,7 @@ class ChatRepository {
     });
   }
 
-  /// Delete for everyone — replaces content with deleted placeholder.
+  /// Delete for everyone â€” replaces content with deleted placeholder.
   Future<void> deleteMessageForEveryone(
       String chatId, String messageId) async {
     await _firestore
@@ -138,7 +139,7 @@ class ChatRepository {
     });
   }
 
-  // ── Read receipts ──────────────────────────────────────────────────────────
+  // â”€â”€ Read receipts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   Future<void> markMessagesAsRead(String chatId, String userId) async {
     final unread = await _firestore
@@ -161,7 +162,7 @@ class ChatRepository {
     await batch.commit();
   }
 
-  // ── Create / get 1:1 chat room ─────────────────────────────────────────────
+  // â”€â”€ Create / get 1:1 chat room â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   Future<String> createOrGetChatRoom({
     required String ptId,
@@ -191,7 +192,7 @@ class ChatRepository {
     return chatId;
   }
 
-  // ── Create / update group chat room ───────────────────────────────────────
+  // â”€â”€ Create / update group chat room â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   Future<String> createOrUpdateGroupChatRoom({
     required String groupId,
@@ -235,3 +236,4 @@ class ChatRepository {
     return chatId;
   }
 }
+

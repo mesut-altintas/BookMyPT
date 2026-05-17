@@ -1,7 +1,8 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+﻿import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_constants.dart';
+import '../../../core/utils/stream_utils.dart';
 import '../../../features/auth/providers/auth_provider.dart';
 import '../../../shared/models/payment_model.dart';
 
@@ -17,7 +18,7 @@ final ptPaymentsProvider =
             snap.docs.map((d) => PaymentModel.fromFirestore(d)).toList();
         list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
         return list;
-      }).handleError((e, st) {});
+      }).transform(safeList<PaymentModel>());
 });
 
 final ptPackagesProvider =
@@ -31,7 +32,7 @@ final ptPackagesProvider =
       .snapshots()
       .map((snap) =>
           snap.docs.map((d) => PackageModel.fromFirestore(d)).toList())
-      .handleError((e, st) {});
+      .transform(safeList<PackageModel>());
 });
 
 /// Member-facing: active packages visible to this specific member.
@@ -52,7 +53,7 @@ final memberFacingPackagesProvider = StreamProvider.family<List<PackageModel>,
             .where((p) =>
                 !p.isForSpecificMember || p.forMemberId == args.memberId)
             .toList();
-      }).handleError((e, st) {});
+      }).transform(safeList<PackageModel>());
 });
 
 final allPtPackagesProvider =
@@ -66,7 +67,7 @@ final allPtPackagesProvider =
       .snapshots()
       .map((snap) =>
           snap.docs.map((d) => PackageModel.fromFirestore(d)).toList())
-      .handleError((e, st) {});
+      .transform(safeList<PackageModel>());
 });
 
 final earningsRepositoryProvider = Provider<EarningsRepository>((ref) {
@@ -118,3 +119,4 @@ class EarningsRepository {
           .doc(packageId)
           .delete();
 }
+

@@ -1,7 +1,8 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+﻿import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_constants.dart';
+import '../../../core/utils/stream_utils.dart';
 import '../../../features/auth/providers/auth_provider.dart';
 import '../../../shared/models/session_model.dart';
 
@@ -17,7 +18,7 @@ final ptSessionsProvider =
             snap.docs.map((d) => SessionModel.fromFirestore(d)).toList();
         sessions.sort((a, b) => a.dateTime.compareTo(b.dateTime));
         return sessions;
-      }).handleError((e, st) {});
+      }).transform(safeList<SessionModel>());
 });
 
 final upcomingSessionsProvider =
@@ -37,7 +38,7 @@ final upcomingSessionsProvider =
                 s.dateTime.isAfter(now) && s.dateTime.isBefore(weekLater))
             .toList()
           ..sort((a, b) => a.dateTime.compareTo(b.dateTime));
-      }).handleError((e, st) {});
+      }).transform(safeList<SessionModel>());
 });
 
 final ptMemberSessionsProvider = StreamProvider.family<List<SessionModel>,
@@ -53,7 +54,7 @@ final ptMemberSessionsProvider = StreamProvider.family<List<SessionModel>,
             snap.docs.map((d) => SessionModel.fromFirestore(d)).toList();
         sessions.sort((a, b) => b.dateTime.compareTo(a.dateTime));
         return sessions;
-      }).handleError((e, st) {});
+      }).transform(safeList<SessionModel>());
 });
 
 final memberSessionsProvider =
@@ -68,7 +69,7 @@ final memberSessionsProvider =
             snap.docs.map((d) => SessionModel.fromFirestore(d)).toList();
         sessions.sort((a, b) => b.dateTime.compareTo(a.dateTime));
         return sessions;
-      }).handleError((e, st) {});
+      }).transform(safeList<SessionModel>());
 });
 
 final memberPtIdProvider = FutureProvider.family<String, String>((ref, memberId) async {
@@ -109,7 +110,7 @@ final memberUpcomingSessionsProvider =
                     s.status == SessionStatus.confirmed))
             .toList()
           ..sort((a, b) => a.dateTime.compareTo(b.dateTime));
-      }).handleError((e, st) {});
+      }).transform(safeList<SessionModel>());
 });
 
 final sessionDetailProvider =
@@ -120,7 +121,7 @@ final sessionDetailProvider =
       .doc(sessionId)
       .snapshots()
       .map((d) => d.exists ? SessionModel.fromFirestore(d) : null)
-      .handleError((e, st) {});
+      .transform(safeNullable<SessionModel>());
 });
 
 final sessionRepositoryProvider = Provider<SessionRepository>((ref) {
@@ -201,3 +202,4 @@ class SessionRepository {
     return sessions;
   }
 }
+

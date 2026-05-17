@@ -46,3 +46,6 @@ firebase.json
 # Environment / secrets
 .env
 *.env
+
+# Store assets — screenshots are large binaries, scripts contain API keys
+store-screenshots/
