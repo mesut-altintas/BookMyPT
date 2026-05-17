@@ -5,6 +5,7 @@ import '../../../../core/l10n/extensions.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../../features/auth/providers/auth_provider.dart';
 import '../../../../features/m_chat/providers/chat_provider.dart';
+import '../../../../features/pt_groups/providers/pt_groups_provider.dart';
 import '../../../../shared/models/chat_model.dart';
 import '../../../../shared/widgets/app_loading.dart';
 import '../../../../shared/widgets/user_avatar.dart';
@@ -152,10 +153,25 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         final room = rooms?.where((r) => r.id == widget.chatId).firstOrNull;
         final isGroup = room?.isGroup ?? false;
 
+        // For group chats: watch the group model to resolve member names
+        // (fallback for old messages that don't have senderName stored)
+        final groupId = room?.groupId;
+        final groupModel = (isGroup && groupId != null)
+            ? ref.watch(groupByIdProvider(groupId)).valueOrNull
+            : null;
+        // Combined name map: participantNames from room + memberNames from group
+        final nameMap = <String, String>{
+          if (room != null) ...room.participantNames,
+          if (groupModel != null) ...groupModel.memberNames,
+        };
+
         return Scaffold(
           appBar: AppBar(
             title: _ChatAppBarTitle(
-                chatId: widget.chatId, userId: user.uid, room: room),
+                chatId: widget.chatId,
+                userId: user.uid,
+                room: room,
+                nameMap: nameMap),
           ),
           body: Column(
             children: [
@@ -221,7 +237,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                                 padding: const EdgeInsets.only(
                                     left: 12, bottom: 2, top: 4),
                                 child: Text(
-                                  _senderName(room, msg),
+                                  _senderName(room, msg, nameMap),
                                   style: Theme.of(context)
                                       .textTheme
                                       .labelSmall
@@ -261,13 +277,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   /// Resolves sender display name for group messages.
-  /// Priority: senderName stored in message → participantNames map → UID prefix.
-  String _senderName(ChatRoom? room, ChatMessage msg) {
+  /// Priority:
+  ///   1. senderName stored in the message (new messages)
+  ///   2. participantNames map in the chat room doc
+  ///   3. memberNames from the GroupModel (covers old chat rooms without participantNames)
+  ///   4. First 6 chars of UID as last-resort fallback
+  String _senderName(ChatRoom? room, ChatMessage msg, Map<String, String> nameMap) {
     if (msg.senderName != null && msg.senderName!.isNotEmpty) {
       return msg.senderName!;
     }
-    if (room == null) return msg.senderId.substring(0, 6);
-    final fromMap = room.participantNames[msg.senderId];
+    final fromMap = nameMap[msg.senderId];
     if (fromMap != null && fromMap.isNotEmpty) return fromMap;
     return msg.senderId.substring(0, 6);
   }
@@ -282,12 +301,17 @@ class _ChatAppBarTitle extends StatelessWidget {
   final String chatId;
   final String userId;
   final ChatRoom? room;
+  final Map<String, String> nameMap;
 
   const _ChatAppBarTitle(
-      {required this.chatId, required this.userId, this.room});
+      {required this.chatId,
+      required this.userId,
+      this.room,
+      this.nameMap = const {}});
 
   void _showParticipants(BuildContext context) {
-    final names = room!.participantNames;
+    // Merge room.participantNames with the passed nameMap (covers old rooms)
+    final names = {...room!.participantNames, ...nameMap};
     final participants = room!.participants;
 
     showModalBottomSheet(
