@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class ChatMessage {
   final String id;
   final String senderId;
+  final String? senderName; // stored at send-time; null on old messages
   final String text;
   final DateTime createdAt;
   final bool read;
@@ -13,6 +14,7 @@ class ChatMessage {
   const ChatMessage({
     required this.id,
     required this.senderId,
+    this.senderName,
     required this.text,
     required this.createdAt,
     this.read = false,
@@ -28,6 +30,7 @@ class ChatMessage {
     return ChatMessage(
       id: doc.id,
       senderId: data['senderId'] as String? ?? '',
+      senderName: data['senderName'] as String?,
       text: data['text'] as String? ?? '',
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       read: data['read'] as bool? ?? false,
@@ -39,6 +42,7 @@ class ChatMessage {
 
   Map<String, dynamic> toFirestore() => {
         'senderId': senderId,
+        if (senderName != null) 'senderName': senderName,
         'text': text,
         'createdAt': Timestamp.fromDate(createdAt),
         'read': read,
@@ -50,6 +54,7 @@ class ChatMessage {
   ChatMessage copyWith({bool? read}) => ChatMessage(
         id: id,
         senderId: senderId,
+        senderName: senderName,
         text: text,
         createdAt: createdAt,
         read: read ?? this.read,
@@ -75,6 +80,7 @@ class ChatRoom {
   final String? groupId;
   final String? groupName;
   final List<String> participants;
+  final Map<String, String> participantNames; // {uid: displayName}
 
   const ChatRoom({
     required this.id,
@@ -91,6 +97,7 @@ class ChatRoom {
     this.groupId,
     this.groupName,
     this.participants = const [],
+    this.participantNames = const {},
   });
 
   factory ChatRoom.fromFirestore(DocumentSnapshot doc) {
@@ -110,6 +117,9 @@ class ChatRoom {
       groupId: data['groupId'] as String?,
       groupName: data['groupName'] as String?,
       participants: List<String>.from(data['participants'] as List? ?? []),
+      participantNames: Map<String, String>.from(
+          (data['participantNames'] as Map? ?? {})
+              .map((k, v) => MapEntry(k.toString(), v.toString()))),
     );
   }
 
@@ -128,6 +138,7 @@ class ChatRoom {
         if (groupId != null) 'groupId': groupId,
         if (groupName != null) 'groupName': groupName,
         'participants': participants,
+        'participantNames': participantNames,
       };
 
   String getOtherName(String currentUserId) {

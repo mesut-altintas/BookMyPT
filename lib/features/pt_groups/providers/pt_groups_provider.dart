@@ -227,6 +227,7 @@ class GroupRepository {
       groupName: name,
       ptId: ptId,
       memberIds: memberIds,
+      memberNames: memberNames,
     );
 
     return ref.id;
@@ -244,6 +245,7 @@ class GroupRepository {
       groupName: group.name,
       ptId: group.ptId,
       memberIds: group.memberIds,
+      memberNames: group.memberNames,
     );
   }
 

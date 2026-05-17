@@ -64,6 +64,7 @@ class ChatRepository {
     required String chatId,
     required String senderId,
     required String text,
+    String? senderName,
   }) async {
     final batch = _firestore.batch();
 
@@ -76,6 +77,7 @@ class ChatRepository {
     final message = ChatMessage(
       id: msgRef.id,
       senderId: senderId,
+      senderName: senderName,
       text: text,
       createdAt: DateTime.now(),
     );
@@ -183,9 +185,23 @@ class ChatRepository {
     required String groupName,
     required String ptId,
     required List<String> memberIds,
+    Map<String, String> memberNames = const {},
   }) async {
     final chatId = getGroupChatId(groupId);
     final participants = [ptId, ...memberIds];
+
+    // Look up PT display name
+    final ptDoc = await _firestore
+        .collection(AppConstants.usersCollection)
+        .doc(ptId)
+        .get();
+    final ptData = ptDoc.data() ?? {};
+    final ptName = ptData['name'] as String? ??
+        ptData['displayName'] as String? ??
+        'PT';
+
+    final participantNames = <String, String>{ptId: ptName, ...memberNames};
+
     final docRef = _firestore
         .collection(AppConstants.chatsCollection)
         .doc(chatId);
@@ -193,13 +209,14 @@ class ChatRepository {
     await docRef.set({
       'id': chatId,
       'ptId': ptId,
-      'memberId': '',       // not used for group chats
-      'ptName': '',         // not used for group chats
-      'memberName': '',     // not used for group chats
+      'memberId': '',
+      'ptName': '',
+      'memberName': '',
       'isGroup': true,
       'groupId': groupId,
       'groupName': groupName,
       'participants': participants,
+      'participantNames': participantNames,
     }, SetOptions(merge: true));
 
     return chatId;

@@ -56,6 +56,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       await ref.read(chatRepositoryProvider).sendMessage(
             chatId: widget.chatId,
             senderId: user.uid,
+            senderName: user.name,
             text: text,
           );
       _scrollToBottom();
@@ -220,7 +221,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                                 padding: const EdgeInsets.only(
                                     left: 12, bottom: 2, top: 4),
                                 child: Text(
-                                  _senderName(room, msg.senderId),
+                                  _senderName(room, msg),
                                   style: Theme.of(context)
                                       .textTheme
                                       .labelSmall
@@ -259,10 +260,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     );
   }
 
-  String _senderName(ChatRoom? room, String senderId) {
-    if (room == null) return senderId.substring(0, 6);
-    if (senderId == room.ptId) return room.ptName.isNotEmpty ? room.ptName : 'PT';
-    return room.memberName.isNotEmpty ? room.memberName : senderId.substring(0, 6);
+  /// Resolves sender display name for group messages.
+  /// Priority: senderName stored in message → participantNames map → UID prefix.
+  String _senderName(ChatRoom? room, ChatMessage msg) {
+    if (msg.senderName != null && msg.senderName!.isNotEmpty) {
+      return msg.senderName!;
+    }
+    if (room == null) return msg.senderId.substring(0, 6);
+    final fromMap = room.participantNames[msg.senderId];
+    if (fromMap != null && fromMap.isNotEmpty) return fromMap;
+    return msg.senderId.substring(0, 6);
   }
 
   bool isSameDay(DateTime a, DateTime b) =>
@@ -279,37 +286,124 @@ class _ChatAppBarTitle extends StatelessWidget {
   const _ChatAppBarTitle(
       {required this.chatId, required this.userId, this.room});
 
+  void _showParticipants(BuildContext context) {
+    final names = room!.participantNames;
+    final participants = room!.participants;
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: Row(
+                children: [
+                  Icon(Icons.group,
+                      size: 18,
+                      color: Theme.of(context).colorScheme.primary),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${room!.groupName ?? 'Grup'} • ${participants.length} katılımcı',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(),
+            ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.4,
+              ),
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: participants.length,
+                itemBuilder: (ctx, i) {
+                  final uid = participants[i];
+                  final name = names[uid] ?? uid.substring(0, 6);
+                  final isPt = uid == room!.ptId;
+                  return ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor:
+                          Theme.of(context).colorScheme.primaryContainer,
+                      child: Text(
+                        name.isNotEmpty ? name[0].toUpperCase() : '?',
+                        style: TextStyle(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onPrimaryContainer),
+                      ),
+                    ),
+                    title: Text(name),
+                    trailing: isPt
+                        ? Chip(
+                            label: const Text('PT',
+                                style: TextStyle(fontSize: 11)),
+                            padding: EdgeInsets.zero,
+                            visualDensity: VisualDensity.compact,
+                          )
+                        : null,
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (room == null) return Text(context.l10n.messaging);
 
     if (room!.isGroup) {
-      return Row(
-        children: [
-          CircleAvatar(
-            radius: 18,
-            backgroundColor:
-                Theme.of(context).colorScheme.primaryContainer,
-            child: Icon(Icons.group,
-                size: 18,
-                color: Theme.of(context).colorScheme.onPrimaryContainer),
-          ),
-          const SizedBox(width: 10),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(room!.groupName ?? 'Grup',
-                  style: const TextStyle(fontSize: 14)),
-              Text(
-                '${room!.participants.length} katılımcı',
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(fontSize: 11),
-              ),
-            ],
-          ),
-        ],
+      return GestureDetector(
+        onTap: () => _showParticipants(context),
+        behavior: HitTestBehavior.opaque,
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 18,
+              backgroundColor:
+                  Theme.of(context).colorScheme.primaryContainer,
+              child: Icon(Icons.group,
+                  size: 18,
+                  color: Theme.of(context).colorScheme.onPrimaryContainer),
+            ),
+            const SizedBox(width: 10),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(room!.groupName ?? 'Grup',
+                    style: const TextStyle(fontSize: 14)),
+                Text(
+                  '${room!.participants.length} katılımcı • görüntüle',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      fontSize: 11,
+                      color: Theme.of(context).colorScheme.primary),
+                ),
+              ],
+            ),
+          ],
+        ),
       );
     }
 

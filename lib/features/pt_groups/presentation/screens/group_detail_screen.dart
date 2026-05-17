@@ -493,6 +493,7 @@ class _ChatTab extends ConsumerWidget {
                 groupName: group.name,
                 ptId: group.ptId,
                 memberIds: group.memberIds,
+                memberNames: group.memberNames,
               );
               if (context.mounted) {
                 Navigator.of(context).push(
