@@ -44,11 +44,11 @@
 		<false/>
 		<!-- Permissions -->
 		<key>NSPhotoLibraryUsageDescription</key>
-		<string>İlerleme fotoğrafı ve profil resmi yüklemek için galeri erişimi gereklidir.</string>
+		<string>Used to select progress photos and profile pictures from your library.</string>
 		<key>NSCameraUsageDescription</key>
-		<string>Fotoğraf çekmek için kamera erişimi gereklidir.</string>
+		<string>Used to take photos for your profile or progress tracking.</string>
 		<key>NSPhotoLibraryAddUsageDescription</key>
-		<string>Fotoğraf kaydetmek için galeri erişimi gereklidir.</string>
+		<string>Used to save photos to your library.</string>
 		<!-- Push Notifications -->
 		<key>UIBackgroundModes</key>
 		<array>

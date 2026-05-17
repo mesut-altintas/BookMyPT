@@ -12,6 +12,7 @@ build/
 android/.gradle/
 android/local.properties
 android/key.properties
+android/app/bookmypt-release.jks
 android/app/google-services.json
 **/android/gradlew
 **/android/gradlew.bat
