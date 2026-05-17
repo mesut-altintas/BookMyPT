@@ -269,11 +269,19 @@ class GroupRepository {
   }
 
   Future<void> deleteGroup(String groupId) async {
-    // Delete group doc, packages are kept for history
-    await _firestore
+    // Delete group doc and its associated group chat room in parallel.
+    // Packages and sessions are intentionally kept for historical records.
+    final groupDocRef = _firestore
         .collection(AppConstants.groupsCollection)
-        .doc(groupId)
-        .delete();
+        .doc(groupId);
+    final chatDocRef = _firestore
+        .collection(AppConstants.chatsCollection)
+        .doc('${groupId}_group');
+
+    await Future.wait([
+      groupDocRef.delete(),
+      chatDocRef.delete().catchError((_) {}), // ignore if chat room doesn't exist
+    ]);
   }
 
   // ── Group Package CRUD ─────────────────────────────────────────────────────
@@ -333,6 +341,7 @@ class GroupRepository {
     final payment = GroupPayment(
       id: ref.id,
       groupId: group.id,
+      groupName: group.name,
       groupPackageId: package.id,
       groupPackageName: package.name,
       memberId: memberId,

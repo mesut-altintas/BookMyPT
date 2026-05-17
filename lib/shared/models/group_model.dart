@@ -123,6 +123,7 @@ class GroupPackage {
 class GroupPayment {
   final String id;
   final String groupId;
+  final String groupName; // group's display name — used in push notifications
   final String groupPackageId;
   final String groupPackageName;
   final String memberId;
@@ -137,6 +138,7 @@ class GroupPayment {
   const GroupPayment({
     required this.id,
     required this.groupId,
+    required this.groupName,
     required this.groupPackageId,
     required this.groupPackageName,
     required this.memberId,
@@ -154,6 +156,7 @@ class GroupPayment {
     return GroupPayment(
       id: doc.id,
       groupId: data['groupId'] as String? ?? '',
+      groupName: data['groupName'] as String? ?? '',
       groupPackageId: data['groupPackageId'] as String? ?? '',
       groupPackageName: data['groupPackageName'] as String? ?? '',
       memberId: data['memberId'] as String? ?? '',
@@ -170,8 +173,12 @@ class GroupPayment {
 
   Map<String, dynamic> toFirestore() => {
         'groupId': groupId,
+        'groupName': groupName,
         'groupPackageId': groupPackageId,
         'groupPackageName': groupPackageName,
+        // 'packageName' is stored so Cloud Function paymentCreated/paymentUpdated
+        // can read it uniformly for both individual and group payments.
+        'packageName': groupPackageName,
         'memberId': memberId,
         'memberName': memberName,
         'ptId': ptId,

@@ -143,15 +143,24 @@ service cloud.firestore {
          resource.data.ptId == request.auth.uid ||
          resource.data.memberId == request.auth.uid ||
          request.auth.uid in resource.data.get('participants', []));
-      allow create: if isAuthenticated() &&
-        (request.resource.data.ptId == request.auth.uid ||
-         request.resource.data.memberId == request.auth.uid ||
-         request.auth.uid in request.resource.data.get('participants', []));
+      allow create: if isAuthenticated() && (
+        // Group chat: only the PT can create
+        (request.resource.data.get('isGroup', false) == true &&
+         request.resource.data.ptId == request.auth.uid) ||
+        // 1:1 chat: a PT-member relationship must exist
+        (request.resource.data.get('isGroup', false) != true &&
+         (request.resource.data.ptId == request.auth.uid ||
+          request.resource.data.memberId == request.auth.uid) &&
+         exists(/databases/$(database)/documents/pts/$(request.resource.data.ptId)/members/$(request.resource.data.memberId)))
+      );
       allow update: if isAuthenticated() &&
         (resource.data.ptId == request.auth.uid ||
          resource.data.memberId == request.auth.uid ||
          request.auth.uid in resource.data.get('participants', []));
-      allow delete: if false;
+      // Only PT can delete group chat rooms (e.g. when deleting the group)
+      allow delete: if isAuthenticated() &&
+        resource.data.ptId == request.auth.uid &&
+        resource.data.get('isGroup', false) == true;
 
       // Messages subcollection
       match /messages/{messageId} {
