@@ -166,6 +166,25 @@ final memberGroupSessionsProvider =
       .handleError((_, __) {});
 });
 
+/// ALL group packages for a PT (active + inactive) — used by Package Management screen.
+final ptAllGroupPackagesProvider =
+    StreamProvider.family<List<GroupPackage>, String>((ref, ptId) {
+  if (ref.watch(currentUserProvider).valueOrNull == null) {
+    return Stream.value(const <GroupPackage>[]);
+  }
+  return FirebaseFirestore.instance
+      .collection(AppConstants.groupPackagesCollection)
+      .where('ptId', isEqualTo: ptId)
+      .snapshots()
+      .map((snap) {
+        final list =
+            snap.docs.map((d) => GroupPackage.fromFirestore(d)).toList();
+        list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        return list;
+      })
+      .handleError((_, __) {});
+});
+
 /// PT's pending group payment approvals.
 final ptPendingGroupPaymentsProvider =
     StreamProvider.family<List<GroupPayment>, String>((ref, ptId) {
@@ -286,6 +305,20 @@ class GroupRepository {
         .collection(AppConstants.groupPackagesCollection)
         .doc(packageId)
         .update({'isActive': false});
+  }
+
+  Future<void> activateGroupPackage(String packageId) async {
+    await _firestore
+        .collection(AppConstants.groupPackagesCollection)
+        .doc(packageId)
+        .update({'isActive': true});
+  }
+
+  Future<void> deleteGroupPackage(String packageId) async {
+    await _firestore
+        .collection(AppConstants.groupPackagesCollection)
+        .doc(packageId)
+        .delete();
   }
 
   // ── Group Payment ──────────────────────────────────────────────────────────

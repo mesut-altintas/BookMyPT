@@ -5,83 +5,404 @@ import '../../../../core/l10n/extensions.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../features/auth/providers/auth_provider.dart';
+import '../../../../features/pt_groups/providers/pt_groups_provider.dart';
 import '../../../../features/pt_members/providers/pt_members_provider.dart';
+import '../../../../shared/models/group_model.dart';
 import '../../../../shared/models/member_model.dart';
 import '../../../../shared/models/payment_model.dart';
 import '../../../../shared/widgets/app_loading.dart';
 import '../../../../shared/widgets/app_empty.dart';
 import '../../../pt_earnings/providers/pt_earnings_provider.dart';
 
-class PackageManagementScreen extends ConsumerWidget {
+class PackageManagementScreen extends ConsumerStatefulWidget {
   const PackageManagementScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PackageManagementScreen> createState() =>
+      _PackageManagementScreenState();
+}
+
+class _PackageManagementScreenState
+    extends ConsumerState<PackageManagementScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tab;
+
+  @override
+  void initState() {
+    super.initState();
+    _tab = TabController(length: 2, vsync: this);
+    _tab.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _tab.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final userAsync = ref.watch(currentUserProvider);
+    final l10n = context.l10n;
 
     return userAsync.when(
       loading: () => const Scaffold(body: AppLoading()),
       error: (e, _) => Scaffold(body: Center(child: Text(e.toString()))),
       data: (user) {
         if (user == null) return const Scaffold(body: AppLoading());
-        return _PackageContent(ptId: user.uid);
+        final ptId = user.uid;
+
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(l10n.packageManagement),
+            bottom: TabBar(
+              controller: _tab,
+              tabs: [
+                Tab(
+                  icon: const Icon(Icons.person_outline, size: 18),
+                  text: l10n.individual,
+                ),
+                Tab(
+                  icon: const Icon(Icons.groups_outlined, size: 18),
+                  text: l10n.groupPackages,
+                ),
+              ],
+            ),
+          ),
+          body: TabBarView(
+            controller: _tab,
+            children: [
+              _IndividualPackagesTab(ptId: ptId),
+              _GroupPackagesTab(ptId: ptId),
+            ],
+          ),
+          floatingActionButton: _tab.index == 0
+              ? FloatingActionButton(
+                  onPressed: () => _showAddIndividualSheet(context, ptId),
+                  tooltip: l10n.addPackage,
+                  child: const Icon(Icons.add),
+                )
+              : null,
+        );
       },
+    );
+  }
+
+  void _showAddIndividualSheet(BuildContext context, String ptId) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => _AddPackageSheet(ptId: ptId, ref: ref),
     );
   }
 }
 
-class _PackageContent extends ConsumerWidget {
-  final String ptId;
+// ─── Individual Packages Tab ──────────────────────────────────────────────────
 
-  const _PackageContent({required this.ptId});
+class _IndividualPackagesTab extends ConsumerWidget {
+  final String ptId;
+  const _IndividualPackagesTab({required this.ptId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final packagesAsync = ref.watch(allPtPackagesProvider(ptId));
 
-    return Scaffold(
-      appBar: AppBar(title: Text(context.l10n.packageManagement)),
-      body: packagesAsync.when(
-        loading: () => const AppLoading(),
-        error: (e, _) => Center(child: Text(e.toString())),
-        data: (packages) {
-          if (packages.isEmpty) {
-            return AppEmpty(
-              message: context.l10n.noPackagesYet,
-              subMessage: context.l10n.noPackagesYetSub,
-              icon: Icons.inventory_2_outlined,
-              action: ElevatedButton.icon(
-                onPressed: () => _showAddPackageSheet(context, ref, ptId),
-                icon: const Icon(Icons.add),
-                label: Text(context.l10n.addPackage),
-              ),
-            );
-          }
-
-          return ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: packages.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 8),
-            itemBuilder: (_, i) => _PackageTile(
-              package: packages[i],
-              ptId: ptId,
-            ),
+    return packagesAsync.when(
+      loading: () => const AppLoading(),
+      error: (e, _) => Center(child: Text(e.toString())),
+      data: (packages) {
+        if (packages.isEmpty) {
+          return AppEmpty(
+            message: context.l10n.noPackagesYet,
+            subMessage: context.l10n.noPackagesYetSub,
+            icon: Icons.inventory_2_outlined,
           );
-        },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddPackageSheet(context, ref, ptId),
-        child: const Icon(Icons.add),
-      ),
+        }
+        return ListView.separated(
+          padding: const EdgeInsets.all(16),
+          itemCount: packages.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 8),
+          itemBuilder: (_, i) => _PackageTile(
+            package: packages[i],
+            ptId: ptId,
+          ),
+        );
+      },
+    );
+  }
+}
+
+// ─── Group Packages Tab ───────────────────────────────────────────────────────
+
+class _GroupPackagesTab extends ConsumerWidget {
+  final String ptId;
+  const _GroupPackagesTab({required this.ptId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final groupsAsync = ref.watch(ptGroupsProvider(ptId));
+    final allPkgsAsync = ref.watch(ptAllGroupPackagesProvider(ptId));
+
+    if (groupsAsync.isLoading || allPkgsAsync.isLoading) {
+      return const AppLoading();
+    }
+
+    final groups = groupsAsync.valueOrNull ?? [];
+    final allPkgs = allPkgsAsync.valueOrNull ?? [];
+
+    if (groups.isEmpty) {
+      return AppEmpty(
+        message: context.l10n.noGroupsYet,
+        icon: Icons.groups_outlined,
+      );
+    }
+
+    // Map packages by groupId
+    final pkgsByGroup = <String, List<GroupPackage>>{};
+    for (final pkg in allPkgs) {
+      pkgsByGroup.putIfAbsent(pkg.groupId, () => []).add(pkg);
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+      itemCount: groups.length,
+      itemBuilder: (_, i) {
+        final group = groups[i];
+        final pkgs = pkgsByGroup[group.id] ?? [];
+        final groupColor = Color(group.colorValue);
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Group header ──────────────────────────────────────────
+            Padding(
+              padding: EdgeInsets.only(bottom: 10, top: i == 0 ? 0 : 20),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 16,
+                    backgroundColor: groupColor,
+                    child: const Icon(Icons.groups,
+                        color: Colors.white, size: 18),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      group.name,
+                      style:
+                          Theme.of(context).textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                    ),
+                  ),
+                  TextButton.icon(
+                    onPressed: () =>
+                        _showAddGroupPackageDialog(context, ref, group),
+                    icon: const Icon(Icons.add, size: 18),
+                    label: Text(context.l10n.addPackage),
+                    style: TextButton.styleFrom(
+                        foregroundColor: groupColor,
+                        visualDensity: VisualDensity.compact),
+                  ),
+                ],
+              ),
+            ),
+
+            // ── Package list ──────────────────────────────────────────
+            if (pkgs.isEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  context.l10n.noPackagesYet,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontStyle: FontStyle.italic,
+                      ),
+                ),
+              )
+            else
+              ...pkgs.map((pkg) => _GroupPackageTile(
+                    package: pkg,
+                    groupColor: groupColor,
+                    group: group,
+                  )),
+          ],
+        );
+      },
     );
   }
 
-  void _showAddPackageSheet(
-      BuildContext context, WidgetRef ref, String ptId) {
-    showModalBottomSheet(
+  void _showAddGroupPackageDialog(
+      BuildContext context, WidgetRef ref, GroupModel group) {
+    final nameCtrl = TextEditingController();
+    final sessionCtrl = TextEditingController();
+    final priceCtrl = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    final l10n = context.l10n;
+
+    showDialog(
       context: context,
-      isScrollControlled: true,
-      builder: (_) => _AddPackageSheet(ptId: ptId, ref: ref),
+      builder: (d) => AlertDialog(
+        title: Text('${group.name} — ${l10n.newPackage}'),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: nameCtrl,
+                decoration:
+                    InputDecoration(labelText: l10n.packageName),
+                validator: (v) =>
+                    v == null || v.trim().isEmpty ? l10n.required : null,
+              ),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: sessionCtrl,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                    labelText: l10n.sessionCountLabel),
+                validator: (v) =>
+                    int.tryParse(v ?? '') == null ? l10n.required : null,
+              ),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: priceCtrl,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                decoration: InputDecoration(
+                    labelText: '${l10n.price} (₺ / ${l10n.perMember})'),
+                validator: (v) =>
+                    double.tryParse(v ?? '') == null ? l10n.required : null,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(d),
+              child: Text(l10n.cancel)),
+          FilledButton(
+            onPressed: () async {
+              if (!formKey.currentState!.validate()) return;
+              Navigator.pop(d);
+              await ref.read(groupRepositoryProvider).createGroupPackage(
+                    ptId: group.ptId,
+                    groupId: group.id,
+                    name: nameCtrl.text.trim(),
+                    sessionCount: int.parse(sessionCtrl.text.trim()),
+                    pricePerMember: double.parse(priceCtrl.text.trim()),
+                  );
+            },
+            child: Text(l10n.save),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GroupPackageTile extends ConsumerWidget {
+  final GroupPackage package;
+  final Color groupColor;
+  final GroupModel group;
+
+  const _GroupPackageTile({
+    required this.package,
+    required this.groupColor,
+    required this.group,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final repo = ref.read(groupRepositoryProvider);
+    final l10n = context.l10n;
+    final isActive = package.isActive;
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: isActive
+              ? groupColor.withValues(alpha: 0.4)
+              : theme.dividerColor,
+        ),
+      ),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: isActive
+              ? groupColor
+              : theme.colorScheme.surfaceContainerHighest,
+          child: Text(
+            '${package.sessionCount}',
+            style: TextStyle(
+              color: isActive
+                  ? Colors.white
+                  : theme.colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+            ),
+          ),
+        ),
+        title: Text(package.name,
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: isActive ? null : theme.colorScheme.onSurfaceVariant,
+            )),
+        subtitle: Text(
+          '${package.sessionCount} ${l10n.sessions} • '
+          '${package.pricePerMember.formattedCurrency} / ${l10n.perMember}',
+          style: TextStyle(
+              color: isActive
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.onSurfaceVariant),
+        ),
+        trailing: PopupMenuButton<String>(
+          itemBuilder: (_) => [
+            PopupMenuItem(
+              value: 'toggle',
+              child: Text(isActive ? l10n.deactivate : l10n.activate),
+            ),
+            PopupMenuItem(
+              value: 'delete',
+              child: Text(l10n.delete,
+                  style: const TextStyle(color: Colors.red)),
+            ),
+          ],
+          onSelected: (val) async {
+            if (val == 'toggle') {
+              isActive
+                  ? await repo.deactivateGroupPackage(package.id)
+                  : await repo.activateGroupPackage(package.id);
+            } else if (val == 'delete') {
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (d) => AlertDialog(
+                  title: Text(l10n.deletePackageTitle),
+                  content: Text(l10n.deletePackageConfirm),
+                  actions: [
+                    TextButton(
+                        onPressed: () => Navigator.pop(d, false),
+                        child: Text(l10n.cancel)),
+                    ElevatedButton(
+                        onPressed: () => Navigator.pop(d, true),
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red),
+                        child: Text(l10n.delete)),
+                  ],
+                ),
+              );
+              if (confirm == true) {
+                await ref
+                    .read(groupRepositoryProvider)
+                    .deleteGroupPackage(package.id);
+              }
+            }
+          },
+        ),
+      ),
     );
   }
 }
