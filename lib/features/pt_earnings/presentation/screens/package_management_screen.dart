@@ -179,22 +179,39 @@ class _GroupPackagesTab extends ConsumerWidget {
               padding: EdgeInsets.only(bottom: 10, top: i == 0 ? 0 : 20),
               child: Row(
                 children: [
-                  CircleAvatar(
-                    radius: 16,
-                    backgroundColor: groupColor,
-                    child: const Icon(Icons.groups,
-                        color: Colors.white, size: 18),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      group.name,
-                      style:
-                          Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w700,
-                              ),
+                  // Tappable: group avatar + name → shows members sheet
+                  InkWell(
+                    onTap: () => _showGroupMembersSheet(
+                        context, group, groupColor),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 4, horizontal: 2),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircleAvatar(
+                            radius: 16,
+                            backgroundColor: groupColor,
+                            child: const Icon(Icons.groups,
+                                color: Colors.white, size: 18),
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            group.name,
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(fontWeight: FontWeight.w700),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(Icons.people_outline,
+                              size: 14, color: groupColor),
+                        ],
+                      ),
                     ),
                   ),
+                  const Spacer(),
                   TextButton.icon(
                     onPressed: () =>
                         _showAddGroupPackageDialog(context, ref, group),
@@ -549,6 +566,109 @@ class _PackageTile extends ConsumerWidget {
       ),
     );
   }
+}
+
+// ─── Group Members Sheet ──────────────────────────────────────────────────────
+
+void _showGroupMembersSheet(
+    BuildContext context, GroupModel group, Color groupColor) {
+  final members = group.memberNames.entries.toList()
+    ..sort((a, b) => a.value.compareTo(b.value));
+
+  showModalBottomSheet(
+    context: context,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (_) => SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 8),
+          Container(
+            width: 36,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Padding(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 20,
+                  backgroundColor: groupColor,
+                  child: const Icon(Icons.groups,
+                      color: Colors.white, size: 22),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        group.name,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w700, fontSize: 16),
+                      ),
+                      Text(
+                        '${members.length} üye',
+                        style: TextStyle(
+                            color: Colors.grey[600], fontSize: 13),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Divider(),
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.45,
+            ),
+            child: members.isEmpty
+                ? Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Text(
+                      'Henüz üye yok',
+                      style:
+                          TextStyle(color: Colors.grey[600]),
+                    ),
+                  )
+                : ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: members.length,
+                    itemBuilder: (_, i) {
+                      final name = members[i].value;
+                      return ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor:
+                              groupColor.withValues(alpha: 0.15),
+                          child: Text(
+                            name.isNotEmpty
+                                ? name[0].toUpperCase()
+                                : '?',
+                            style: TextStyle(
+                              color: groupColor,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        title: Text(name),
+                      );
+                    },
+                  ),
+          ),
+          const SizedBox(height: 8),
+        ],
+      ),
+    ),
+  );
 }
 
 // ---------------------------------------------------------------------------
