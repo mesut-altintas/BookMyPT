@@ -419,13 +419,21 @@ class _DaySection extends StatelessWidget {
               margin: const EdgeInsets.only(bottom: 4),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                border: Border.all(
-                  color: Theme.of(context).dividerColor,
-                ),
+                border: Border.all(color: Theme.of(context).dividerColor),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
                 children: [
+                  // Type indicator strip
+                  Container(
+                    width: 3,
+                    height: 36,
+                    margin: const EdgeInsets.only(right: 10),
+                    decoration: BoxDecoration(
+                      color: _exerciseTypeColor(ex.type, context),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -435,9 +443,17 @@ class _DaySection extends StatelessWidget {
                           style: const TextStyle(
                               fontWeight: FontWeight.w500, fontSize: 13),
                         ),
-                        Text(
-                          '${ex.sets} set × ${ex.reps} tekrar${ex.weight != null ? ' • ${ex.weight} kg' : ''}',
-                          style: Theme.of(context).textTheme.bodySmall,
+                        Row(
+                          children: [
+                            Icon(_exerciseTypeIcon(ex.type),
+                                size: 11,
+                                color: _exerciseTypeColor(ex.type, context)),
+                            const SizedBox(width: 3),
+                            Text(
+                              _exerciseSummary(ex),
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -489,6 +505,56 @@ class _DaySection extends StatelessWidget {
   }
 }
 
+// ─── Exercise type helpers (shared within this file) ─────────────────────────
+
+Color _exerciseTypeColor(String type, BuildContext context) {
+  switch (type) {
+    case ExerciseType.cardio:
+      return const Color(0xFFE65100);
+    case ExerciseType.stretching:
+      return const Color(0xFF2E7D32);
+    default:
+      return Theme.of(context).colorScheme.primary;
+  }
+}
+
+IconData _exerciseTypeIcon(String type) {
+  switch (type) {
+    case ExerciseType.cardio:
+      return Icons.directions_run;
+    case ExerciseType.stretching:
+      return Icons.self_improvement;
+    default:
+      return Icons.fitness_center;
+  }
+}
+
+String _exerciseSummary(ExerciseModel ex) {
+  switch (ex.type) {
+    case ExerciseType.cardio:
+      final min = ex.durationSeconds != null
+          ? '${(ex.durationSeconds! / 60).round()} dk'
+          : '—';
+      final km = ex.distanceMeters != null
+          ? ' · ${(ex.distanceMeters! / 1000).toStringAsFixed(1)} km'
+          : '';
+      return '$min$km';
+    case ExerciseType.stretching:
+      final sets = '${ex.sets} set';
+      final hold = ex.durationSeconds != null
+          ? ' · ${ex.durationSeconds} sn tutma'
+          : '';
+      return '$sets$hold';
+    default: // strength
+      var s = '${ex.sets} set × ${ex.reps} tekrar';
+      if (ex.weight != null) s += ' · ${ex.weight} kg';
+      if (ex.restSeconds != null) s += ' · ${ex.restSeconds} sn';
+      return s;
+  }
+}
+
+// ─── Add Exercise Bottom Sheet ────────────────────────────────────────────────
+
 class _AddExerciseSheet extends StatefulWidget {
   final void Function(ExerciseModel) onAdd;
 
@@ -499,31 +565,90 @@ class _AddExerciseSheet extends StatefulWidget {
 }
 
 class _AddExerciseSheetState extends State<_AddExerciseSheet> {
-  final _nameCtrl = TextEditingController();
-  final _setsCtrl = TextEditingController(text: '3');
-  final _repsCtrl = TextEditingController(text: '10');
-  final _weightCtrl = TextEditingController();
-  final _restCtrl = TextEditingController(text: '60');
+  String _type = ExerciseType.strength;
+
+  // Common
+  final _nameCtrl  = TextEditingController();
   final _notesCtrl = TextEditingController();
+
+  // Strength
+  final _setsCtrl   = TextEditingController(text: '3');
+  final _repsCtrl   = TextEditingController(text: '10');
+  final _weightCtrl = TextEditingController();
+  final _restCtrl   = TextEditingController(text: '60');
+
+  // Cardio
+  final _durationCtrl = TextEditingController(text: '20'); // minutes
+  final _distanceCtrl = TextEditingController();           // km
+
+  // Stretching
+  final _holdSetsCtrl = TextEditingController(text: '3');
+  final _holdCtrl     = TextEditingController(text: '30'); // seconds
 
   @override
   void dispose() {
     _nameCtrl.dispose();
+    _notesCtrl.dispose();
     _setsCtrl.dispose();
     _repsCtrl.dispose();
     _weightCtrl.dispose();
     _restCtrl.dispose();
-    _notesCtrl.dispose();
+    _durationCtrl.dispose();
+    _distanceCtrl.dispose();
+    _holdSetsCtrl.dispose();
+    _holdCtrl.dispose();
     super.dispose();
+  }
+
+  ExerciseModel _buildExercise() {
+    final name = _nameCtrl.text.trim();
+    final notes =
+        _notesCtrl.text.trim().isNotEmpty ? _notesCtrl.text.trim() : null;
+
+    switch (_type) {
+      case ExerciseType.cardio:
+        final mins = int.tryParse(_durationCtrl.text) ?? 20;
+        final km   = double.tryParse(_distanceCtrl.text);
+        return ExerciseModel(
+          type:            ExerciseType.cardio,
+          name:            name,
+          durationSeconds: mins * 60,
+          distanceMeters:  km != null ? km * 1000 : null,
+          notes:           notes,
+        );
+
+      case ExerciseType.stretching:
+        return ExerciseModel(
+          type:            ExerciseType.stretching,
+          name:            name,
+          sets:            int.tryParse(_holdSetsCtrl.text) ?? 3,
+          durationSeconds: int.tryParse(_holdCtrl.text),
+          notes:           notes,
+        );
+
+      default: // strength
+        return ExerciseModel(
+          type:        ExerciseType.strength,
+          name:        name,
+          sets:        int.tryParse(_setsCtrl.text) ?? 3,
+          reps:        int.tryParse(_repsCtrl.text) ?? 10,
+          weight:      double.tryParse(_weightCtrl.text),
+          restSeconds: int.tryParse(_restCtrl.text),
+          notes:       notes,
+        );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n  = context.l10n;
+    final theme = Theme.of(context);
+
     return Padding(
       padding: EdgeInsets.only(
-        left: 24,
-        right: 24,
-        top: 24,
+        left: 20,
+        right: 20,
+        top: 20,
         bottom: MediaQuery.of(context).viewInsets.bottom + 24,
       ),
       child: SingleChildScrollView(
@@ -531,13 +656,13 @@ class _AddExerciseSheetState extends State<_AddExerciseSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // ── Header ──────────────────────────────────────────────────────
             Row(
               children: [
                 Text(
-                  context.l10n.addExercise,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
+                  l10n.addExercise,
+                  style: theme.textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w700),
                 ),
                 const Spacer(),
                 IconButton(
@@ -546,74 +671,184 @@ class _AddExerciseSheetState extends State<_AddExerciseSheet> {
                 ),
               ],
             ),
+            const SizedBox(height: 12),
+
+            // ── Type selector ────────────────────────────────────────────────
+            SizedBox(
+              width: double.infinity,
+              child: SegmentedButton<String>(
+                showSelectedIcon: false,
+                style: SegmentedButton.styleFrom(
+                  textStyle: const TextStyle(fontSize: 12),
+                  visualDensity: VisualDensity.compact,
+                ),
+                segments: [
+                  ButtonSegment(
+                    value: ExerciseType.strength,
+                    icon: const Icon(Icons.fitness_center, size: 15),
+                    label: Text(l10n.exerciseTypeStrength),
+                  ),
+                  ButtonSegment(
+                    value: ExerciseType.cardio,
+                    icon: const Icon(Icons.directions_run, size: 15),
+                    label: Text(l10n.exerciseTypeCardio),
+                  ),
+                  ButtonSegment(
+                    value: ExerciseType.stretching,
+                    icon: const Icon(Icons.self_improvement, size: 15),
+                    label: Text(l10n.exerciseTypeStretching),
+                  ),
+                ],
+                selected: {_type},
+                onSelectionChanged: (s) =>
+                    setState(() => _type = s.first),
+              ),
+            ),
             const SizedBox(height: 16),
+
+            // ── Exercise name (common) ────────────────────────────────────────
             TextFormField(
               controller: _nameCtrl,
-              decoration: InputDecoration(labelText: context.l10n.exerciseName),
+              textCapitalization: TextCapitalization.sentences,
+              decoration: InputDecoration(
+                labelText: l10n.exerciseName,
+                prefixIcon: Icon(
+                  _exerciseTypeIcon(_type),
+                  color: _exerciseTypeColor(_type, context),
+                ),
+              ),
             ),
             const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: _setsCtrl,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(labelText: context.l10n.sets),
+
+            // ── Type-specific fields ─────────────────────────────────────────
+            if (_type == ExerciseType.strength) ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _setsCtrl,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(labelText: l10n.sets),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: TextFormField(
-                    controller: _repsCtrl,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(labelText: context.l10n.reps),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _repsCtrl,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(labelText: l10n.reps),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: TextFormField(
-                    controller: _weightCtrl,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(labelText: context.l10n.weightKg),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _weightCtrl,
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
+                      decoration: InputDecoration(
+                        labelText: l10n.weightKg,
+                        suffixText: 'kg',
+                      ),
+                    ),
                   ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              TextFormField(
+                controller: _restCtrl,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: l10n.restSeconds,
+                  suffixText: 'sn',
+                  prefixIcon: const Icon(Icons.timer_outlined, size: 20),
                 ),
-              ],
+              ),
+            ],
+
+            if (_type == ExerciseType.cardio) ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _durationCtrl,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: l10n.durationMinLabel,
+                        suffixText: 'dk',
+                        prefixIcon:
+                            const Icon(Icons.timer_outlined, size: 20),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _distanceCtrl,
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
+                      decoration: InputDecoration(
+                        labelText: l10n.distanceKmLabel,
+                        suffixText: 'km',
+                        prefixIcon:
+                            const Icon(Icons.route_outlined, size: 20),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+
+            if (_type == ExerciseType.stretching) ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _holdSetsCtrl,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(labelText: l10n.sets),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _holdCtrl,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: l10n.holdSecLabel,
+                        suffixText: 'sn',
+                        prefixIcon:
+                            const Icon(Icons.hourglass_bottom_outlined, size: 20),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+
+            const SizedBox(height: 10),
+
+            // ── Notes (common) ───────────────────────────────────────────────
+            TextFormField(
+              controller: _notesCtrl,
+              decoration: InputDecoration(
+                labelText: l10n.noteLabel,
+                prefixIcon: const Icon(Icons.notes_outlined, size: 20),
+              ),
             ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: _restCtrl,
-                    keyboardType: TextInputType.number,
-                    decoration:
-                        InputDecoration(labelText: context.l10n.restSeconds),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: TextFormField(
-                    controller: _notesCtrl,
-                    decoration: InputDecoration(labelText: context.l10n.noteLabel),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: () {
-                if (_nameCtrl.text.isEmpty) return;
-                widget.onAdd(ExerciseModel(
-                  name: _nameCtrl.text.trim(),
-                  sets: int.tryParse(_setsCtrl.text) ?? 3,
-                  reps: int.tryParse(_repsCtrl.text) ?? 10,
-                  weight: double.tryParse(_weightCtrl.text),
-                  restSeconds: int.tryParse(_restCtrl.text),
-                  notes: _notesCtrl.text.isEmpty ? null : _notesCtrl.text,
-                ));
-                Navigator.pop(context);
-              },
-              child: Text(context.l10n.addExercise),
+            const SizedBox(height: 20),
+
+            // ── Add button ───────────────────────────────────────────────────
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: () {
+                  if (_nameCtrl.text.trim().isEmpty) return;
+                  widget.onAdd(_buildExercise());
+                  Navigator.pop(context);
+                },
+                icon: const Icon(Icons.add),
+                label: Text(l10n.addExercise),
+              ),
             ),
           ],
         ),

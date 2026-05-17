@@ -10,6 +10,48 @@ import '../../../../shared/widgets/app_loading.dart';
 import '../../../../shared/widgets/app_error.dart';
 import '../../../pt_programs/providers/pt_programs_provider.dart';
 
+// ─── Exercise type helpers ────────────────────────────────────────────────────
+
+Color _typeColor(String type, BuildContext context) {
+  switch (type) {
+    case ExerciseType.cardio:     return const Color(0xFFE65100);
+    case ExerciseType.stretching: return const Color(0xFF2E7D32);
+    default:                      return Theme.of(context).colorScheme.primary;
+  }
+}
+
+IconData _typeIcon(String type) {
+  switch (type) {
+    case ExerciseType.cardio:     return Icons.directions_run;
+    case ExerciseType.stretching: return Icons.self_improvement;
+    default:                      return Icons.fitness_center;
+  }
+}
+
+String _exSummary(ExerciseModel ex) {
+  switch (ex.type) {
+    case ExerciseType.cardio:
+      final min = ex.durationSeconds != null
+          ? '${(ex.durationSeconds! / 60).round()} dk'
+          : '—';
+      final km = ex.distanceMeters != null
+          ? ' · ${(ex.distanceMeters! / 1000).toStringAsFixed(1)} km'
+          : '';
+      return '$min$km';
+    case ExerciseType.stretching:
+      final sets = '${ex.sets} set';
+      final hold = ex.durationSeconds != null
+          ? ' · ${ex.durationSeconds} sn tutma'
+          : '';
+      return '$sets$hold';
+    default:
+      var s = '${ex.sets} set × ${ex.reps} tekrar';
+      if (ex.weight != null)      s += ' · ${ex.weight} kg';
+      if (ex.restSeconds != null) s += ' · ${ex.restSeconds} sn';
+      return s;
+  }
+}
+
 class ProgramDetailScreen extends ConsumerWidget {
   final String programId;
 
@@ -243,22 +285,25 @@ class _DayCard extends StatelessWidget {
               child: Column(
                 children: List.generate(day.exercises.length, (i) {
                   final ex = day.exercises[i];
+                  final tColor = _typeColor(ex.type, context);
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 8),
                     child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Badge: number + type color
                         Container(
                           width: 28,
                           height: 28,
                           decoration: BoxDecoration(
-                            color: theme.colorScheme.primary,
+                            color: tColor,
                             shape: BoxShape.circle,
                           ),
                           child: Center(
                             child: Text(
                               '${i + 1}',
-                              style: TextStyle(
-                                color: theme.colorScheme.onPrimary,
+                              style: const TextStyle(
+                                color: Colors.white,
                                 fontWeight: FontWeight.w700,
                                 fontSize: 12,
                               ),
@@ -275,14 +320,30 @@ class _DayCard extends StatelessWidget {
                                 style: const TextStyle(
                                     fontWeight: FontWeight.w500),
                               ),
-                              Text(
-                                '${ex.sets} set × ${ex.reps} tekrar'
-                                '${ex.weight != null ? ' • ${ex.weight} kg' : ''}'
-                                '${ex.restSeconds != null ? ' • ${ex.restSeconds}sn dinlenme' : ''}',
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                ),
+                              Row(
+                                children: [
+                                  Icon(_typeIcon(ex.type),
+                                      size: 11, color: tColor),
+                                  const SizedBox(width: 3),
+                                  Expanded(
+                                    child: Text(
+                                      _exSummary(ex),
+                                      style: theme.textTheme.bodySmall?.copyWith(
+                                        color:
+                                            theme.colorScheme.onSurfaceVariant,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
+                              if (ex.notes != null)
+                                Text(
+                                  ex.notes!,
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.primary,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
                             ],
                           ),
                         ),

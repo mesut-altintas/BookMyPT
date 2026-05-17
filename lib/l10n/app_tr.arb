@@ -1741,5 +1741,47 @@
   "@cancellationRequestConfirm": { "description": "Confirmation dialog for sending a cancellation request" },
 
   "sessionInFutureWarning": "Gelecekteki bir seans tamamlanamaz",
-  "@sessionInFutureWarning": { "description": "Tooltip shown when mark-as-completed is disabled for a future session" }
+  "@sessionInFutureWarning": { "description": "Tooltip shown when mark-as-completed is disabled for a future session" },
+
+  "exerciseTypeStrength": "Güç",
+  "@exerciseTypeStrength": { "description": "Strength training exercise type label" },
+
+  "exerciseTypeCardio": "Kardio",
+  "@exerciseTypeCardio": { "description": "Cardio exercise type label" },
+
+  "exerciseTypeStretching": "Esneme",
+  "@exerciseTypeStretching": { "description": "Stretching exercise type label" },
+
+  "durationMinLabel": "Süre (dk)",
+  "@durationMinLabel": { "description": "Duration field label in minutes" },
+
+  "distanceKmLabel": "Mesafe (km)",
+  "@distanceKmLabel": { "description": "Distance field label in kilometres" },
+
+  "holdSecLabel": "Tutma Süresi (sn)",
+  "@holdSecLabel": { "description": "Hold duration field label in seconds for stretching" },
+
+  "about": "Hakkında",
+  "@about": { "description": "About menu item and screen title" },
+
+  "aboutTagline": "Kişisel antrenör ve üye yönetim platformu",
+  "@aboutTagline": { "description": "Short app description shown in About sheet" },
+
+  "aboutVersionLabel": "Sürüm",
+  "@aboutVersionLabel": { "description": "Version label in About sheet" },
+
+  "aboutReleaseDateLabel": "Yayın Tarihi",
+  "@aboutReleaseDateLabel": { "description": "Release date label in About sheet" },
+
+  "aboutReleaseDateValue": "Mayıs 2026",
+  "@aboutReleaseDateValue": { "description": "Release date value shown in About sheet" },
+
+  "aboutDeveloperLabel": "Geliştirici",
+  "@aboutDeveloperLabel": { "description": "Developer label in About sheet" },
+
+  "aboutDeveloperName": "BookMyPt Ekibi",
+  "@aboutDeveloperName": { "description": "Developer name shown in About sheet" },
+
+  "aboutCopyright": "© 2026 BookMyPt. Tüm hakları saklıdır.",
+  "@aboutCopyright": { "description": "Copyright notice in About sheet" }
 }

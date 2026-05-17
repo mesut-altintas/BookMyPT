@@ -410,6 +410,135 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
+  void _showAboutSheet() {
+    final theme = Theme.of(context);
+    final l10n  = context.l10n;
+
+    showModalBottomSheet(
+      context: context,
+      useRootNavigator: false,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        final t = Theme.of(ctx);
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Handle
+                Container(
+                  width: 36, height: 4,
+                  decoration: BoxDecoration(
+                    color: t.colorScheme.outlineVariant,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 28),
+
+                // App icon
+                Container(
+                  width: 80, height: 80,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        t.colorScheme.primary,
+                        t.colorScheme.tertiary,
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: t.colorScheme.primary.withValues(alpha: 0.3),
+                        blurRadius: 16,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.fitness_center,
+                    size: 40,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // App name
+                Text(
+                  'BookMyPT',
+                  style: t.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  l10n.aboutTagline,
+                  textAlign: TextAlign.center,
+                  style: t.textTheme.bodyMedium?.copyWith(
+                    color: t.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Info cards
+                Container(
+                  decoration: BoxDecoration(
+                    color: t.colorScheme.surfaceContainerHighest
+                        .withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    children: [
+                      _AboutRow(
+                        icon: Icons.tag,
+                        label: l10n.aboutVersionLabel,
+                        value: '2.0.1',
+                      ),
+                      Divider(height: 1,
+                          indent: 16,
+                          endIndent: 16,
+                          color: t.dividerColor),
+                      _AboutRow(
+                        icon: Icons.calendar_today_outlined,
+                        label: l10n.aboutReleaseDateLabel,
+                        value: l10n.aboutReleaseDateValue,
+                      ),
+                      Divider(height: 1,
+                          indent: 16,
+                          endIndent: 16,
+                          color: t.dividerColor),
+                      _AboutRow(
+                        icon: Icons.code_outlined,
+                        label: l10n.aboutDeveloperLabel,
+                        value: l10n.aboutDeveloperName,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Copyright
+                Text(
+                  l10n.aboutCopyright,
+                  textAlign: TextAlign.center,
+                  style: t.textTheme.bodySmall?.copyWith(
+                    color: t.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> _signOut() async {
     final l10n = context.l10n;
     final confirmed = await showDialog<bool>(
@@ -589,6 +718,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       builder: (_) => HelpScreen(isPt: user.isPt),
                     ),
                   ),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.info_outline),
+                  title: Text(l10n.about),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: _showAboutSheet,
                 ),
                 const Divider(),
                 ListTile(
@@ -833,6 +968,46 @@ class _LocaleOption extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ── About info row ────────────────────────────────────────────────────────────
+class _AboutRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _AboutRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: theme.colorScheme.primary),
+          const SizedBox(width: 12),
+          Text(
+            label,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const Spacer(),
+          Text(
+            value,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }

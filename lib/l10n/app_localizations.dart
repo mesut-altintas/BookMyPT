@@ -3344,6 +3344,90 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Gelecekteki bir seans tamamlanamaz'**
   String get sessionInFutureWarning;
+
+  /// Strength training exercise type label
+  ///
+  /// In tr, this message translates to:
+  /// **'Güç'**
+  String get exerciseTypeStrength;
+
+  /// Cardio exercise type label
+  ///
+  /// In tr, this message translates to:
+  /// **'Kardio'**
+  String get exerciseTypeCardio;
+
+  /// Stretching exercise type label
+  ///
+  /// In tr, this message translates to:
+  /// **'Esneme'**
+  String get exerciseTypeStretching;
+
+  /// Duration field label in minutes
+  ///
+  /// In tr, this message translates to:
+  /// **'Süre (dk)'**
+  String get durationMinLabel;
+
+  /// Distance field label in kilometres
+  ///
+  /// In tr, this message translates to:
+  /// **'Mesafe (km)'**
+  String get distanceKmLabel;
+
+  /// Hold duration field label in seconds for stretching
+  ///
+  /// In tr, this message translates to:
+  /// **'Tutma Süresi (sn)'**
+  String get holdSecLabel;
+
+  /// About menu item and screen title
+  ///
+  /// In tr, this message translates to:
+  /// **'Hakkında'**
+  String get about;
+
+  /// Short app description shown in About sheet
+  ///
+  /// In tr, this message translates to:
+  /// **'Kişisel antrenör ve üye yönetim platformu'**
+  String get aboutTagline;
+
+  /// Version label in About sheet
+  ///
+  /// In tr, this message translates to:
+  /// **'Sürüm'**
+  String get aboutVersionLabel;
+
+  /// Release date label in About sheet
+  ///
+  /// In tr, this message translates to:
+  /// **'Yayın Tarihi'**
+  String get aboutReleaseDateLabel;
+
+  /// Release date value shown in About sheet
+  ///
+  /// In tr, this message translates to:
+  /// **'Mayıs 2026'**
+  String get aboutReleaseDateValue;
+
+  /// Developer label in About sheet
+  ///
+  /// In tr, this message translates to:
+  /// **'Geliştirici'**
+  String get aboutDeveloperLabel;
+
+  /// Developer name shown in About sheet
+  ///
+  /// In tr, this message translates to:
+  /// **'BookMyPt Ekibi'**
+  String get aboutDeveloperName;
+
+  /// Copyright notice in About sheet
+  ///
+  /// In tr, this message translates to:
+  /// **'© 2026 BookMyPt. Tüm hakları saklıdır.'**
+  String get aboutCopyright;
 }
 
 class _AppLocalizationsDelegate

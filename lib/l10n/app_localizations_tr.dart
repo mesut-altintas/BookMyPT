@@ -1758,4 +1758,46 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get sessionInFutureWarning => 'Gelecekteki bir seans tamamlanamaz';
+
+  @override
+  String get exerciseTypeStrength => 'Güç';
+
+  @override
+  String get exerciseTypeCardio => 'Kardio';
+
+  @override
+  String get exerciseTypeStretching => 'Esneme';
+
+  @override
+  String get durationMinLabel => 'Süre (dk)';
+
+  @override
+  String get distanceKmLabel => 'Mesafe (km)';
+
+  @override
+  String get holdSecLabel => 'Tutma Süresi (sn)';
+
+  @override
+  String get about => 'Hakkında';
+
+  @override
+  String get aboutTagline => 'Kişisel antrenör ve üye yönetim platformu';
+
+  @override
+  String get aboutVersionLabel => 'Sürüm';
+
+  @override
+  String get aboutReleaseDateLabel => 'Yayın Tarihi';
+
+  @override
+  String get aboutReleaseDateValue => 'Mayıs 2026';
+
+  @override
+  String get aboutDeveloperLabel => 'Geliştirici';
+
+  @override
+  String get aboutDeveloperName => 'BookMyPt Ekibi';
+
+  @override
+  String get aboutCopyright => '© 2026 BookMyPt. Tüm hakları saklıdır.';
 }

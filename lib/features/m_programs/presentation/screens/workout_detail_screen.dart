@@ -3,8 +3,51 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/l10n/extensions.dart';
 import '../../../../features/pt_programs/providers/pt_programs_provider.dart';
+import '../../../../shared/models/program_model.dart';
 import '../../../../shared/widgets/app_loading.dart';
 import '../../../../shared/widgets/app_error.dart';
+
+// ─── Exercise type helpers ────────────────────────────────────────────────────
+
+Color _typeColor(String type, BuildContext context) {
+  switch (type) {
+    case ExerciseType.cardio:     return const Color(0xFFE65100);
+    case ExerciseType.stretching: return const Color(0xFF2E7D32);
+    default:                      return Theme.of(context).colorScheme.primary;
+  }
+}
+
+IconData _typeIcon(String type) {
+  switch (type) {
+    case ExerciseType.cardio:     return Icons.directions_run;
+    case ExerciseType.stretching: return Icons.self_improvement;
+    default:                      return Icons.fitness_center;
+  }
+}
+
+String _exSummary(ExerciseModel ex) {
+  switch (ex.type) {
+    case ExerciseType.cardio:
+      final min = ex.durationSeconds != null
+          ? '${(ex.durationSeconds! / 60).round()} dk'
+          : '—';
+      final km = ex.distanceMeters != null
+          ? ' · ${(ex.distanceMeters! / 1000).toStringAsFixed(1)} km'
+          : '';
+      return '$min$km';
+    case ExerciseType.stretching:
+      final sets = '${ex.sets} set';
+      final hold = ex.durationSeconds != null
+          ? ' · ${ex.durationSeconds} sn tutma'
+          : '';
+      return '$sets$hold';
+    default:
+      var s = '${ex.sets} set × ${ex.reps} tekrar';
+      if (ex.weight != null)      s += ' · ${ex.weight} kg';
+      if (ex.restSeconds != null) s += ' · ${ex.restSeconds} sn';
+      return s;
+  }
+}
 
 class WorkoutDetailScreen extends ConsumerWidget {
   final String programId;
@@ -123,28 +166,30 @@ class _DayCard extends StatelessWidget {
               child: Column(
                 children: List.generate(day.exercises.length, (i) {
                   final ex = day.exercises[i];
+                  final tColor = _typeColor(ex.type, context);
                   return Container(
                     margin: const EdgeInsets.only(bottom: 8),
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      border: Border.all(
-                          color: theme.dividerColor),
+                      border: Border.all(color: theme.dividerColor),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Badge: number colored by type
                         Container(
                           width: 32,
                           height: 32,
                           decoration: BoxDecoration(
-                            color: theme.colorScheme.primary,
+                            color: tColor,
                             shape: BoxShape.circle,
                           ),
                           child: Center(
                             child: Text(
                               '${i + 1}',
-                              style: TextStyle(
-                                color: theme.colorScheme.onPrimary,
+                              style: const TextStyle(
+                                color: Colors.white,
                                 fontWeight: FontWeight.w700,
                                 fontSize: 13,
                               ),
@@ -162,14 +207,25 @@ class _DayCard extends StatelessWidget {
                                     fontWeight: FontWeight.w600),
                               ),
                               const SizedBox(height: 2),
-                              Text(
-                                '${ex.sets} set × ${ex.reps} tekrar'
-                                '${ex.weight != null ? ' • ${ex.weight} kg' : ''}',
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                ),
+                              Row(
+                                children: [
+                                  Icon(_typeIcon(ex.type),
+                                      size: 12, color: tColor),
+                                  const SizedBox(width: 3),
+                                  Expanded(
+                                    child: Text(
+                                      _exSummary(ex),
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(
+                                        color: theme
+                                            .colorScheme.onSurfaceVariant,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                              if (ex.notes != null)
+                              if (ex.notes != null) ...[
+                                const SizedBox(height: 2),
                                 Text(
                                   ex.notes!,
                                   style: theme.textTheme.bodySmall?.copyWith(
@@ -177,23 +233,28 @@ class _DayCard extends StatelessWidget {
                                     fontStyle: FontStyle.italic,
                                   ),
                                 ),
+                              ],
                             ],
                           ),
                         ),
-                        if (ex.restSeconds != null)
-                          Column(
-                            children: [
-                              Icon(Icons.timer_outlined,
-                                  size: 16,
-                                  color: theme.colorScheme.onSurfaceVariant),
-                              Text(
-                                '${ex.restSeconds}s',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: theme.colorScheme.onSurfaceVariant,
+                        // Rest timer badge — strength only
+                        if (ex.isStrength && ex.restSeconds != null)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 8),
+                            child: Column(
+                              children: [
+                                Icon(Icons.timer_outlined,
+                                    size: 16,
+                                    color: theme.colorScheme.onSurfaceVariant),
+                                Text(
+                                  '${ex.restSeconds}s',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                       ],
                     ),

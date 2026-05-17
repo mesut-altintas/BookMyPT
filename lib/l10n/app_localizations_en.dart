@@ -1758,4 +1758,46 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sessionInFutureWarning => 'Cannot complete a future session';
+
+  @override
+  String get exerciseTypeStrength => 'Strength';
+
+  @override
+  String get exerciseTypeCardio => 'Cardio';
+
+  @override
+  String get exerciseTypeStretching => 'Stretch';
+
+  @override
+  String get durationMinLabel => 'Duration (min)';
+
+  @override
+  String get distanceKmLabel => 'Distance (km)';
+
+  @override
+  String get holdSecLabel => 'Hold Time (sec)';
+
+  @override
+  String get about => 'About';
+
+  @override
+  String get aboutTagline => 'Personal trainer & member management platform';
+
+  @override
+  String get aboutVersionLabel => 'Version';
+
+  @override
+  String get aboutReleaseDateLabel => 'Release Date';
+
+  @override
+  String get aboutReleaseDateValue => 'May 2026';
+
+  @override
+  String get aboutDeveloperLabel => 'Developer';
+
+  @override
+  String get aboutDeveloperName => 'BookMyPt Team';
+
+  @override
+  String get aboutCopyright => '© 2026 BookMyPt. All rights reserved.';
 }

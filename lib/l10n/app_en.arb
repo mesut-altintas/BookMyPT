@@ -585,5 +585,22 @@
   "acceptCancellation": "Accept Cancellation",
   "rejectCancellation": "Reject",
   "cancellationRequestConfirm": "Your cancellation request will be sent to the other party. Do you want to proceed?",
-  "sessionInFutureWarning": "Cannot complete a future session"
+  "sessionInFutureWarning": "Cannot complete a future session",
+
+  "exerciseTypeStrength": "Strength",
+  "exerciseTypeCardio": "Cardio",
+  "exerciseTypeStretching": "Stretch",
+
+  "durationMinLabel": "Duration (min)",
+  "distanceKmLabel": "Distance (km)",
+  "holdSecLabel": "Hold Time (sec)",
+
+  "about": "About",
+  "aboutTagline": "Personal trainer & member management platform",
+  "aboutVersionLabel": "Version",
+  "aboutReleaseDateLabel": "Release Date",
+  "aboutReleaseDateValue": "May 2026",
+  "aboutDeveloperLabel": "Developer",
+  "aboutDeveloperName": "BookMyPt Team",
+  "aboutCopyright": "© 2026 BookMyPt. All rights reserved."
 }
