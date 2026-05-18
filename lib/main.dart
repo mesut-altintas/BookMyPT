@@ -106,6 +106,30 @@ class _FitCoachAppState extends ConsumerState<FitCoachApp> {
       }
     });
 
+    // ── Login → save current token to Firestore ────────────────────────────
+    // Runs once when the user object appears (login / app restart).
+    ref.listenManual(currentUserProvider, (_, userAsync) {
+      userAsync.whenData((user) async {
+        if (user != null) {
+          final token = await FirebaseMessaging.instance.getToken();
+          if (token != null) {
+            await ref.read(authRepositoryProvider).updateFcmToken(user.uid, token);
+          }
+        }
+      });
+    });
+
+    // ── FCM token refresh → save new token to Firestore immediately ────────
+    // iOS reassigns the APNs token after new builds / reinstalls.
+    // Without this listener the old token stays in Firestore and
+    // push notifications silently stop arriving.
+    FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
+      final user = ref.read(currentUserProvider).valueOrNull;
+      if (user != null) {
+        await ref.read(authRepositoryProvider).updateFcmToken(user.uid, newToken);
+      }
+    });
+
     // ── Terminated tap: app was closed, user tapped notification ───────────
     FirebaseMessaging.instance.getInitialMessage().then((message) {
       if (message != null) {
@@ -126,19 +150,6 @@ class _FitCoachAppState extends ConsumerState<FitCoachApp> {
     final currentUser = ref.watch(currentUserProvider);
     final isPt = currentUser.valueOrNull?.isPt ?? false;
 
-    // Setup FCM token refresh listener
-    ref.listen(currentUserProvider, (_, userAsync) {
-      userAsync.whenData((user) async {
-        if (user != null) {
-          final token = await NotificationService().getToken();
-          if (token != null) {
-            await ref
-                .read(authRepositoryProvider)
-                .updateFcmToken(user.uid, token);
-          }
-        }
-      });
-    });
 
     return MaterialApp.router(
       title: AppConstants.appName,
