@@ -9,6 +9,8 @@ import 'package:go_router/go_router.dart';
 import 'l10n/app_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
+import 'dart:io';
+
 import 'core/constants/app_constants.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
@@ -108,12 +110,15 @@ class _FitCoachAppState extends ConsumerState<FitCoachApp> {
 
     // ── Login → save current token to Firestore ────────────────────────────
     // Runs once when the user object appears (login / app restart).
+    // Saves under fcmTokens.ios or fcmTokens.android so every device
+    // the user is logged into keeps its own token.
+    final _platform = Platform.isIOS ? 'ios' : 'android';
     ref.listenManual(currentUserProvider, (_, userAsync) {
       userAsync.whenData((user) async {
         if (user != null) {
           final token = await FirebaseMessaging.instance.getToken();
           if (token != null) {
-            await ref.read(authRepositoryProvider).updateFcmToken(user.uid, token);
+            await ref.read(authRepositoryProvider).updateFcmToken(user.uid, token, _platform);
           }
         }
       });
@@ -126,7 +131,7 @@ class _FitCoachAppState extends ConsumerState<FitCoachApp> {
     FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
       final user = ref.read(currentUserProvider).valueOrNull;
       if (user != null) {
-        await ref.read(authRepositoryProvider).updateFcmToken(user.uid, newToken);
+        await ref.read(authRepositoryProvider).updateFcmToken(user.uid, newToken, _platform);
       }
     });
 
