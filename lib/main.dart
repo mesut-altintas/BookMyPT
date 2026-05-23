@@ -15,6 +15,7 @@ import 'core/constants/app_constants.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/providers/auth_provider.dart';
+import 'shared/models/user_model.dart';
 import 'firebase_options.dart';
 import 'shared/services/notification_service.dart';
 import 'shared/services/notification_badge_service.dart';
@@ -64,10 +65,31 @@ class FitCoachApp extends ConsumerStatefulWidget {
 }
 
 class _FitCoachAppState extends ConsumerState<FitCoachApp> {
+  ProviderSubscription<AsyncValue<UserModel?>>? _userSub;
+
   @override
   void initState() {
     super.initState();
+    // Resolve platform before _setupNotifications so onTokenRefresh can use it
+    _fcmPlatform = Platform.isIOS ? 'ios' : 'android';
     _setupNotifications();
+    // fireImmediately:true ensures we fire even when the provider already has
+    // a value when initState runs — ref.listen in build() misses that case.
+    _userSub = ref.listenManual(
+      currentUserProvider,
+      (_, userAsync) {
+        userAsync.whenData((user) {
+          if (user != null) _saveFcmToken(user.uid, _fcmPlatform);
+        });
+      },
+      fireImmediately: true,
+    );
+  }
+
+  @override
+  void dispose() {
+    _userSub?.close();
+    super.dispose();
   }
 
   /// Retries navigation every 200 ms until the router context is ready.
@@ -169,10 +191,6 @@ class _FitCoachAppState extends ConsumerState<FitCoachApp> {
       }
     });
 
-    // ── FCM token: saved in build() via ref.listen (same pattern as the
-    //    original working implementation). The platform key is captured once.
-    _fcmPlatform = Platform.isIOS ? 'ios' : 'android';
-
     // ── FCM token refresh → save new token to Firestore immediately ────────
     // iOS reassigns the APNs token after new builds / reinstalls.
     // Without this listener the old token stays in Firestore and
@@ -208,18 +226,6 @@ class _FitCoachAppState extends ConsumerState<FitCoachApp> {
     final colorScheme = ref.watch(colorSchemeProvider);
     final currentUser = ref.watch(currentUserProvider);
     final isPt = currentUser.valueOrNull?.isPt ?? false;
-
-    // Save FCM token whenever the user object appears / changes.
-    // Placed in build() so it runs on every provider emission — the same
-    // reliable pattern as the original working implementation.
-    ref.listen(currentUserProvider, (_, userAsync) {
-      userAsync.whenData((user) async {
-        if (user != null) {
-          _saveFcmToken(user.uid, _fcmPlatform);
-        }
-      });
-    });
-
 
     return MaterialApp.router(
       title: AppConstants.appName,
