@@ -130,12 +130,16 @@ class _FitCoachAppState extends ConsumerState<FitCoachApp> {
           .doc(uid)
           .set({'_fcmDiag': 'perm:${settings.authorizationStatus.name} plat:$platform'}, SetOptions(merge: true));
 
+      // getToken() can hang indefinitely on iOS if APNs hasn't responded yet.
+      // Add a per-attempt timeout so the loop can actually progress.
       String? token;
       String? lastError;
       for (int i = 0; i < 10 && token == null; i++) {
         if (i > 0) await Future.delayed(Duration(seconds: i));
         try {
-          token = await FirebaseMessaging.instance.getToken();
+          token = await FirebaseMessaging.instance
+              .getToken()
+              .timeout(const Duration(seconds: 8));
         } catch (e) {
           lastError = e.toString();
         }
