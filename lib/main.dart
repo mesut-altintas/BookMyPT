@@ -119,6 +119,13 @@ class _FitCoachAppState extends ConsumerState<FitCoachApp> {
         sound: true,
       );
 
+      // Delete any stale cached token so iOS is forced to request a fresh
+      // APNs token from Apple's servers. Without this, getToken() can hang
+      // indefinitely on iOS when the cached token is in a bad state.
+      try {
+        await FirebaseMessaging.instance.deleteToken();
+      } catch (_) {}
+
       // getToken() can hang on iOS while APNs registers; 15 s is generous.
       final token = await FirebaseMessaging.instance
           .getToken()
