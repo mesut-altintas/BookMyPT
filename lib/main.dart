@@ -64,7 +64,8 @@ class FitCoachApp extends ConsumerStatefulWidget {
   ConsumerState<FitCoachApp> createState() => _FitCoachAppState();
 }
 
-class _FitCoachAppState extends ConsumerState<FitCoachApp> {
+class _FitCoachAppState extends ConsumerState<FitCoachApp>
+    with WidgetsBindingObserver {
   // ── FCM state ──────────────────────────────────────────────────────────────
   final String _platform = Platform.isIOS ? 'ios' : 'android';
 
@@ -80,6 +81,7 @@ class _FitCoachAppState extends ConsumerState<FitCoachApp> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _setupNotifications();
     // listenManual + fireImmediately covers both "user already loaded" and
     // "user loads later" cases — ref.listen in build() misses the former.
@@ -100,8 +102,19 @@ class _FitCoachAppState extends ConsumerState<FitCoachApp> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _userSub?.close();
     super.dispose();
+  }
+
+  /// Retry FCM token save every time the app comes to foreground.
+  /// getToken() requires foreground on iOS — background calls hang/fail.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && !_fcmTokenSaved) {
+      final user = ref.read(currentUserProvider).valueOrNull;
+      if (user != null) _saveFcmToken(user.uid);
+    }
   }
 
   // ── FCM token ──────────────────────────────────────────────────────────────
