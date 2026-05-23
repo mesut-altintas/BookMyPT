@@ -79,7 +79,13 @@ class _FitCoachAppState extends ConsumerState<FitCoachApp> {
       currentUserProvider,
       (_, userAsync) {
         userAsync.whenData((user) {
-          if (user != null) _saveFcmToken(user.uid, _fcmPlatform);
+          if (user != null) {
+            _saveFcmToken(user.uid, _fcmPlatform);
+          } else {
+            // User logged out — allow fresh token save on next login
+            _fcmTokenSaved = false;
+            _savingFcmToken = false;
+          }
         });
       },
       fireImmediately: true,
@@ -112,12 +118,21 @@ class _FitCoachAppState extends ConsumerState<FitCoachApp> {
   /// _saveFcmToken picks this up as a fallback so the token isn't lost.
   String? _pendingFcmToken;
 
+  /// Guards against re-entrant / concurrent calls to _saveFcmToken.
+  /// Writing to the user document triggers currentUserProvider to re-emit,
+  /// which re-triggers listenManual, which would restart _saveFcmToken in an
+  /// infinite loop without this flag.
+  bool _savingFcmToken = false;
+  bool _fcmTokenSaved = false;
+
   /// Requests notification permission then fetches and saves the FCM token.
   /// On iOS the APNs → Firebase round-trip can take several seconds after
   /// app launch, so getToken() may return null on the first call.
   /// We retry up to 10 times with linear back-off (1 s, 2 s, … 9 s = ~45 s
   /// total) before giving up. onTokenRefresh covers any remaining cases.
   Future<void> _saveFcmToken(String uid, String platform) async {
+    if (_fcmTokenSaved || _savingFcmToken) return;
+    _savingFcmToken = true;
     try {
       final settings = await FirebaseMessaging.instance.requestPermission(
         alert: true,
@@ -163,6 +178,7 @@ class _FitCoachAppState extends ConsumerState<FitCoachApp> {
 
       if (token != null) {
         _pendingFcmToken = null;
+        _fcmTokenSaved = true;
         await ref.read(authRepositoryProvider).updateFcmToken(uid, token, platform);
         await FirebaseFirestore.instance
             .collection('users')
@@ -181,6 +197,8 @@ class _FitCoachAppState extends ConsumerState<FitCoachApp> {
             .doc(uid)
             .set({'_fcmDiag': 'exception:$e'}, SetOptions(merge: true));
       } catch (_) {}
+    } finally {
+      _savingFcmToken = false;
     }
   }
 
