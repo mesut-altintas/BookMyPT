@@ -132,25 +132,30 @@ class _FitCoachAppState extends ConsumerState<FitCoachApp>
         sound: true,
       );
 
-      // Delete any stale cached token so iOS is forced to request a fresh
-      // APNs token from Apple's servers. Without this, getToken() can hang
-      // indefinitely on iOS when the cached token is in a bad state.
-      try {
-        await FirebaseMessaging.instance.deleteToken();
-      } catch (_) {}
-
-      // getToken() can hang on iOS while APNs registers; 15 s is generous.
+      // 10 s timeout. On iOS the call hangs when the app is in background
+      // because APNs registration requires foreground context.
       final token = await FirebaseMessaging.instance
           .getToken()
-          .timeout(const Duration(seconds: 15));
+          .timeout(const Duration(seconds: 10));
 
       if (token != null) {
         await _writeToken(uid, token);
-      } else {
-        _fcmTokenSaved = false; // no token yet — allow retry on next emit
+        return; // success — _fcmTokenSaved stays true
       }
     } catch (_) {
-      _fcmTokenSaved = false; // error — allow retry on next emit
+      // Timeout or other error — fall through to retry logic below
+    }
+
+    // Getting here means we failed (background timeout is the common case).
+    _fcmTokenSaved = false;
+
+    // If the app is already in the foreground now (e.g. the 10 s background
+    // timeout just fired while the user is actively using the app), retry
+    // immediately instead of waiting for the next lifecycle event.
+    if (mounted &&
+        WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      _saveFcmToken(uid);
     }
   }
 
