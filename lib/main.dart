@@ -84,6 +84,8 @@ class _FitCoachAppState extends ConsumerState<FitCoachApp> {
     }
   }
 
+  String _fcmPlatform = 'android';
+
   /// Tries to obtain the FCM token and write it to Firestore.
   /// - On iOS: waits up to 30 s for the APNs token before calling getToken().
   /// - Retries getToken() up to 5 times (with growing delays) in case of
@@ -144,18 +146,9 @@ class _FitCoachAppState extends ConsumerState<FitCoachApp> {
       }
     });
 
-    // ── Login → save current token to Firestore ────────────────────────────
-    // Runs once when the user object appears (login / app restart).
-    // Saves under fcmTokens.ios or fcmTokens.android so every device
-    // the user is logged into keeps its own token.
-    final platform = Platform.isIOS ? 'ios' : 'android';
-    ref.listenManual(currentUserProvider, (_, userAsync) {
-      userAsync.whenData((user) async {
-        if (user != null) {
-          _saveFcmToken(user.uid, platform);
-        }
-      });
-    });
+    // ── FCM token: saved in build() via ref.listen (same pattern as the
+    //    original working implementation). The platform key is captured once.
+    _fcmPlatform = Platform.isIOS ? 'ios' : 'android';
 
     // ── FCM token refresh → save new token to Firestore immediately ────────
     // iOS reassigns the APNs token after new builds / reinstalls.
@@ -164,7 +157,7 @@ class _FitCoachAppState extends ConsumerState<FitCoachApp> {
     FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
       final user = ref.read(currentUserProvider).valueOrNull;
       if (user != null) {
-        await ref.read(authRepositoryProvider).updateFcmToken(user.uid, newToken, platform);
+        await ref.read(authRepositoryProvider).updateFcmToken(user.uid, newToken, _fcmPlatform);
       }
     });
 
@@ -187,6 +180,17 @@ class _FitCoachAppState extends ConsumerState<FitCoachApp> {
     final colorScheme = ref.watch(colorSchemeProvider);
     final currentUser = ref.watch(currentUserProvider);
     final isPt = currentUser.valueOrNull?.isPt ?? false;
+
+    // Save FCM token whenever the user object appears / changes.
+    // Placed in build() so it runs on every provider emission — the same
+    // reliable pattern as the original working implementation.
+    ref.listen(currentUserProvider, (_, userAsync) {
+      userAsync.whenData((user) async {
+        if (user != null) {
+          _saveFcmToken(user.uid, _fcmPlatform);
+        }
+      });
+    });
 
 
     return MaterialApp.router(
