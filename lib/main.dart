@@ -65,26 +65,32 @@ class FitCoachApp extends ConsumerStatefulWidget {
 }
 
 class _FitCoachAppState extends ConsumerState<FitCoachApp> {
+  // ── FCM state ──────────────────────────────────────────────────────────────
+  final String _platform = Platform.isIOS ? 'ios' : 'android';
+
+  /// True once token has been successfully written to Firestore.
+  /// Prevents re-entry: writing to the user doc triggers currentUserProvider
+  /// to re-emit, which would restart _saveFcmToken in an infinite loop.
+  bool _fcmTokenSaved = false;
+
   ProviderSubscription<AsyncValue<UserModel?>>? _userSub;
+
+  // ── Lifecycle ──────────────────────────────────────────────────────────────
 
   @override
   void initState() {
     super.initState();
-    // Resolve platform before _setupNotifications so onTokenRefresh can use it
-    _fcmPlatform = Platform.isIOS ? 'ios' : 'android';
     _setupNotifications();
-    // fireImmediately:true ensures we fire even when the provider already has
-    // a value when initState runs — ref.listen in build() misses that case.
+    // listenManual + fireImmediately covers both "user already loaded" and
+    // "user loads later" cases — ref.listen in build() misses the former.
     _userSub = ref.listenManual(
       currentUserProvider,
-      (_, userAsync) {
-        userAsync.whenData((user) {
+      (_, next) {
+        next.whenData((user) {
           if (user != null) {
-            _saveFcmToken(user.uid, _fcmPlatform);
+            _saveFcmToken(user.uid);
           } else {
-            // User logged out — allow fresh token save on next login
-            _fcmTokenSaved = false;
-            _savingFcmToken = false;
+            _fcmTokenSaved = false; // logged out → reset for next login
           }
         });
       },
@@ -98,117 +104,51 @@ class _FitCoachAppState extends ConsumerState<FitCoachApp> {
     super.dispose();
   }
 
-  /// Retries navigation every 200 ms until the router context is ready.
-  /// Needed when the app starts from a terminated state via a notification tap.
-  void _navigateWhenReady(String route, {int attempt = 0}) {
-    final ctx = navigatorKey.currentContext;
-    if (ctx != null) {
-      ctx.go(route);
-    } else if (attempt < 25) {
-      // Try for up to 5 seconds (25 × 200 ms)
-      Future.delayed(const Duration(milliseconds: 200), () {
-        _navigateWhenReady(route, attempt: attempt + 1);
-      });
-    }
-  }
+  // ── FCM token ──────────────────────────────────────────────────────────────
 
-  String _fcmPlatform = 'android';
+  /// Saves the FCM token for this device to Firestore once per session.
+  /// Uses a guard flag so Firestore writes never trigger a second call.
+  Future<void> _saveFcmToken(String uid) async {
+    if (_fcmTokenSaved) return;
+    _fcmTokenSaved = true; // set before any await — blocks re-entry immediately
 
-  /// Holds a token that arrived via onTokenRefresh before the user was loaded.
-  /// _saveFcmToken picks this up as a fallback so the token isn't lost.
-  String? _pendingFcmToken;
-
-  /// Guards against re-entrant / concurrent calls to _saveFcmToken.
-  /// Writing to the user document triggers currentUserProvider to re-emit,
-  /// which re-triggers listenManual, which would restart _saveFcmToken in an
-  /// infinite loop without this flag.
-  bool _savingFcmToken = false;
-  bool _fcmTokenSaved = false;
-
-  /// Requests notification permission then fetches and saves the FCM token.
-  /// On iOS the APNs → Firebase round-trip can take several seconds after
-  /// app launch, so getToken() may return null on the first call.
-  /// We retry up to 10 times with linear back-off (1 s, 2 s, … 9 s = ~45 s
-  /// total) before giving up. onTokenRefresh covers any remaining cases.
-  Future<void> _saveFcmToken(String uid, String platform) async {
-    if (_fcmTokenSaved || _savingFcmToken) return;
-    _savingFcmToken = true;
     try {
-      final settings = await FirebaseMessaging.instance.requestPermission(
+      await FirebaseMessaging.instance.requestPermission(
         alert: true,
         badge: true,
         sound: true,
       );
-      // Write permission status to Firestore so we can diagnose remotely
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .set({'_fcmDiag': 'perm:${settings.authorizationStatus.name} plat:$platform'}, SetOptions(merge: true));
 
-      // getToken() can hang indefinitely on iOS if APNs hasn't responded yet.
-      // Add a per-attempt timeout so the loop can actually progress.
-      String? token;
-      String? lastError;
-      for (int i = 0; i < 10 && token == null; i++) {
-        if (i > 0) await Future.delayed(Duration(seconds: i));
-        try {
-          token = await FirebaseMessaging.instance
-              .getToken()
-              .timeout(const Duration(seconds: 8));
-        } catch (e) {
-          lastError = e.toString();
-        }
-      }
-
-      // Fallback 1: onTokenRefresh fired before the user was ready
-      token ??= _pendingFcmToken;
-
-      // Fallback 2: getToken() kept timing out — wait on onTokenRefresh stream
-      // directly. APNs sometimes delivers the token asynchronously via this
-      // stream even when getToken() hangs.
-      if (token == null) {
-        try {
-          token = await FirebaseMessaging.instance.onTokenRefresh
-              .first
-              .timeout(const Duration(seconds: 30));
-        } catch (e) {
-          lastError = 'onTokenRefresh timeout: $e';
-        }
-      }
+      // getToken() can hang on iOS while APNs registers; 15 s is generous.
+      final token = await FirebaseMessaging.instance
+          .getToken()
+          .timeout(const Duration(seconds: 15));
 
       if (token != null) {
-        _pendingFcmToken = null;
-        _fcmTokenSaved = true;
-        await ref.read(authRepositoryProvider).updateFcmToken(uid, token, platform);
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(uid)
-            .set({'_fcmDiag': 'ok:${token.substring(0, 10)}'}, SetOptions(merge: true));
+        await _writeToken(uid, token);
       } else {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(uid)
-            .set({'_fcmDiag': 'failed. err:${lastError ?? "none"}'}, SetOptions(merge: true));
+        _fcmTokenSaved = false; // no token yet — allow retry on next emit
       }
-    } catch (e) {
-      try {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(uid)
-            .set({'_fcmDiag': 'exception:$e'}, SetOptions(merge: true));
-      } catch (_) {}
-    } finally {
-      _savingFcmToken = false;
+    } catch (_) {
+      _fcmTokenSaved = false; // error — allow retry on next emit
     }
   }
 
+  Future<void> _writeToken(String uid, String token) =>
+      FirebaseFirestore.instance
+          .collection(AppConstants.usersCollection)
+          .doc(uid)
+          .set({'fcmTokens': {_platform: token}}, SetOptions(merge: true));
+
+  // ── Notifications setup ───────────────────────────────────────────────────
+
   void _setupNotifications() {
-    // ── Local notification tap (app in foreground) ──────────────────────────
+    // Local notification tap (foreground)
     NotificationService.onLocalNotificationTap = (route) {
       navigatorKey.currentContext?.go(route);
     };
 
-    // ── Foreground FCM message → increment badge ────────────────────────────
+    // Foreground FCM → increment badge counter
     NotificationService.onForegroundMessage = (type) {
       final source = notificationSourceFromType(type);
       if (source != null) {
@@ -216,7 +156,7 @@ class _FitCoachAppState extends ConsumerState<FitCoachApp> {
       }
     };
 
-    // ── Background tap: app was in background, user tapped notification ─────
+    // Background tap (app was suspended)
     FirebaseMessaging.onMessageOpenedApp.listen((message) {
       final route = message.data['route'] as String?;
       if (route != null) {
@@ -226,32 +166,40 @@ class _FitCoachAppState extends ConsumerState<FitCoachApp> {
       }
     });
 
-    // ── FCM token refresh → save new token to Firestore immediately ────────
-    // iOS reassigns the APNs token after new builds / reinstalls.
-    // Without this listener the old token stays in Firestore and
-    // push notifications silently stop arriving.
-    // If the user isn't loaded yet (race at startup), stash the token so
-    // _saveFcmToken can pick it up once the user provider emits.
-    FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
+    // Token refresh (iOS re-issues APNs token after reinstall / new build)
+    FirebaseMessaging.instance.onTokenRefresh.listen((token) async {
+      _fcmTokenSaved = false; // allow overwrite with fresh token
       final user = ref.read(currentUserProvider).valueOrNull;
       if (user != null) {
-        _pendingFcmToken = null;
-        await ref.read(authRepositoryProvider).updateFcmToken(user.uid, newToken, _fcmPlatform);
-      } else {
-        _pendingFcmToken = newToken;
+        _fcmTokenSaved = true;
+        await _writeToken(user.uid, token);
       }
+      // If user not loaded yet, _saveFcmToken will call getToken() which
+      // returns the cached token once APNs registration completes.
     });
 
-    // ── Terminated tap: app was closed, user tapped notification ───────────
+    // Terminated tap (app was fully closed)
     FirebaseMessaging.instance.getInitialMessage().then((message) {
       if (message != null) {
         final route = message.data['route'] as String?;
-        if (route != null) {
-          _navigateWhenReady(route);
-        }
+        if (route != null) _navigateWhenReady(route);
       }
     });
   }
+
+  /// Retries navigation every 200 ms until the router context is ready.
+  void _navigateWhenReady(String route, {int attempt = 0}) {
+    final ctx = navigatorKey.currentContext;
+    if (ctx != null) {
+      ctx.go(route);
+    } else if (attempt < 25) {
+      Future.delayed(const Duration(milliseconds: 200), () {
+        _navigateWhenReady(route, attempt: attempt + 1);
+      });
+    }
+  }
+
+  // ── Build ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
