@@ -97,16 +97,26 @@ class _FitCoachAppState extends ConsumerState<FitCoachApp> {
   /// total) before giving up. onTokenRefresh covers any remaining cases.
   Future<void> _saveFcmToken(String uid, String platform) async {
     try {
-      await FirebaseMessaging.instance.requestPermission(
+      final settings = await FirebaseMessaging.instance.requestPermission(
         alert: true,
         badge: true,
         sound: true,
       );
+      // Write permission status to Firestore so we can diagnose remotely
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .set({'_fcmDiag': 'perm:${settings.authorizationStatus.name} plat:$platform'}, SetOptions(merge: true));
 
       String? token;
+      String? lastError;
       for (int i = 0; i < 10 && token == null; i++) {
         if (i > 0) await Future.delayed(Duration(seconds: i));
-        token = await FirebaseMessaging.instance.getToken();
+        try {
+          token = await FirebaseMessaging.instance.getToken();
+        } catch (e) {
+          lastError = e.toString();
+        }
       }
 
       // Fallback: onTokenRefresh may have fired before the user was ready
@@ -115,8 +125,24 @@ class _FitCoachAppState extends ConsumerState<FitCoachApp> {
       if (token != null) {
         _pendingFcmToken = null;
         await ref.read(authRepositoryProvider).updateFcmToken(uid, token, platform);
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .set({'_fcmDiag': 'ok:${token.substring(0, 10)}'}, SetOptions(merge: true));
+      } else {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .set({'_fcmDiag': 'null after 10 retries. err:${lastError ?? "none"}'}, SetOptions(merge: true));
       }
-    } catch (_) {}
+    } catch (e) {
+      try {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .set({'_fcmDiag': 'exception:$e'}, SetOptions(merge: true));
+      } catch (_) {}
+    }
   }
 
   void _setupNotifications() {
