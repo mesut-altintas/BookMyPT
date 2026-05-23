@@ -145,8 +145,21 @@ class _FitCoachAppState extends ConsumerState<FitCoachApp> {
         }
       }
 
-      // Fallback: onTokenRefresh may have fired before the user was ready
+      // Fallback 1: onTokenRefresh fired before the user was ready
       token ??= _pendingFcmToken;
+
+      // Fallback 2: getToken() kept timing out — wait on onTokenRefresh stream
+      // directly. APNs sometimes delivers the token asynchronously via this
+      // stream even when getToken() hangs.
+      if (token == null) {
+        try {
+          token = await FirebaseMessaging.instance.onTokenRefresh
+              .first
+              .timeout(const Duration(seconds: 30));
+        } catch (e) {
+          lastError = 'onTokenRefresh timeout: $e';
+        }
+      }
 
       if (token != null) {
         _pendingFcmToken = null;
@@ -159,7 +172,7 @@ class _FitCoachAppState extends ConsumerState<FitCoachApp> {
         await FirebaseFirestore.instance
             .collection('users')
             .doc(uid)
-            .set({'_fcmDiag': 'null after 10 retries. err:${lastError ?? "none"}'}, SetOptions(merge: true));
+            .set({'_fcmDiag': 'failed. err:${lastError ?? "none"}'}, SetOptions(merge: true));
       }
     } catch (e) {
       try {
