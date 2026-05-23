@@ -132,6 +132,23 @@ class _FitCoachAppState extends ConsumerState<FitCoachApp>
         sound: true,
       );
 
+      // ── iOS diagnostic: check APNs token first ──────────────────────────
+      // If getAPNSToken() returns null, iOS is not providing an APNs token
+      // at all — the problem is at the iOS/provisioning level, not Flutter.
+      if (Platform.isIOS) {
+        final apns = await FirebaseMessaging.instance
+            .getAPNSToken()
+            .timeout(const Duration(seconds: 10));
+        await FirebaseFirestore.instance
+            .collection(AppConstants.usersCollection)
+            .doc(uid)
+            .set({'_apnsDiag': apns ?? 'NULL'}, SetOptions(merge: true));
+        if (apns == null) {
+          _fcmTokenSaved = false;
+          return;
+        }
+      }
+
       // 10 s timeout. On iOS the call hangs when the app is in background
       // because APNs registration requires foreground context.
       final token = await FirebaseMessaging.instance
@@ -142,7 +159,11 @@ class _FitCoachAppState extends ConsumerState<FitCoachApp>
         await _writeToken(uid, token);
         return; // success — _fcmTokenSaved stays true
       }
-    } catch (_) {
+    } catch (e) {
+      await FirebaseFirestore.instance
+          .collection(AppConstants.usersCollection)
+          .doc(uid)
+          .set({'_apnsDiag': 'exception: $e'}, SetOptions(merge: true));
       // Timeout or other error — fall through to retry logic below
     }
 
