@@ -86,40 +86,21 @@ class _FitCoachAppState extends ConsumerState<FitCoachApp> {
 
   String _fcmPlatform = 'android';
 
-  /// Tries to obtain the FCM token and write it to Firestore.
-  /// - On iOS: waits up to 30 s for the APNs token before calling getToken().
-  /// - Retries getToken() up to 5 times (with growing delays) in case of
-  ///   transient network issues.
-  /// - If all attempts fail, deletes the stale token so the SDK requests a
-  ///   fresh one; that triggers onTokenRefresh which saves it automatically.
+  /// Requests notification permission then immediately fetches and saves
+  /// the FCM token. Mirrors the working pattern from AcilYardım:
+  /// requestPermission → getToken in the same sequential call.
   Future<void> _saveFcmToken(String uid, String platform) async {
     try {
-      if (Platform.isIOS) {
-        String? apns;
-        for (var i = 0; i < 30 && apns == null; i++) {
-          apns = await FirebaseMessaging.instance.getAPNSToken();
-          if (apns == null) await Future.delayed(const Duration(seconds: 1));
-        }
-        if (apns == null) return; // APNs unavailable — onTokenRefresh will retry
-      }
-
-      String? token;
-      for (var attempt = 0; attempt < 5 && token == null; attempt++) {
-        if (attempt > 0) {
-          await Future.delayed(Duration(seconds: attempt * 3));
-        }
-        token = await FirebaseMessaging.instance.getToken();
-      }
-
+      await FirebaseMessaging.instance.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+      final token = await FirebaseMessaging.instance.getToken();
       if (token != null) {
         await ref.read(authRepositoryProvider).updateFcmToken(uid, token, platform);
-      } else {
-        // Force the SDK to request a new token; onTokenRefresh will pick it up.
-        await FirebaseMessaging.instance.deleteToken();
       }
-    } catch (_) {
-      // Silent — onTokenRefresh acts as fallback
-    }
+    } catch (_) {}
   }
 
   void _setupNotifications() {
