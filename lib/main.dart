@@ -112,13 +112,22 @@ class _FitCoachAppState extends ConsumerState<FitCoachApp> {
     // Runs once when the user object appears (login / app restart).
     // Saves under fcmTokens.ios or fcmTokens.android so every device
     // the user is logged into keeps its own token.
-    final _platform = Platform.isIOS ? 'ios' : 'android';
+    final platform = Platform.isIOS ? 'ios' : 'android';
     ref.listenManual(currentUserProvider, (_, userAsync) {
       userAsync.whenData((user) async {
         if (user != null) {
+          // On iOS, the APNs token must be established before getToken() works.
+          // Poll getAPNSToken() up to 10 times (10 s total) before giving up.
+          if (Platform.isIOS) {
+            String? apns;
+            for (var i = 0; i < 10 && apns == null; i++) {
+              apns = await FirebaseMessaging.instance.getAPNSToken();
+              if (apns == null) await Future.delayed(const Duration(seconds: 1));
+            }
+          }
           final token = await FirebaseMessaging.instance.getToken();
           if (token != null) {
-            await ref.read(authRepositoryProvider).updateFcmToken(user.uid, token, _platform);
+            await ref.read(authRepositoryProvider).updateFcmToken(user.uid, token, platform);
           }
         }
       });
@@ -131,7 +140,7 @@ class _FitCoachAppState extends ConsumerState<FitCoachApp> {
     FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
       final user = ref.read(currentUserProvider).valueOrNull;
       if (user != null) {
-        await ref.read(authRepositoryProvider).updateFcmToken(user.uid, newToken, _platform);
+        await ref.read(authRepositoryProvider).updateFcmToken(user.uid, newToken, platform);
       }
     });
 
