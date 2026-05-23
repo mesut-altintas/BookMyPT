@@ -112,13 +112,13 @@ class AuthRepository {
 
   /// Saves the FCM token for the current platform (ios / android) so that
   /// notifications reach every device the user is logged into, not just the
-  /// last one. Uses Firestore dot-notation to merge a single key without
-  /// overwriting tokens from other platforms.
+  /// last one. Uses set+merge so it works even when the fcmTokens map doesn't
+  /// exist yet in the document (update() would throw in that case).
   Future<void> updateFcmToken(String uid, String token, String platform) =>
       _firestore
           .collection(AppConstants.usersCollection)
           .doc(uid)
-          .update({'fcmTokens.$platform': token});
+          .set({'fcmTokens': {platform: token}}, SetOptions(merge: true));
 
   Future<void> updateProfile({
     required String uid,

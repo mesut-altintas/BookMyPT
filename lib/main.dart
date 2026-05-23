@@ -86,9 +86,15 @@ class _FitCoachAppState extends ConsumerState<FitCoachApp> {
 
   String _fcmPlatform = 'android';
 
-  /// Requests notification permission then immediately fetches and saves
-  /// the FCM token. Mirrors the working pattern from AcilYardım:
-  /// requestPermission → getToken in the same sequential call.
+  /// Holds a token that arrived via onTokenRefresh before the user was loaded.
+  /// _saveFcmToken picks this up as a fallback so the token isn't lost.
+  String? _pendingFcmToken;
+
+  /// Requests notification permission then fetches and saves the FCM token.
+  /// On iOS the APNs → Firebase round-trip can take several seconds after
+  /// app launch, so getToken() may return null on the first call.
+  /// We retry up to 10 times with linear back-off (1 s, 2 s, … 9 s = ~45 s
+  /// total) before giving up. onTokenRefresh covers any remaining cases.
   Future<void> _saveFcmToken(String uid, String platform) async {
     try {
       await FirebaseMessaging.instance.requestPermission(
@@ -96,8 +102,18 @@ class _FitCoachAppState extends ConsumerState<FitCoachApp> {
         badge: true,
         sound: true,
       );
-      final token = await FirebaseMessaging.instance.getToken();
+
+      String? token;
+      for (int i = 0; i < 10 && token == null; i++) {
+        if (i > 0) await Future.delayed(Duration(seconds: i));
+        token = await FirebaseMessaging.instance.getToken();
+      }
+
+      // Fallback: onTokenRefresh may have fired before the user was ready
+      token ??= _pendingFcmToken;
+
       if (token != null) {
+        _pendingFcmToken = null;
         await ref.read(authRepositoryProvider).updateFcmToken(uid, token, platform);
       }
     } catch (_) {}
@@ -135,10 +151,15 @@ class _FitCoachAppState extends ConsumerState<FitCoachApp> {
     // iOS reassigns the APNs token after new builds / reinstalls.
     // Without this listener the old token stays in Firestore and
     // push notifications silently stop arriving.
+    // If the user isn't loaded yet (race at startup), stash the token so
+    // _saveFcmToken can pick it up once the user provider emits.
     FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
       final user = ref.read(currentUserProvider).valueOrNull;
       if (user != null) {
+        _pendingFcmToken = null;
         await ref.read(authRepositoryProvider).updateFcmToken(user.uid, newToken, _fcmPlatform);
+      } else {
+        _pendingFcmToken = newToken;
       }
     });
 
