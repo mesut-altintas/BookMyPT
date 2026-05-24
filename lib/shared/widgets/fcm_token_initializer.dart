@@ -70,39 +70,43 @@ class _FcmTokenInitializerState extends ConsumerState<FcmTokenInitializer>
         sound: true,
       );
 
-      // On iOS, APNs token must be available before FCM token can be fetched.
-      // Retry up to 5× with 3 s gaps (covers slow APNs registration on first
-      // launch or after reinstall).
-      if (Platform.isIOS) {
-        String? apns;
-        for (int i = 0; i < 5 && apns == null; i++) {
-          if (i > 0) await Future.delayed(const Duration(seconds: 3));
-          if (!mounted) { _running = false; return; }
-          try {
-            apns = await FirebaseMessaging.instance
-                .getAPNSToken()
-                .timeout(const Duration(seconds: 5));
-          } catch (_) {}
-        }
-        if (apns == null) {
-          // APNs still not ready — didChangeAppLifecycleState will retry
-          // next time the user brings the app to foreground.
-          _running = false;
-          return;
-        }
-      }
+      // Build 95: skip getAPNSToken() check entirely — call getToken() directly.
+      // Firebase SDK handles APNs registration internally; getAPNSToken() was
+      // always returning null even when everything else was correct.
+      String? diagMsg;
+      try {
+        final token = await FirebaseMessaging.instance
+            .getToken()
+            .timeout(const Duration(seconds: 30));
 
-      final token = await FirebaseMessaging.instance
-          .getToken()
-          .timeout(const Duration(seconds: 15));
-
-      if (token != null && mounted) {
-        final platform = Platform.isIOS ? 'ios' : 'android';
-        await FirebaseFirestore.instance
-            .collection(AppConstants.usersCollection)
-            .doc(user.uid)
-            .set({'fcmTokens': {platform: token}}, SetOptions(merge: true));
-        _saved = true;
+        if (token != null && mounted) {
+          final platform = Platform.isIOS ? 'ios' : 'android';
+          diagMsg = 'token_ok';
+          await FirebaseFirestore.instance
+              .collection(AppConstants.usersCollection)
+              .doc(user.uid)
+              .set(
+                {'fcmTokens': {platform: token}, '_fcmDiag95': diagMsg},
+                SetOptions(merge: true),
+              );
+          _saved = true;
+        } else {
+          diagMsg = 'token_null';
+          if (mounted) {
+            await FirebaseFirestore.instance
+                .collection(AppConstants.usersCollection)
+                .doc(user.uid)
+                .set({'_fcmDiag95': diagMsg}, SetOptions(merge: true));
+          }
+        }
+      } catch (e) {
+        diagMsg = 'exception: $e';
+        if (mounted) {
+          await FirebaseFirestore.instance
+              .collection(AppConstants.usersCollection)
+              .doc(user.uid)
+              .set({'_fcmDiag95': diagMsg}, SetOptions(merge: true));
+        }
       }
     } catch (_) {
       // Will retry on next foreground resume.
