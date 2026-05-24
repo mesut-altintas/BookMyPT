@@ -9,9 +9,9 @@ import '../../core/constants/app_constants.dart';
 import '../../features/auth/providers/auth_provider.dart';
 
 /// Invisible widget placed inside PtShell and MemberShell.
-/// By the time these shells render, the user is authenticated and the app
-/// is definitely in the foreground — the ideal moment to fetch the FCM token.
-/// A short initial delay lets APNs complete its registration after a fresh install.
+/// Saves the FCM token once per session. Retries automatically each time
+/// the app comes to the foreground — necessary because TestFlight/cold
+/// launches often start in background where APNs is not yet available.
 class FcmTokenInitializer extends ConsumerStatefulWidget {
   const FcmTokenInitializer({super.key});
 
@@ -20,49 +20,83 @@ class FcmTokenInitializer extends ConsumerStatefulWidget {
       _FcmTokenInitializerState();
 }
 
-class _FcmTokenInitializerState extends ConsumerState<FcmTokenInitializer> {
-  static bool _saved = false; // process-level guard — survives widget rebuilds
+class _FcmTokenInitializerState extends ConsumerState<FcmTokenInitializer>
+    with WidgetsBindingObserver {
+  /// Process-level guard — survives widget rebuilds/remounts.
+  static bool _saved = false;
+
+  /// Prevents concurrent _init() calls.
+  bool _running = false;
 
   @override
   void initState() {
     super.initState();
-    if (!_saved) _init();
+    WidgetsBinding.instance.addObserver(this);
+    _tryInit();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  /// Retry every time the app comes to the foreground until token is saved.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _tryInit();
+    }
+  }
+
+  void _tryInit() {
+    if (_saved || _running) return;
+    _init();
   }
 
   Future<void> _init() async {
-    // Brief delay so APNs registration can complete after a fresh install.
-    await Future.delayed(const Duration(seconds: 3));
-    if (!mounted) return;
-
-    final user = ref.read(currentUserProvider).valueOrNull;
-    if (user == null) return;
-
+    _running = true;
     try {
+      // Brief pause — lets APNs settle after app becomes active.
+      await Future.delayed(const Duration(seconds: 2));
+      if (!mounted) { _running = false; return; }
+
+      final user = ref.read(currentUserProvider).valueOrNull;
+      if (user == null) { _running = false; return; }
+
       await FirebaseMessaging.instance.requestPermission(
         alert: true,
         badge: true,
         sound: true,
       );
 
-      // On iOS, wait for the APNs token — retry every 3 s, up to 5 attempts.
+      // On iOS, APNs token must be available before FCM token can be fetched.
+      // Retry up to 5× with 3 s gaps (covers slow APNs registration on first
+      // launch or after reinstall).
       if (Platform.isIOS) {
         String? apns;
         for (int i = 0; i < 5 && apns == null; i++) {
           if (i > 0) await Future.delayed(const Duration(seconds: 3));
+          if (!mounted) { _running = false; return; }
           try {
             apns = await FirebaseMessaging.instance
                 .getAPNSToken()
                 .timeout(const Duration(seconds: 5));
           } catch (_) {}
         }
-        if (apns == null) return; // APNs still not ready — onTokenRefresh will handle it
+        if (apns == null) {
+          // APNs still not ready — didChangeAppLifecycleState will retry
+          // next time the user brings the app to foreground.
+          _running = false;
+          return;
+        }
       }
 
       final token = await FirebaseMessaging.instance
           .getToken()
           .timeout(const Duration(seconds: 15));
 
-      if (token != null) {
+      if (token != null && mounted) {
         final platform = Platform.isIOS ? 'ios' : 'android';
         await FirebaseFirestore.instance
             .collection(AppConstants.usersCollection)
@@ -71,8 +105,9 @@ class _FcmTokenInitializerState extends ConsumerState<FcmTokenInitializer> {
         _saved = true;
       }
     } catch (_) {
-      // Will be retried on next app launch via onTokenRefresh
+      // Will retry on next foreground resume.
     }
+    _running = false;
   }
 
   @override
