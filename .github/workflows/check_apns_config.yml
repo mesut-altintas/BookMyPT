@@ -7,6 +7,9 @@ jobs:
   check:
     runs-on: macos-latest
     steps:
+      - name: Install dependencies
+        run: pip3 install PyJWT cryptography
+
       - name: Check Apple Developer Portal — Push Notifications capability
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_IDENTIFIER }}
