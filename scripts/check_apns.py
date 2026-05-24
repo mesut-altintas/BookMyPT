@@ -3,9 +3,14 @@ import urllib.request
 
 key_id    = os.environ["ASC_KEY_ID"]
 issuer_id = os.environ["ASC_ISSUER_ID"]
+raw_key   = os.environ["ASC_PRIVATE_KEY"]
 
-with open("/tmp/asc_key.p8") as f:
-    private_key = f.read().strip()
+# Handle both literal \n and real newlines
+private_key = raw_key.replace("\\n", "\n")
+
+# If key doesn't have PEM headers, it's just the base64 body — wrap it
+if "BEGIN" not in private_key:
+    private_key = "-----BEGIN PRIVATE KEY-----\n" + private_key + "\n-----END PRIVATE KEY-----\n"
 
 now = int(time.time())
 payload = {"iss": issuer_id, "iat": now, "exp": now + 1200, "aud": "appstoreconnect-v1"}
