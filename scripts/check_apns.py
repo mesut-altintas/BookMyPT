@@ -1,5 +1,5 @@
 import jwt, time, json, os, base64
-import urllib.request
+import urllib.request, urllib.error
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
 
 key_id    = os.environ["ASC_KEY_ID"]
@@ -20,7 +20,11 @@ headers = {"Authorization": f"Bearer {token}"}
 
 # 1. Bundle ID capabilities
 url = "https://api.appstoreconnect.apple.com/v1/bundleIds?filter[identifier]=com.bookmypt&include=bundleIdCapabilities&fields[bundleIdCapabilities]=capabilityType"
-data = json.loads(urllib.request.urlopen(urllib.request.Request(url, headers=headers)).read())
+try:
+    data = json.loads(urllib.request.urlopen(urllib.request.Request(url, headers=headers)).read())
+except urllib.error.HTTPError as e:
+    print(f"HTTP {e.code}: {e.read().decode()}")
+    raise
 
 print("\n=== BUNDLE ID ===")
 for item in data.get("data", []):
