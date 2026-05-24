@@ -1,20 +1,18 @@
 import jwt, time, json, os
 import urllib.request
+from cryptography.hazmat.primitives.serialization import load_pem_private_key
 
 key_id    = os.environ["ASC_KEY_ID"]
 issuer_id = os.environ["ASC_ISSUER_ID"]
 raw_key   = os.environ["ASC_PRIVATE_KEY"]
 
 # Handle both literal \n and real newlines
-private_key = raw_key.replace("\\n", "\n")
-
-# If key doesn't have PEM headers, it's just the base64 body — wrap it
-if "BEGIN" not in private_key:
-    private_key = "-----BEGIN PRIVATE KEY-----\n" + private_key + "\n-----END PRIVATE KEY-----\n"
+private_key_str = raw_key.replace("\\n", "\n")
+private_key_obj = load_pem_private_key(private_key_str.encode(), password=None)
 
 now = int(time.time())
 payload = {"iss": issuer_id, "iat": now, "exp": now + 1200, "aud": "appstoreconnect-v1"}
-token = jwt.encode(payload, private_key, algorithm="ES256", headers={"kid": key_id})
+token = jwt.encode(payload, private_key_obj, algorithm="ES256", headers={"kid": key_id})
 headers = {"Authorization": f"Bearer {token}"}
 
 # 1. Bundle ID capabilities
