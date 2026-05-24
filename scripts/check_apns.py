@@ -1,45 +1,28 @@
-import jwt, time, json, os
-import urllib.request
+import os, sys
+
+raw_key = os.environ.get("ASC_PRIVATE_KEY", "")
+
+# Debug key structure (no secret content printed)
+print(f"Key length: {len(raw_key)}")
+print(f"Has actual newlines: {'chr(10)' in raw_key or chr(10) in raw_key}")
+print(f"Has literal backslash-n: {chr(92)+'n' in raw_key}")
+print(f"Has BEGIN: {'BEGIN' in raw_key}")
+print(f"Has EC PRIVATE: {'EC PRIVATE' in raw_key}")
+print(f"Has PRIVATE KEY: {'PRIVATE KEY' in raw_key}")
+print(f"Line count (split newline): {len(raw_key.splitlines())}")
+print(f"Line count (split literal): {len(raw_key.split(chr(92)+'n'))}")
+
+# Try to fix and load
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
 
-key_id    = os.environ["ASC_KEY_ID"]
-issuer_id = os.environ["ASC_ISSUER_ID"]
-raw_key   = os.environ["ASC_PRIVATE_KEY"]
-
-# Handle both literal \n and real newlines
-private_key_str = raw_key.replace("\\n", "\n")
-private_key_obj = load_pem_private_key(private_key_str.encode(), password=None)
-
-now = int(time.time())
-payload = {"iss": issuer_id, "iat": now, "exp": now + 1200, "aud": "appstoreconnect-v1"}
-token = jwt.encode(payload, private_key_obj, algorithm="ES256", headers={"kid": key_id})
-headers = {"Authorization": f"Bearer {token}"}
-
-# 1. Bundle ID capabilities
-url = "https://api.appstoreconnect.apple.com/v1/bundleIds?filter[identifier]=com.bookmypt&include=bundleIdCapabilities&fields[bundleIdCapabilities]=capabilityType"
-data = json.loads(urllib.request.urlopen(urllib.request.Request(url, headers=headers)).read())
-
-print("\n=== BUNDLE ID ===")
-for item in data.get("data", []):
-    a = item["attributes"]
-    print(f"  {a['name']} | {a['identifier']} | {a['platform']}")
-
-print("\n=== CAPABILITIES ===")
-caps = []
-for inc in data.get("included", []):
-    cap = inc["attributes"]["capabilityType"]
-    caps.append(cap)
-    print(f"  - {cap}")
-
-if "PUSH_NOTIFICATIONS" in caps:
-    print("\n[RESULT] PUSH_NOTIFICATIONS: AKTIF")
-else:
-    print("\n[RESULT] PUSH_NOTIFICATIONS: EKSIK!")
-
-# 2. Certificates
-print("\n=== CERTIFICATES ===")
-url2 = "https://api.appstoreconnect.apple.com/v1/certificates?filter[certificateType]=IOS_DISTRIBUTION,DISTRIBUTION"
-data2 = json.loads(urllib.request.urlopen(urllib.request.Request(url2, headers=headers)).read())
-for cert in data2.get("data", []):
-    a = cert["attributes"]
-    print(f"  {a['certificateType']}: {a['displayName']} (exp: {str(a.get('expirationDate','?'))[:10]})")
+for attempt, key_str in enumerate([
+    raw_key,
+    raw_key.replace("\\n", "\n"),
+    raw_key.replace("\\n", "\n").strip(),
+]):
+    try:
+        load_pem_private_key(key_str.encode(), password=None)
+        print(f"\nAttempt {attempt}: SUCCESS")
+        break
+    except Exception as e:
+        print(f"Attempt {attempt}: FAILED - {e}")
