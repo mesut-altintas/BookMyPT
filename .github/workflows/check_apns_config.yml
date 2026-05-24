@@ -6,20 +6,42 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/check_apns_config.yml'
-      - 'scripts/check_apns.py'
 
 jobs:
   check:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Install dependencies
-        run: pip3 install PyJWT cryptography --break-system-packages
-
-      - name: Run check
+      - name: Decode and inspect provisioning profile
         env:
-          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_IDENTIFIER }}
-          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
-          ASC_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
-        run: python3 scripts/check_apns.py
+          PROFILE_BASE64: ${{ secrets.BUILD_PROVISION_PROFILE_BASE64 }}
+        run: |
+          echo "$PROFILE_BASE64" | base64 --decode > /tmp/profile.mobileprovision
+
+          echo "=== PROFILE ENTITLEMENTS ==="
+          security cms -D -i /tmp/profile.mobileprovision | \
+            plutil -extract Entitlements xml1 -o - - 2>/dev/null || \
+            /usr/libexec/PlistBuddy -c "Print :Entitlements" /dev/stdin <<< \
+              "$(security cms -D -i /tmp/profile.mobileprovision)"
+
+          echo ""
+          echo "=== APS ENVIRONMENT ==="
+          security cms -D -i /tmp/profile.mobileprovision | \
+            grep -A1 "aps-environment" | head -5
+
+          echo ""
+          echo "=== PUSH NOTIFICATION CHECK ==="
+          if security cms -D -i /tmp/profile.mobileprovision | grep -q "aps-environment"; then
+            echo "[RESULT] aps-environment: FOUND in profile"
+            security cms -D -i /tmp/profile.mobileprovision | \
+              grep -A1 "aps-environment" | grep -v "aps-environment" | \
+              tr -d '\t<>/string' | xargs echo "Value:"
+          else
+            echo "[RESULT] aps-environment: NOT FOUND - Push Notifications missing!"
+          fi
+
+          echo ""
+          echo "=== PROFILE NAME & EXPIRY ==="
+          security cms -D -i /tmp/profile.mobileprovision | \
+            plutil -extract Name xml1 -o - - 2>/dev/null || true
+          security cms -D -i /tmp/profile.mobileprovision | \
+            grep -A1 "ExpirationDate" | head -3
