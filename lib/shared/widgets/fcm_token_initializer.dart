@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_constants.dart';
@@ -70,10 +71,20 @@ class _FcmTokenInitializerState extends ConsumerState<FcmTokenInitializer>
         sound: true,
       );
 
-      // Build 95: skip getAPNSToken() check entirely — call getToken() directly.
-      // Firebase SDK handles APNs registration internally; getAPNSToken() was
-      // always returning null even when everything else was correct.
-      String? diagMsg;
+      // Read native APNs diagnostic before attempting getToken().
+      String nativeDiag = 'not_ios';
+      if (Platform.isIOS) {
+        try {
+          const channel = MethodChannel('com.bookmypt/native_diag');
+          nativeDiag = await channel.invokeMethod<String>('getApnsDiag')
+              ?? 'channel_null';
+        } catch (e) {
+          nativeDiag = 'channel_err:$e';
+        }
+      }
+
+      // Attempt to get FCM token directly (Firebase handles APNs internally).
+      String? fcmDiag;
       try {
         final token = await FirebaseMessaging.instance
             .getToken()
@@ -81,31 +92,41 @@ class _FcmTokenInitializerState extends ConsumerState<FcmTokenInitializer>
 
         if (token != null && mounted) {
           final platform = Platform.isIOS ? 'ios' : 'android';
-          diagMsg = 'token_ok';
+          fcmDiag = 'token_ok';
           await FirebaseFirestore.instance
               .collection(AppConstants.usersCollection)
               .doc(user.uid)
               .set(
-                {'fcmTokens': {platform: token}, '_fcmDiag95': diagMsg},
+                {
+                  'fcmTokens': {platform: token},
+                  '_fcmDiag': fcmDiag,
+                  '_apnsDiag': nativeDiag,
+                },
                 SetOptions(merge: true),
               );
           _saved = true;
         } else {
-          diagMsg = 'token_null';
+          fcmDiag = 'token_null';
           if (mounted) {
             await FirebaseFirestore.instance
                 .collection(AppConstants.usersCollection)
                 .doc(user.uid)
-                .set({'_fcmDiag95': diagMsg}, SetOptions(merge: true));
+                .set(
+                  {'_fcmDiag': fcmDiag, '_apnsDiag': nativeDiag},
+                  SetOptions(merge: true),
+                );
           }
         }
       } catch (e) {
-        diagMsg = 'exception: $e';
+        fcmDiag = 'exception:$e';
         if (mounted) {
           await FirebaseFirestore.instance
               .collection(AppConstants.usersCollection)
               .doc(user.uid)
-              .set({'_fcmDiag95': diagMsg}, SetOptions(merge: true));
+              .set(
+                {'_fcmDiag': fcmDiag, '_apnsDiag': nativeDiag},
+                SetOptions(merge: true),
+              );
         }
       }
     } catch (_) {
