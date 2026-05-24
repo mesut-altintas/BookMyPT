@@ -7,6 +7,7 @@ import '../../core/l10n/extensions.dart';
 import '../../core/router/app_router.dart';
 import '../../features/m_calendar/providers/invitation_provider.dart';
 import '../../shared/services/notification_badge_service.dart';
+import 'fcm_token_initializer.dart';
 
 class MemberShell extends ConsumerWidget {
   final Widget child;
@@ -53,7 +54,12 @@ class MemberShell extends ConsumerWidget {
     final homeBadge = pendingCount + (badgeMap[NotificationSource.calendar] ?? 0);
 
     return Scaffold(
-      body: child,
+      body: Stack(
+        children: [
+          child,
+          const FcmTokenInitializer(),
+        ],
+      ),
       bottomNavigationBar: NavigationBarTheme(
         data: NavigationBarThemeData(
           labelTextStyle: WidgetStateProperty.all(

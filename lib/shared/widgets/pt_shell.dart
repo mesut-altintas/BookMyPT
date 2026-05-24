@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/l10n/extensions.dart';
 import '../../core/router/app_router.dart';
 import '../../shared/services/notification_badge_service.dart';
+import 'fcm_token_initializer.dart';
 
 class PtShell extends ConsumerWidget {
   final Widget child;
@@ -47,7 +48,12 @@ class PtShell extends ConsumerWidget {
     }
 
     return Scaffold(
-      body: child,
+      body: Stack(
+        children: [
+          child,
+          const FcmTokenInitializer(),
+        ],
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: selectedIndex,
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
