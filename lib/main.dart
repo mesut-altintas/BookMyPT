@@ -11,6 +11,9 @@ import 'package:intl/date_symbol_data_local.dart';
 
 import 'dart:io';
 
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import 'core/constants/app_constants.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
@@ -30,6 +33,16 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // iOS Keychain persists across app deletions/reinstalls.
+  // On first launch after a fresh install, sign out any stale session
+  // so the user is not auto-logged-in with a deleted or wrong account.
+  final prefs = await SharedPreferences.getInstance();
+  final hasLaunchedBefore = prefs.getBool('has_launched_before') ?? false;
+  if (!hasLaunchedBefore) {
+    await FirebaseAuth.instance.signOut();
+    await prefs.setBool('has_launched_before', true);
+  }
 
   // Disable offline persistence to prevent stale auth error states
   FirebaseFirestore.instance.settings = const Settings(persistenceEnabled: false);
