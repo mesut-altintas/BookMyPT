@@ -33,7 +33,14 @@ jobs:
       - name: Flutter pub get
         run: flutter pub get
 
-      # ── 4. Signing setup ──────────────────────────────────────────────────
+      # ── 4. Firebase config ───────────────────────────────────────────────
+      - name: Decode google-services.json
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          echo -n "$GOOGLE_SERVICES_JSON" | base64 --decode > android/app/google-services.json
+
+      # ── 5. Signing setup ──────────────────────────────────────────────────
       - name: Decode keystore
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -55,14 +62,14 @@ jobs:
           # Strip leading spaces (heredoc indentation)
           sed -i 's/^[[:space:]]*//' android/key.properties
 
-      # ── 5. Build AAB ──────────────────────────────────────────────────────
+      # ── 6. Build AAB ──────────────────────────────────────────────────────
       - name: Build Android App Bundle
         run: |
           flutter build appbundle \
             --release \
             --build-number=${{ github.run_number }}
 
-      # ── 6. Upload to Play Store (Internal track) ──────────────────────────
+      # ── 7. Upload to Play Store (Internal track) ──────────────────────────
       - name: Upload to Play Store
         uses: r0adkll/upload-google-play@v1
         with:
