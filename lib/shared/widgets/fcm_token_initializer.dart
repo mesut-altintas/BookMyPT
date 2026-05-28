@@ -5,14 +5,22 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../features/auth/providers/auth_provider.dart';
 
 /// Invisible widget placed inside PtShell and MemberShell.
-/// Saves the FCM token once per session. Retries automatically each time
-/// the app comes to the foreground — necessary because TestFlight/cold
-/// launches often start in background where APNs is not yet available.
+///
+/// Token strategy:
+/// - Tracks the last UID that saved a token via SharedPreferences.
+/// - On login with a different UID, removes the token from the previous
+///   user's Firestore doc so they no longer receive notifications on this
+///   device, then saves the current user's token.
+/// - Token is NOT deleted on logout — last logged-in user keeps receiving
+///   notifications until someone else logs in on this device.
+/// - Uses UID-based static guard so switching accounts always triggers a
+///   fresh save without needing a full app restart.
 class FcmTokenInitializer extends ConsumerStatefulWidget {
   const FcmTokenInitializer({super.key});
 
@@ -23,8 +31,9 @@ class FcmTokenInitializer extends ConsumerStatefulWidget {
 
 class _FcmTokenInitializerState extends ConsumerState<FcmTokenInitializer>
     with WidgetsBindingObserver {
-  /// Process-level guard — survives widget rebuilds/remounts.
-  static bool _saved = false;
+  /// UID of the user whose token was last successfully saved this process.
+  /// Null means no save has happened yet.
+  static String? _savedUid;
 
   /// Prevents concurrent _init() calls.
   bool _running = false;
@@ -42,28 +51,31 @@ class _FcmTokenInitializerState extends ConsumerState<FcmTokenInitializer>
     super.dispose();
   }
 
-  /// Retry every time the app comes to the foreground until token is saved.
+  /// Retry every time the app comes to the foreground.
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      _tryInit();
-    }
+    if (state == AppLifecycleState.resumed) _tryInit();
   }
 
   void _tryInit() {
-    if (_saved || _running) return;
+    if (_running) return;
+    final user = ref.read(currentUserProvider).valueOrNull;
+    // Already saved for this user — skip.
+    if (user != null && _savedUid == user.uid) return;
     _init();
   }
 
   Future<void> _init() async {
     _running = true;
     try {
-      // Brief pause — lets APNs settle after app becomes active.
       await Future.delayed(const Duration(seconds: 2));
       if (!mounted) { _running = false; return; }
 
       final user = ref.read(currentUserProvider).valueOrNull;
       if (user == null) { _running = false; return; }
+
+      // Already saved for this user — skip.
+      if (_savedUid == user.uid) { _running = false; return; }
 
       await FirebaseMessaging.instance.requestPermission(
         alert: true,
@@ -71,7 +83,7 @@ class _FcmTokenInitializerState extends ConsumerState<FcmTokenInitializer>
         sound: true,
       );
 
-      // Read native APNs diagnostic before attempting getToken().
+      // Read native APNs diagnostic (iOS only).
       String nativeDiag = 'not_ios';
       if (Platform.isIOS) {
         try {
@@ -83,52 +95,43 @@ class _FcmTokenInitializerState extends ConsumerState<FcmTokenInitializer>
         }
       }
 
-      // Attempt to get FCM token directly (Firebase handles APNs internally).
-      String? fcmDiag;
-      try {
-        final token = await FirebaseMessaging.instance
-            .getToken()
-            .timeout(const Duration(seconds: 30));
+      final token = await FirebaseMessaging.instance
+          .getToken()
+          .timeout(const Duration(seconds: 30));
 
-        if (token != null && mounted) {
-          final platform = Platform.isIOS ? 'ios' : 'android';
-          fcmDiag = 'token_ok';
+      if (token == null || !mounted) { _running = false; return; }
+
+      final platform = Platform.isIOS ? 'ios' : 'android';
+      final prefs = await SharedPreferences.getInstance();
+      final previousUid = prefs.getString('fcm_last_uid');
+
+      // Remove token from previous user's doc if they're a different person.
+      if (previousUid != null && previousUid != user.uid) {
+        try {
           await FirebaseFirestore.instance
               .collection(AppConstants.usersCollection)
-              .doc(user.uid)
-              .set(
-                {
-                  'fcmTokens': {platform: token},
-                  '_fcmDiag': fcmDiag,
-                  '_apnsDiag': nativeDiag,
-                },
-                SetOptions(merge: true),
-              );
-          _saved = true;
-        } else {
-          fcmDiag = 'token_null';
-          if (mounted) {
-            await FirebaseFirestore.instance
-                .collection(AppConstants.usersCollection)
-                .doc(user.uid)
-                .set(
-                  {'_fcmDiag': fcmDiag, '_apnsDiag': nativeDiag},
-                  SetOptions(merge: true),
-                );
-          }
-        }
-      } catch (e) {
-        fcmDiag = 'exception:$e';
-        if (mounted) {
-          await FirebaseFirestore.instance
-              .collection(AppConstants.usersCollection)
-              .doc(user.uid)
-              .set(
-                {'_fcmDiag': fcmDiag, '_apnsDiag': nativeDiag},
-                SetOptions(merge: true),
-              );
+              .doc(previousUid)
+              .update({'fcmTokens.$platform': FieldValue.delete()});
+        } catch (_) {
+          // Previous user doc may not exist — ignore.
         }
       }
+
+      // Save token for current user.
+      await FirebaseFirestore.instance
+          .collection(AppConstants.usersCollection)
+          .doc(user.uid)
+          .set(
+            {
+              'fcmTokens': {platform: token},
+              '_fcmDiag': 'token_ok',
+              '_apnsDiag': nativeDiag,
+            },
+            SetOptions(merge: true),
+          );
+
+      await prefs.setString('fcm_last_uid', user.uid);
+      _savedUid = user.uid;
     } catch (_) {
       // Will retry on next foreground resume.
     }
