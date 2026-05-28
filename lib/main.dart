@@ -51,19 +51,19 @@ void main() async {
 
   runApp(
     const ProviderScope(
-      child: FitCoachApp(),
+      child: BookMyPTApp(),
     ),
   );
 }
 
-class FitCoachApp extends ConsumerStatefulWidget {
-  const FitCoachApp({super.key});
+class BookMyPTApp extends ConsumerStatefulWidget {
+  const BookMyPTApp({super.key});
 
   @override
-  ConsumerState<FitCoachApp> createState() => _FitCoachAppState();
+  ConsumerState<BookMyPTApp> createState() => _BookMyPTAppState();
 }
 
-class _FitCoachAppState extends ConsumerState<FitCoachApp> {
+class _BookMyPTAppState extends ConsumerState<BookMyPTApp> {
   @override
   void initState() {
     super.initState();

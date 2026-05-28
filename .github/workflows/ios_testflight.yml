@@ -79,7 +79,7 @@ jobs:
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
         run: |
           xcrun altool --upload-app \
-            --file "$RUNNER_TEMP/export/fitcoach.ipa" \
+            --file "$RUNNER_TEMP/export/bookmypt.ipa" \
             --type ios \
             --username "$APPLE_ID" \
             --password "$APPLE_APP_SPECIFIC_PASSWORD" \

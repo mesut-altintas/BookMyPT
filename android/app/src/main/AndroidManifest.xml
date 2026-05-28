@@ -10,7 +10,7 @@
     <uses-permission android:name="android.permission.CAMERA"/>
 
     <application
-        android:label="FitCoach"
+        android:label="BookMyPT"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="false">
@@ -38,7 +38,7 @@
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
-                <data android:scheme="https" android:host="fitcoach.app"/>
+                <data android:scheme="https" android:host="bookmypt.com.tr"/>
             </intent-filter>
         </activity>
 
