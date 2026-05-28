@@ -23,6 +23,7 @@ import '../../features/pt_calendar/presentation/screens/pt_calendar_screen.dart'
 import '../../features/pt_calendar/presentation/screens/session_detail_screen.dart';
 import '../../features/pt_earnings/presentation/screens/earnings_screen.dart';
 import '../../features/pt_earnings/presentation/screens/package_management_screen.dart';
+import '../../features/pt_schedule/presentation/screens/work_schedule_screen.dart';
 
 // PT Group Screens
 import '../../features/pt_groups/presentation/screens/create_group_screen.dart';
@@ -86,6 +87,7 @@ class AppRoutes {
   static const packageManagement = '/pt/earnings/packages';
   static const ptChatList = '/pt/chat';
   static const ptChat = '/pt/chat/:chatId';
+  static const workSchedule = '/pt/work-schedule';
 
   // PT Groups (outside shell — full-screen)
   static const createGroup = '/pt/groups/create';
@@ -168,6 +170,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.profile,
         builder: (_, __) => const ProfileScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.workSchedule,
+        builder: (_, __) => const WorkScheduleScreen(),
       ),
 
       // PT Group full-screen routes

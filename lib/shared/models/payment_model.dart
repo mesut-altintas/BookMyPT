@@ -119,6 +119,7 @@ class PaymentModel {
   final int sessionCount;
   final DateTime createdAt;
   final String? transactionId;
+  final int? sessionDurationMinutes;
 
   const PaymentModel({
     required this.id,
@@ -131,12 +132,12 @@ class PaymentModel {
     required this.sessionCount,
     required this.createdAt,
     this.transactionId,
+    this.sessionDurationMinutes,
   });
 
-  factory PaymentModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+  factory PaymentModel.fromMap(String id, Map<String, dynamic> data) {
     return PaymentModel(
-      id: doc.id,
+      id: id,
       memberId: data['memberId'] as String? ?? '',
       ptId: data['ptId'] as String? ?? '',
       amount: (data['amount'] as num?)?.toDouble() ?? 0.0,
@@ -146,8 +147,13 @@ class PaymentModel {
       sessionCount: (data['sessionCount'] as num?)?.toInt() ?? 0,
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       transactionId: data['transactionId'] as String?,
+      sessionDurationMinutes:
+          (data['sessionDurationMinutes'] as num?)?.toInt(),
     );
   }
+
+  factory PaymentModel.fromFirestore(DocumentSnapshot doc) =>
+      PaymentModel.fromMap(doc.id, doc.data() as Map<String, dynamic>);
 
   Map<String, dynamic> toFirestore() => {
         'memberId': memberId,
@@ -159,5 +165,7 @@ class PaymentModel {
         'sessionCount': sessionCount,
         'createdAt': Timestamp.fromDate(createdAt),
         if (transactionId != null) 'transactionId': transactionId,
+        if (sessionDurationMinutes != null)
+          'sessionDurationMinutes': sessionDurationMinutes,
       };
 }

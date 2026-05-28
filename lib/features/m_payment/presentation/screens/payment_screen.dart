@@ -1150,6 +1150,7 @@ class _PackageCard extends ConsumerWidget {
               packageName: package.name,
               sessionCount: package.sessionCount,
               createdAt: DateTime.now(),
+              sessionDurationMinutes: package.sessionDurationMinutes,
             ),
           );
       if (context.mounted) {

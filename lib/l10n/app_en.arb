@@ -241,6 +241,8 @@
   "language": "Language",
   "appearance": "Appearance",
   "helpGuide": "User Guide",
+  "settingsSection": "Settings",
+  "supportSection": "Support",
   "signOut": "Sign Out",
   "notifSettings": "Notification Settings",
   "notifOn": "Notifications On",

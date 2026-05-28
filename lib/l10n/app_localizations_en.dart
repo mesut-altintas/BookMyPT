@@ -680,6 +680,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get helpGuide => 'User Guide';
 
   @override
+  String get settingsSection => 'Settings';
+
+  @override
+  String get supportSection => 'Support';
+
+  @override
   String get signOut => 'Sign Out';
 
   @override

@@ -1388,6 +1388,18 @@ abstract class AppLocalizations {
   /// **'Kullanım Kılavuzu'**
   String get helpGuide;
 
+  /// Settings section header on profile screen
+  ///
+  /// In tr, this message translates to:
+  /// **'Ayarlar'**
+  String get settingsSection;
+
+  /// Support section header on profile screen
+  ///
+  /// In tr, this message translates to:
+  /// **'Destek'**
+  String get supportSection;
+
   /// Sign out menu item
   ///
   /// In tr, this message translates to:

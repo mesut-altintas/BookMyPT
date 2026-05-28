@@ -44,7 +44,7 @@ async function sendNotification(token, title, body, data = {}) {
       },
       android: {
         priority: 'high',
-        notification: { sound: 'default', channelId: 'bookmypt_default' },
+        notification: { sound: 'default', channelId: 'bookmypt_v2' },
       },
     });
     console.log('Notification sent to', token.substring(0, 20) + '...');
@@ -58,6 +58,115 @@ async function sendToUser(uid, title, body, data = {}) {
   const tokens = await getFcmTokens(uid);
   await Promise.all(tokens.map(t => sendNotification(t, title, body, data)));
 }
+
+// ─── Program events ───────────────────────────────────────────────────────────
+
+exports.programCreated = functions.firestore
+  .document('programs/{programId}')
+  .onCreate(async (snap) => {
+    const program = snap.data();
+    if (!program) return;
+
+    const { memberId, ptId, title, memberName } = program;
+    if (!memberId) return;
+
+    // Fetch PT name for the notification
+    const ptData = await getUserData(ptId);
+    const ptName = ptData.name || ptData.displayName || 'Antrenörünüz';
+
+    await sendToUser(
+      memberId,
+      'Yeni Program Oluşturuldu',
+      `${ptName} size "${title}" programını atadı`,
+      { route: '/member/programs', type: 'programs' }
+    );
+  });
+
+// ─── Invitation / membership request events ───────────────────────────────────
+
+exports.invitationCreated = functions.firestore
+  .document('invitations/{invitationId}')
+  .onCreate(async (snap) => {
+    const inv = snap.data();
+    if (!inv) return;
+
+    const { type, ptId, memberId, ptName, memberName } = inv;
+
+    if (type === 'request') {
+      // Member → PT: member wants to join
+      await sendToUser(
+        ptId,
+        'Yeni Üyelik İsteği',
+        `${memberName || 'Bir üye'} size katılmak istiyor`,
+        { route: '/pt/members', type: 'members' }
+      );
+    } else if (type === 'activation') {
+      // Member → PT: member wants to reactivate
+      await sendToUser(
+        ptId,
+        'Yeniden Aktivasyon İsteği',
+        `${memberName || 'Bir üye'} üyeliğini yeniden aktif etmek istiyor`,
+        { route: '/pt/members', type: 'members' }
+      );
+    } else if (type === 'invite' && memberId) {
+      // PT → Member: PT invited a member
+      await sendToUser(
+        memberId,
+        'Antrenör Daveti',
+        `${ptName || 'Bir antrenör'} sizi davet etti`,
+        { route: '/member/invitations', type: 'members' }
+      );
+    }
+  });
+
+exports.invitationUpdated = functions.firestore
+  .document('invitations/{invitationId}')
+  .onUpdate(async (change) => {
+    const before = change.before.data();
+    const after = change.after.data();
+    if (!before || !after) return;
+    if (before.status === after.status) return;
+
+    const { type, ptId, memberId, ptName, memberName } = after;
+
+    if (after.status === 'accepted') {
+      if (type === 'request' || type === 'activation') {
+        // PT accepted member's request → notify member
+        await sendToUser(
+          memberId,
+          'İsteğiniz Onaylandı',
+          `${ptName || 'Antrenörünüz'} üyelik isteğinizi onayladı`,
+          { route: '/member/calendar', type: 'calendar' }
+        );
+      } else if (type === 'invite') {
+        // Member accepted PT's invite → notify PT
+        await sendToUser(
+          ptId,
+          'Davet Kabul Edildi',
+          `${memberName || 'Bir üye'} davetinizi kabul etti`,
+          { route: '/pt/members', type: 'members' }
+        );
+      }
+    } else if (after.status === 'rejected') {
+      if (type === 'request' || type === 'activation') {
+        // PT rejected member's request → notify member
+        await sendToUser(
+          memberId,
+          'İsteğiniz Reddedildi',
+          `${ptName || 'Antrenör'} üyelik isteğinizi reddetti`,
+          { route: '/member/calendar', type: 'calendar' }
+        );
+      } else if (type === 'invite') {
+        // Member rejected PT's invite → notify PT
+        await sendToUser(
+          ptId,
+          'Davet Reddedildi',
+          `${memberName || 'Bir üye'} davetinizi reddetti`,
+          { route: '/pt/members', type: 'members' }
+        );
+      }
+    }
+  });
 
 // ─── Payment events ───────────────────────────────────────────────────────────
 

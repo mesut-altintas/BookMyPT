@@ -465,15 +465,44 @@ class _SessionsTab extends ConsumerWidget {
           separatorBuilder: (_, __) => const SizedBox(height: 8),
           itemBuilder: (_, i) {
             final s = sessions[i];
+            final isPending = s.status == SessionStatus.pending;
             return ListTile(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
-                side: BorderSide(color: Theme.of(context).dividerColor),
+                side: BorderSide(
+                  color: isPending
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(context).dividerColor,
+                  width: isPending ? 1.5 : 1.0,
+                ),
               ),
-              leading: const Icon(Icons.event),
-              title: Text(s.dateTime.formattedDateTime),
+              tileColor: isPending
+                  ? Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3)
+                  : null,
+              leading: Icon(
+                isPending ? Icons.pending_actions : Icons.event,
+                color: isPending
+                    ? Theme.of(context).colorScheme.primary
+                    : null,
+              ),
+              title: Text(
+                s.dateTime.formattedDateTime,
+                style: TextStyle(
+                  fontWeight: isPending ? FontWeight.w600 : FontWeight.normal,
+                ),
+              ),
               subtitle: Text('${s.durationMinutes} dk'),
-              trailing: _SessionStatusChip(status: s.status),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _SessionStatusChip(status: s.status),
+                  if (isPending) ...[
+                    const SizedBox(width: 4),
+                    const Icon(Icons.chevron_right, size: 18),
+                  ],
+                ],
+              ),
+              onTap: () => context.push('/pt/calendar/${s.id}'),
             );
           },
         );

@@ -678,6 +678,12 @@
   "helpGuide": "Kullanım Kılavuzu",
   "@helpGuide": { "description": "Help guide menu item" },
 
+  "settingsSection": "Ayarlar",
+  "@settingsSection": { "description": "Settings section header on profile screen" },
+
+  "supportSection": "Destek",
+  "@supportSection": { "description": "Support section header on profile screen" },
+
   "signOut": "Çıkış Yap",
   "@signOut": { "description": "Sign out menu item" },
 

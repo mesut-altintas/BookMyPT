@@ -380,6 +380,7 @@ class _SessionDetailContent extends ConsumerWidget {
                             ptId: session.ptId,
                             memberId: session.memberId,
                             delta: -1,
+                            sessionDurationMinutes: session.durationMinutes,
                           );
                         }
                       : null,

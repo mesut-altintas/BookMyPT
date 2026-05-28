@@ -682,6 +682,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get helpGuide => 'Kullanım Kılavuzu';
 
   @override
+  String get settingsSection => 'Ayarlar';
+
+  @override
+  String get supportSection => 'Destek';
+
+  @override
   String get signOut => 'Çıkış Yap';
 
   @override

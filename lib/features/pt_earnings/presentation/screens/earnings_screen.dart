@@ -368,6 +368,7 @@ class _PendingPaymentCardState extends ConsumerState<_PendingPaymentCard> {
               ptId: ptId,
               memberId: memberId,
               delta: sessionCount,
+              sessionDurationMinutes: widget.payment.sessionDurationMinutes,
             );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(

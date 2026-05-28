@@ -120,12 +120,21 @@ class MemberRepository {
     required String ptId,
     required String memberId,
     required int delta,
-  }) =>
-      _firestore
-          .collection(AppConstants.ptsCollection)
-          .doc(ptId)
-          .collection(AppConstants.membersSubCollection)
-          .doc(memberId)
-          .update({'remainingSessions': FieldValue.increment(delta)});
+    int? sessionDurationMinutes,
+  }) {
+    final updates = <String, dynamic>{
+      'remainingSessions': FieldValue.increment(delta),
+    };
+    if (sessionDurationMinutes != null && sessionDurationMinutes > 0) {
+      updates['remainingSessionsByDuration.$sessionDurationMinutes'] =
+          FieldValue.increment(delta);
+    }
+    return _firestore
+        .collection(AppConstants.ptsCollection)
+        .doc(ptId)
+        .collection(AppConstants.membersSubCollection)
+        .doc(memberId)
+        .update(updates);
+  }
 }
 

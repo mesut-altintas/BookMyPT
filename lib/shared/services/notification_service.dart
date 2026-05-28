@@ -18,8 +18,8 @@ class NotificationService {
   final _localNotifications = FlutterLocalNotificationsPlugin();
 
   static const _androidChannel = AndroidNotificationChannel(
-    'bookmypt_default',
-    'BookMyPt Bildirimleri',
+    'bookmypt_v2',
+    'BookMyPT Bildirimleri',
     description: 'Randevu ve seans bildirimleri',
     importance: Importance.high,
   );

@@ -5,12 +5,15 @@ import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 import '../../../../core/l10n/extensions.dart';
+import '../../../../core/utils/duration_utils.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../../features/auth/providers/auth_provider.dart';
 import '../../../../features/m_calendar/providers/invitation_provider.dart';
 import '../../../../features/m_calendar/providers/personal_event_provider.dart';
 import '../../../../features/pt_calendar/providers/pt_calendar_provider.dart';
 import '../../../../features/pt_members/providers/pt_members_provider.dart';
+import '../../../../features/pt_schedule/providers/work_schedule_provider.dart';
+import '../../../../shared/models/work_schedule_model.dart';
 import '../../../../shared/models/personal_event_model.dart';
 import '../../../../shared/models/session_model.dart';
 import '../../../../shared/widgets/app_loading.dart';
@@ -61,14 +64,17 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
     final sessionsAsync = ref.watch(memberSessionsProvider(memberId));
     final ptId = userPtId ?? '';
     final ptSessionsAsync = ref.watch(ptSessionsProvider(ptId));
+    // Pre-load work schedule so it's available when the sheet opens
+    ref.watch(workScheduleProvider(ptId));
     final personalEventsAsync = ref.watch(memberPersonalEventsProvider(memberId));
     final ptPersonalEventsAsync = ref.watch(memberPersonalEventsProvider(ptId));
-    final sessionDurationMinutes = ptId.isNotEmpty
+    final memberDetail = ptId.isNotEmpty
         ? ref
             .watch(ptMemberDetailProvider((ptId: ptId, memberId: memberId)))
             .valueOrNull
-            ?.sessionDurationMinutes
         : null;
+    final sessionDurationMinutes = memberDetail?.sessionDurationMinutes;
+    final remainingByDuration = memberDetail?.remainingSessionsByDuration ?? {};
 
     return Scaffold(
       appBar: AppBar(
@@ -82,7 +88,8 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
               final sessions =
                   ref.read(memberSessionsProvider(memberId)).valueOrNull ?? [];
               _openSheet(context, ref, memberId, user?.name ?? '',
-                  user?.ptId ?? '', sessions, sessionDurationMinutes);
+                  user?.ptId ?? '', sessions, sessionDurationMinutes,
+                  remainingByDuration);
             },
           ),
         ],
@@ -256,7 +263,8 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
                         icon: Icons.event_available_outlined,
                         action: TextButton.icon(
                           onPressed: () => _openSheet(context, ref, memberId,
-                              memberName, ptId, sessions, sessionDurationMinutes),
+                              memberName, ptId, sessions, sessionDurationMinutes,
+                              remainingByDuration),
                           icon: const Icon(Icons.add),
                           label: Text(context.l10n.requestAppointment),
                         ),
@@ -290,6 +298,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
                                             .toList(),
                                         ptPersonalEvents,
                                         sessionDurationMinutes,
+                                        remainingByDuration,
                                       )
                                   : null,
                             );
@@ -317,6 +326,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
     String ptId,
     List<SessionModel> existingSessions,
     int? sessionDurationMinutes,
+    Map<int, int> remainingByDuration,
   ) async {
     // Check active status if member has a PT
     if (ptId.isNotEmpty) {
@@ -332,6 +342,8 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
     if (!context.mounted) return;
     final ptPersonalEvents =
         ref.read(memberPersonalEventsProvider(ptId)).valueOrNull ?? [];
+    final workSchedule =
+        ref.read(workScheduleProvider(ptId)).valueOrNull;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -343,6 +355,8 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
         existingSessions: existingSessions,
         ptPersonalEvents: ptPersonalEvents,
         sessionDurationMinutes: sessionDurationMinutes,
+        workSchedule: workSchedule,
+        remainingByDuration: remainingByDuration,
       ),
     );
   }
@@ -355,6 +369,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
     List<SessionModel> ptSessions,
     List<PersonalEventModel> ptPersonalEvents,
     int? sessionDurationMinutes,
+    Map<int, int> remainingByDuration,
   ) {
     final repo = ref.read(sessionRepositoryProvider);
     final memberOther = memberSessions
@@ -370,6 +385,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
         ptSessions: ptSessions,
         ptPersonalEvents: ptPersonalEvents,
         sessionDurationMinutes: sessionDurationMinutes,
+        remainingByDuration: remainingByDuration,
       ),
     );
   }
@@ -646,6 +662,8 @@ class _RequestSessionSheet extends StatefulWidget {
   final List<SessionModel> existingSessions;
   final List<PersonalEventModel> ptPersonalEvents;
   final int? sessionDurationMinutes;
+  final WorkSchedule? workSchedule;
+  final Map<int, int> remainingByDuration;
 
   const _RequestSessionSheet({
     required this.memberId,
@@ -655,6 +673,8 @@ class _RequestSessionSheet extends StatefulWidget {
     required this.existingSessions,
     required this.ptPersonalEvents,
     this.sessionDurationMinutes,
+    this.workSchedule,
+    this.remainingByDuration = const {},
   });
 
   @override
@@ -671,6 +691,7 @@ class _RequestSessionSheetState extends State<_RequestSessionSheet> {
   String _ptName = '';
   String? _ptError;
   List<SessionModel> _ptSessions = [];
+  WorkSchedule? _ptWorkSchedule;
   final _ptEmailCtrl = TextEditingController();
 
   @override
@@ -693,7 +714,15 @@ class _RequestSessionSheetState extends State<_RequestSessionSheet> {
     );
     final earliest = DateTime.now().add(const Duration(minutes: 30));
     _selectedDateTime = base.isAfter(earliest) ? base : earliest;
-    _duration = widget.sessionDurationMinutes ?? 60;
+    // Prefer first available package duration, else fixed, else default 60
+    final availDurations = widget.remainingByDuration.entries
+        .where((e) => e.value > 0)
+        .map((e) => e.key)
+        .toList()
+      ..sort();
+    _duration = availDurations.isNotEmpty
+        ? availDurations.first
+        : (widget.sessionDurationMinutes ?? 60);
     _findPt();
   }
 
@@ -721,12 +750,21 @@ class _RequestSessionSheetState extends State<_RequestSessionSheet> {
       ]);
 
       final ptDoc = results[0] as DocumentSnapshot;
-      ptName = (ptDoc.data() as Map<String, dynamic>?)?['name'] as String? ?? '';
+      final ptData = ptDoc.data() as Map<String, dynamic>?;
+      ptName = ptData?['name'] as String? ?? '';
       ptSessions = (results[1] as QuerySnapshot)
           .docs
           .map((d) => SessionModel.fromFirestore(d))
           .where((s) => s.status != SessionStatus.cancelled)
           .toList();
+
+      // Load work schedule
+      final rawSchedule = ptData?['workSchedule'];
+      if (rawSchedule is Map) {
+        _ptWorkSchedule = WorkSchedule.fromMap(
+          Map<String, dynamic>.from(rawSchedule),
+        );
+      }
     } catch (_) {}
 
     if (mounted) {
@@ -801,6 +839,109 @@ class _RequestSessionSheetState extends State<_RequestSessionSheet> {
     }
   }
 
+  static String _durationLabel(int minutes) => formatDurationMinutes(minutes);
+
+  Widget _buildDurationPicker(BuildContext context) {
+    final theme = Theme.of(context);
+
+    // Case 1: Has package-based duration entries
+    final availDurations = widget.remainingByDuration.entries
+        .where((e) => e.value > 0)
+        .map((e) => e.key)
+        .toList()
+      ..sort();
+
+    if (availDurations.isNotEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(context.l10n.durationLabel,
+              style: const TextStyle(fontWeight: FontWeight.w500)),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: availDurations.map((d) {
+              final remaining = widget.remainingByDuration[d] ?? 0;
+              final isSelected = _duration == d;
+              return ChoiceChip(
+                label: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(_durationLabel(d),
+                        style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: isSelected
+                                ? theme.colorScheme.onPrimary
+                                : theme.colorScheme.onSurface)),
+                    Text('$remaining seans',
+                        style: TextStyle(
+                            fontSize: 10,
+                            color: isSelected
+                                ? theme.colorScheme.onPrimary.withValues(alpha: 0.8)
+                                : theme.colorScheme.onSurfaceVariant)),
+                  ],
+                ),
+                selected: isSelected,
+                onSelected: (_) => setState(() => _duration = d),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                visualDensity: VisualDensity.compact,
+              );
+            }).toList(),
+          ),
+        ],
+      );
+    }
+
+    // Case 2: Fixed duration from member profile (legacy)
+    if (widget.sessionDurationMinutes != null) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.timer_outlined,
+                size: 18,
+                color: theme.colorScheme.onSurfaceVariant),
+            const SizedBox(width: 8),
+            Text(
+              context.l10n.sessionDurationLabel(widget.sessionDurationMinutes!),
+              style: TextStyle(
+                fontWeight: FontWeight.w500,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Case 3: No packages, free choice
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(context.l10n.durationLabel,
+            style: const TextStyle(fontWeight: FontWeight.w500)),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 6,
+          children: [30, 45, 60, 90, 120]
+              .map((d) => ChoiceChip(
+                    label: Text(_durationLabel(d)),
+                    selected: _duration == d,
+                    onSelected: (_) => setState(() => _duration = d),
+                    visualDensity: VisualDensity.compact,
+                  ))
+              .toList(),
+        ),
+      ],
+    );
+  }
+
   bool _overlaps(SessionModel s) {
     final sEnd = s.dateTime.add(Duration(minutes: s.durationMinutes));
     final newEnd = _selectedDateTime.add(Duration(minutes: _duration));
@@ -822,25 +963,41 @@ class _RequestSessionSheetState extends State<_RequestSessionSheet> {
   bool get _ptPersonalConflict =>
       widget.ptPersonalEvents.any(_overlapsEvent);
 
+  /// Returns a Turkish error if the selected time falls outside PT's work schedule.
+  String? get _workHoursError {
+    final ws = widget.workSchedule ?? _ptWorkSchedule;
+    if (ws == null || ws.days.isEmpty) return null;
+    return ws.validateSession(_selectedDateTime, _duration);
+  }
+
   /// True when the selected date+time is in the past (or within 5 min).
   bool get _isPast =>
       _selectedDateTime.isBefore(DateTime.now().add(const Duration(minutes: 5)));
 
-  bool get _isConflict => _memberConflict || _ptConflict || _ptPersonalConflict;
+  bool get _isConflict => _memberConflict || _ptConflict || _ptPersonalConflict || _workHoursError != null;
 
   Future<void> _pickDateTime() async {
     final now = DateTime.now();
-    // Date picker: today or later
+    final ws = widget.workSchedule ?? _ptWorkSchedule;
+
+    // Date picker — grey out non-working days
     final pickedDate = await showDatePicker(
       context: context,
       initialDate: _selectedDateTime.isBefore(now) ? now : _selectedDateTime,
       firstDate: now,
       lastDate: now.add(const Duration(days: 90)),
+      selectableDayPredicate: ws != null && ws.days.isNotEmpty
+          ? (day) => ws.isWorkingDay(day.weekday)
+          : null,
     );
     if (pickedDate == null || !mounted) return;
     final pickedTime = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.fromDateTime(_selectedDateTime),
+      builder: (ctx, child) => MediaQuery(
+        data: MediaQuery.of(ctx).copyWith(alwaysUse24HourFormat: true),
+        child: child!,
+      ),
     );
     if (pickedTime == null || !mounted) return;
 
@@ -851,7 +1008,6 @@ class _RequestSessionSheetState extends State<_RequestSessionSheet> {
       pickedTime.hour,
       pickedTime.minute,
     );
-    // If the user picked a past time on today, show a snackbar and don't update.
     if (picked.isBefore(DateTime.now().add(const Duration(minutes: 5)))) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -993,7 +1149,7 @@ class _RequestSessionSheetState extends State<_RequestSessionSheet> {
                           ? context.l10n.timeConflict
                           : (_ptConflict || _ptPersonalConflict)
                               ? context.l10n.ptNotAvailable
-                              : null,
+                              : _workHoursError,
                 ),
                 child: Text(
                   '${_selectedDateTime.formattedDate} ${_selectedDateTime.formattedTime}',
@@ -1001,45 +1157,7 @@ class _RequestSessionSheetState extends State<_RequestSessionSheet> {
               ),
             ),
             const SizedBox(height: 12),
-            if (widget.sessionDurationMinutes != null)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.timer_outlined,
-                        size: 18,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant),
-                    const SizedBox(width: 8),
-                    Text(
-                      context.l10n.sessionDurationLabel(widget.sessionDurationMinutes!),
-                      style: TextStyle(
-                        fontWeight: FontWeight.w500,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              )
-            else ...[
-              Text(context.l10n.durationLabel,
-                  style: const TextStyle(fontWeight: FontWeight.w500)),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 6,
-                children: [30, 45, 60, 90, 120]
-                    .map((d) => ChoiceChip(
-                          label: Text('$d'),
-                          selected: _duration == d,
-                          onSelected: (_) => setState(() => _duration = d),
-                          visualDensity: VisualDensity.compact,
-                        ))
-                    .toList(),
-              ),
-            ],
+            _buildDurationPicker(context),
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: _isConflict || _isPast || _isLoading ? null : _submit,
@@ -1069,6 +1187,7 @@ class _EditSessionSheet extends StatefulWidget {
   final List<SessionModel> ptSessions;       // PT's other sessions (excl. current)
   final List<PersonalEventModel> ptPersonalEvents;
   final int? sessionDurationMinutes;
+  final Map<int, int> remainingByDuration;
 
   const _EditSessionSheet({
     required this.session,
@@ -1077,6 +1196,7 @@ class _EditSessionSheet extends StatefulWidget {
     required this.ptSessions,
     required this.ptPersonalEvents,
     this.sessionDurationMinutes,
+    this.remainingByDuration = const {},
   });
 
   @override
@@ -1150,6 +1270,103 @@ class _EditSessionSheetState extends State<_EditSessionSheet> {
     }
     setState(() => _selectedDateTime = picked);
   }
+
+  Widget _buildEditDurationPicker(BuildContext context) {
+    final theme = Theme.of(context);
+    final availDurations = widget.remainingByDuration.entries
+        .where((e) => e.value > 0)
+        .map((e) => e.key)
+        .toList()
+      ..sort();
+
+    if (availDurations.isNotEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(context.l10n.durationLabel,
+              style: const TextStyle(fontWeight: FontWeight.w500)),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: availDurations.map((d) {
+              final remaining = widget.remainingByDuration[d] ?? 0;
+              final isSelected = _duration == d;
+              return ChoiceChip(
+                label: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(_durationLabel(d),
+                        style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: isSelected
+                                ? theme.colorScheme.onPrimary
+                                : theme.colorScheme.onSurface)),
+                    Text('$remaining seans',
+                        style: TextStyle(
+                            fontSize: 10,
+                            color: isSelected
+                                ? theme.colorScheme.onPrimary.withValues(alpha: 0.8)
+                                : theme.colorScheme.onSurfaceVariant)),
+                  ],
+                ),
+                selected: isSelected,
+                onSelected: (_) => setState(() => _duration = d),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                visualDensity: VisualDensity.compact,
+              );
+            }).toList(),
+          ),
+        ],
+      );
+    }
+
+    if (widget.sessionDurationMinutes != null) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.timer_outlined,
+                size: 18, color: theme.colorScheme.onSurfaceVariant),
+            const SizedBox(width: 8),
+            Text(
+              context.l10n.sessionDurationLabel(widget.sessionDurationMinutes!),
+              style: TextStyle(
+                  fontWeight: FontWeight.w500,
+                  color: theme.colorScheme.onSurfaceVariant),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(context.l10n.durationLabel,
+            style: const TextStyle(fontWeight: FontWeight.w500)),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 6,
+          children: [30, 45, 60, 90, 120]
+              .map((d) => ChoiceChip(
+                    label: Text(_durationLabel(d)),
+                    selected: _duration == d,
+                    onSelected: (_) => setState(() => _duration = d),
+                    visualDensity: VisualDensity.compact,
+                  ))
+              .toList(),
+        ),
+      ],
+    );
+  }
+
+  static String _durationLabel(int minutes) => formatDurationMinutes(minutes);
 
   Future<void> _save() async {
     if (_isConflict || _isPast || _unchanged) return;
@@ -1233,44 +1450,7 @@ class _EditSessionSheetState extends State<_EditSessionSheet> {
             ),
           ),
           const SizedBox(height: 12),
-          if (widget.sessionDurationMinutes != null)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.timer_outlined,
-                      size: 18,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant),
-                  const SizedBox(width: 8),
-                  Text(
-                    context.l10n.sessionDurationLabel(widget.sessionDurationMinutes!),
-                    style: TextStyle(
-                      fontWeight: FontWeight.w500,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-            )
-          else ...[
-            Text(context.l10n.durationLabel, style: const TextStyle(fontWeight: FontWeight.w500)),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 6,
-              children: [30, 45, 60, 90, 120]
-                  .map((d) => ChoiceChip(
-                        label: Text('$d'),
-                        selected: _duration == d,
-                        onSelected: (_) => setState(() => _duration = d),
-                        visualDensity: VisualDensity.compact,
-                      ))
-                  .toList(),
-            ),
-          ],
+          _buildEditDurationPicker(context),
           const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,

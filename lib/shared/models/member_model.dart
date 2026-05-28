@@ -15,6 +15,9 @@ class MemberProfile {
   final int remainingSessions;
   final bool isActive;
   final int? sessionDurationMinutes;
+  /// Remaining sessions keyed by duration in minutes.
+  /// e.g. {45: 5, 60: 10} — from packages credited to this member.
+  final Map<int, int> remainingSessionsByDuration;
 
   const MemberProfile({
     required this.memberId,
@@ -31,12 +34,32 @@ class MemberProfile {
     this.remainingSessions = 0,
     this.isActive = true,
     this.sessionDurationMinutes,
+    this.remainingSessionsByDuration = const {},
   });
 
-  factory MemberProfile.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+  static Map<int, int> _parseDurationMap(dynamic raw) {
+    if (raw == null || raw is! Map) return {};
+    final result = <int, int>{};
+    for (final entry in raw.entries) {
+      final key = int.tryParse(entry.key.toString());
+      final val = (entry.value as num?)?.toInt() ?? 0;
+      if (key != null && val > 0) result[key] = val;
+    }
+    return result;
+  }
+
+  /// Durations that still have remaining sessions, sorted ascending.
+  List<int> get availableDurations {
+    return remainingSessionsByDuration.entries
+        .where((e) => e.value > 0)
+        .map((e) => e.key)
+        .toList()
+      ..sort();
+  }
+
+  factory MemberProfile.fromMap(String id, Map<String, dynamic> data) {
     return MemberProfile(
-      memberId: doc.id,
+      memberId: id,
       name: data['name'] as String? ?? '',
       email: data['email'] as String? ?? '',
       photoUrl: data['photoUrl'] as String?,
@@ -50,8 +73,13 @@ class MemberProfile {
       remainingSessions: data['remainingSessions'] as int? ?? 0,
       isActive: data['isActive'] as bool? ?? true,
       sessionDurationMinutes: data['sessionDurationMinutes'] as int?,
+      remainingSessionsByDuration:
+          _parseDurationMap(data['remainingSessionsByDuration']),
     );
   }
+
+  factory MemberProfile.fromFirestore(DocumentSnapshot doc) =>
+      MemberProfile.fromMap(doc.id, doc.data() as Map<String, dynamic>);
 
   Map<String, dynamic> toFirestore() => {
         'memberId': memberId,
@@ -69,6 +97,9 @@ class MemberProfile {
         'isActive': isActive,
         if (sessionDurationMinutes != null)
           'sessionDurationMinutes': sessionDurationMinutes,
+        if (remainingSessionsByDuration.isNotEmpty)
+          'remainingSessionsByDuration': remainingSessionsByDuration
+              .map((k, v) => MapEntry(k.toString(), v)),
       };
 
   MemberProfile copyWith({
@@ -84,6 +115,7 @@ class MemberProfile {
     int? remainingSessions,
     bool? isActive,
     int? sessionDurationMinutes,
+    Map<int, int>? remainingSessionsByDuration,
   }) =>
       MemberProfile(
         memberId: memberId,
@@ -101,5 +133,7 @@ class MemberProfile {
         isActive: isActive ?? this.isActive,
         sessionDurationMinutes:
             sessionDurationMinutes ?? this.sessionDurationMinutes,
+        remainingSessionsByDuration:
+            remainingSessionsByDuration ?? this.remainingSessionsByDuration,
       );
 }

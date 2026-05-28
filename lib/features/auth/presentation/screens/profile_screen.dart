@@ -574,6 +574,49 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ),
       );
 
+  /// Builds a titled section card with items separated by thin dividers.
+  Widget _section(
+    BuildContext context, {
+    required String title,
+    required List<Widget> tiles,
+  }) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 8),
+          child: Text(
+            title.toUpperCase(),
+            style: theme.textTheme.labelSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.0,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+        Card(
+          margin: EdgeInsets.zero,
+          clipBehavior: Clip.hardEdge,
+          child: Column(
+            children: [
+              for (int i = 0; i < tiles.length; i++) ...[
+                tiles[i],
+                if (i < tiles.length - 1)
+                  Divider(
+                    height: 1,
+                    indent: 16,
+                    endIndent: 16,
+                    color: theme.dividerColor,
+                  ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final userAsync = ref.watch(currentUserProvider);
@@ -588,151 +631,205 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         data: (user) {
           if (user == null) return const SizedBox.shrink();
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.fromLTRB(16, 24, 16, 40),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Stack(
-                  alignment: Alignment.bottomRight,
-                  children: [
-                    _isUploadingPhoto
-                        ? Container(
-                            width: 100,
-                            height: 100,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: theme.colorScheme.surfaceContainerHighest,
+
+                // ── Profil kartı ────────────────────────────────────────
+                Card(
+                  margin: EdgeInsets.zero,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+                    child: Column(
+                      children: [
+                        Stack(
+                          alignment: Alignment.bottomRight,
+                          children: [
+                            _isUploadingPhoto
+                                ? Container(
+                                    width: 88,
+                                    height: 88,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: theme.colorScheme.surfaceContainerHighest,
+                                    ),
+                                    child: const AppLoading(size: 28),
+                                  )
+                                : UserAvatar(
+                                    photoUrl: user.photoUrl,
+                                    name: user.name,
+                                    radius: 44,
+                                  ),
+                            GestureDetector(
+                              onTap: _pickAndUploadPhoto,
+                              child: Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.primary,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: theme.colorScheme.surface,
+                                    width: 2,
+                                  ),
+                                ),
+                                child: const Icon(Icons.camera_alt,
+                                    size: 14, color: Colors.white),
+                              ),
                             ),
-                            child: const AppLoading(size: 32),
-                          )
-                        : UserAvatar(
-                            photoUrl: user.photoUrl,
-                            name: user.name,
-                            radius: 50,
-                          ),
-                    InkWell(
-                      onTap: _pickAndUploadPhoto,
-                      child: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primary,
-                          shape: BoxShape.circle,
+                          ],
                         ),
-                        child: const Icon(Icons.camera_alt,
-                            size: 18, color: Colors.white),
+                        const SizedBox(height: 14),
+                        // Name + edit
+                        GestureDetector(
+                          onTap: () => _editName(user.name),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                user.name.isNotEmpty ? user.name : l10n.noName,
+                                style: theme.textTheme.titleLarge?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  color: user.name.isEmpty
+                                      ? theme.colorScheme.onSurfaceVariant
+                                      : null,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Icon(Icons.edit_outlined,
+                                  size: 16,
+                                  color: theme.colorScheme.onSurfaceVariant),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          user.email,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primaryContainer,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            user.isPt ? l10n.rolePt : l10n.roleMember,
+                            style: TextStyle(
+                              color: theme.colorScheme.onPrimaryContainer,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 28),
+
+                // ── Hesap (sadece PT) ────────────────────────────────────
+                if (user.isPt) ...[
+                  _section(context,
+                    title: 'Hesap',
+                    tiles: [
+                      ListTile(
+                        leading: const Icon(Icons.schedule_outlined),
+                        title: const Text('Çalışma Saatleri'),
+                        trailing: const Icon(Icons.chevron_right, size: 18),
+                        onTap: () => context.push(AppRoutes.workSchedule),
                       ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                ],
+
+                // ── Ayarlar ──────────────────────────────────────────────
+                _section(context,
+                  title: l10n.settingsSection,
+                  tiles: [
+                    ListTile(
+                      leading: const Icon(Icons.notifications_outlined),
+                      title: Text(l10n.notifications),
+                      trailing: const Icon(Icons.chevron_right, size: 18),
+                      onTap: _showNotificationSettings,
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.language_outlined),
+                      title: Text(l10n.language),
+                      trailing: Consumer(builder: (_, r, __) {
+                        final locale = r.watch(localeProvider);
+                        return Text(
+                          locale.languageCode == 'tr' ? '🇹🇷  Türkçe' : '🇬🇧  English',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        );
+                      }),
+                      onTap: _showLanguageSettings,
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.palette_outlined),
+                      title: Text(l10n.appearance),
+                      trailing: Consumer(builder: (_, r, __) {
+                        final mode = r.watch(themeModeProvider);
+                        return Text(
+                          _themeModeLabel(context, mode),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        );
+                      }),
+                      onTap: _showThemeSettings,
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      user.name.isNotEmpty ? user.name : l10n.noName,
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: user.name.isEmpty
-                            ? theme.colorScheme.onSurfaceVariant
-                            : null,
+                const SizedBox(height: 20),
+
+                // ── Destek ───────────────────────────────────────────────
+                _section(context,
+                  title: l10n.supportSection,
+                  tiles: [
+                    ListTile(
+                      leading: const Icon(Icons.menu_book_outlined),
+                      title: Text(l10n.helpGuide),
+                      trailing: const Icon(Icons.chevron_right, size: 18),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => HelpScreen(isPt: user.isPt),
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    InkWell(
-                      onTap: () => _editName(user.name),
-                      borderRadius: BorderRadius.circular(16),
-                      child: Padding(
-                        padding: const EdgeInsets.all(4),
-                        child: Icon(Icons.edit_outlined,
-                            size: 18,
-                            color: theme.colorScheme.onSurfaceVariant),
-                      ),
+                    ListTile(
+                      leading: const Icon(Icons.info_outline),
+                      title: Text(l10n.about),
+                      trailing: const Icon(Icons.chevron_right, size: 18),
+                      onTap: _showAboutSheet,
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  user.email,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    user.isPt ? l10n.rolePt : l10n.roleMember,
-                    style: TextStyle(
-                      color: theme.colorScheme.onPrimaryContainer,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 32),
-                const Divider(),
-                ListTile(
-                  leading: const Icon(Icons.notifications_outlined),
-                  title: Text(l10n.notifications),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: _showNotificationSettings,
-                ),
-                ListTile(
-                  leading: const Icon(Icons.language),
-                  title: Text(l10n.language),
-                  trailing: Consumer(builder: (_, r, __) {
-                    final locale = r.watch(localeProvider);
-                    return Text(
-                      locale.languageCode == 'tr' ? '🇹🇷  Türkçe' : '🇬🇧  English',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+                const SizedBox(height: 20),
+
+                // ── Çıkış ────────────────────────────────────────────────
+                Card(
+                  margin: EdgeInsets.zero,
+                  clipBehavior: Clip.hardEdge,
+                  child: ListTile(
+                    leading: Icon(Icons.logout_outlined, color: AppColors.error),
+                    title: Text(
+                      l10n.signOut,
+                      style: TextStyle(
+                        color: AppColors.error,
+                        fontWeight: FontWeight.w600,
                       ),
-                    );
-                  }),
-                  onTap: _showLanguageSettings,
-                ),
-                ListTile(
-                  leading: const Icon(Icons.dark_mode_outlined),
-                  title: Text(l10n.appearance),
-                  trailing: Consumer(builder: (_, r, __) {
-                    final mode = r.watch(themeModeProvider);
-                    return Text(
-                      _themeModeLabel(context, mode),
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    );
-                  }),
-                  onTap: _showThemeSettings,
-                ),
-                ListTile(
-                  leading: const Icon(Icons.menu_book_outlined),
-                  title: Text(l10n.helpGuide),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => HelpScreen(isPt: user.isPt),
                     ),
+                    onTap: _signOut,
                   ),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.info_outline),
-                  title: Text(l10n.about),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: _showAboutSheet,
-                ),
-                const Divider(),
-                ListTile(
-                  leading: Icon(Icons.logout, color: AppColors.error),
-                  title: Text(
-                    l10n.signOut,
-                    style: TextStyle(color: AppColors.error),
-                  ),
-                  onTap: _signOut,
                 ),
               ],
             ),
