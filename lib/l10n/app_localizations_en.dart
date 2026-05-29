@@ -683,6 +683,89 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workingHours => 'Working Hours';
 
   @override
+  String get quickApply => 'Quick Apply';
+
+  @override
+  String get startTime => 'Start';
+
+  @override
+  String get endTime => 'End';
+
+  @override
+  String get breakLabel => 'Break';
+
+  @override
+  String get breakStart => 'Break start';
+
+  @override
+  String get breakEnd => 'Break end';
+
+  @override
+  String applyToNDays(int count) {
+    return 'Apply to $count days';
+  }
+
+  @override
+  String get dailySettings => 'Daily Settings';
+
+  @override
+  String get closed => 'Closed';
+
+  @override
+  String get breakTimeTitle => 'Break time';
+
+  @override
+  String get breakTimeSubtitle => 'No appointments during break';
+
+  @override
+  String get workScheduleSaved => 'Work schedule saved';
+
+  @override
+  String get done => 'Done';
+
+  @override
+  String get dayMon => 'Monday';
+
+  @override
+  String get dayTue => 'Tuesday';
+
+  @override
+  String get dayWed => 'Wednesday';
+
+  @override
+  String get dayThu => 'Thursday';
+
+  @override
+  String get dayFri => 'Friday';
+
+  @override
+  String get daySat => 'Saturday';
+
+  @override
+  String get daySun => 'Sunday';
+
+  @override
+  String get dayMonShort => 'Mon';
+
+  @override
+  String get dayTueShort => 'Tue';
+
+  @override
+  String get dayWedShort => 'Wed';
+
+  @override
+  String get dayThuShort => 'Thu';
+
+  @override
+  String get dayFriShort => 'Fri';
+
+  @override
+  String get daySatShort => 'Sat';
+
+  @override
+  String get daySunShort => 'Sun';
+
+  @override
   String get settingsSection => 'Settings';
 
   @override

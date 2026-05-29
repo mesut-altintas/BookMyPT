@@ -681,6 +681,64 @@
   "workingHours": "Çalışma Saatleri",
   "@workingHours": { "description": "Working hours tile inside Settings on profile screen" },
 
+  "quickApply": "Hızlı Uygula",
+  "@quickApply": { "description": "Quick apply section title on work schedule screen" },
+
+  "startTime": "Başlangıç",
+  "@startTime": { "description": "Start time label" },
+
+  "endTime": "Bitiş",
+  "@endTime": { "description": "End time label" },
+
+  "breakLabel": "Mola",
+  "@breakLabel": { "description": "Break toggle label" },
+
+  "breakStart": "Mola başlangıcı",
+  "@breakStart": { "description": "Break start time label" },
+
+  "breakEnd": "Mola bitişi",
+  "@breakEnd": { "description": "Break end time label" },
+
+  "applyToNDays": "Seçili {count} güne uygula",
+  "@applyToNDays": {
+    "description": "Apply to N selected days button",
+    "placeholders": { "count": { "type": "int" } }
+  },
+
+  "dailySettings": "Günlük Ayarlar",
+  "@dailySettings": { "description": "Daily settings section title on work schedule screen" },
+
+  "closed": "Kapalı",
+  "@closed": { "description": "Closed day label" },
+
+  "breakTimeTitle": "Mola saati",
+  "@breakTimeTitle": { "description": "Break time switch title" },
+
+  "breakTimeSubtitle": "Randevu alınamayacak ara mola",
+  "@breakTimeSubtitle": { "description": "Break time switch subtitle" },
+
+  "workScheduleSaved": "Çalışma takvimi kaydedildi",
+  "@workScheduleSaved": { "description": "Snackbar when work schedule is saved" },
+
+  "done": "Tamam",
+  "@done": { "description": "Done / OK button" },
+
+  "dayMon": "Pazartesi",   "@dayMon": { "description": "Monday" },
+  "dayTue": "Salı",        "@dayTue": { "description": "Tuesday" },
+  "dayWed": "Çarşamba",    "@dayWed": { "description": "Wednesday" },
+  "dayThu": "Perşembe",    "@dayThu": { "description": "Thursday" },
+  "dayFri": "Cuma",        "@dayFri": { "description": "Friday" },
+  "daySat": "Cumartesi",   "@daySat": { "description": "Saturday" },
+  "daySun": "Pazar",       "@daySun": { "description": "Sunday" },
+
+  "dayMonShort": "Pzt",    "@dayMonShort": { "description": "Monday abbreviation" },
+  "dayTueShort": "Sal",    "@dayTueShort": { "description": "Tuesday abbreviation" },
+  "dayWedShort": "Çar",    "@dayWedShort": { "description": "Wednesday abbreviation" },
+  "dayThuShort": "Per",    "@dayThuShort": { "description": "Thursday abbreviation" },
+  "dayFriShort": "Cum",    "@dayFriShort": { "description": "Friday abbreviation" },
+  "daySatShort": "Cmt",    "@daySatShort": { "description": "Saturday abbreviation" },
+  "daySunShort": "Paz",    "@daySunShort": { "description": "Sunday abbreviation" },
+
   "settingsSection": "Ayarlar",
   "@settingsSection": { "description": "Settings section header on profile screen" },
 

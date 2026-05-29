@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/l10n/extensions.dart';
 import '../../../../features/auth/providers/auth_provider.dart';
 import '../../../../features/pt_schedule/providers/work_schedule_provider.dart';
 import '../../../../shared/models/work_schedule_model.dart';
@@ -14,28 +15,32 @@ class WorkScheduleScreen extends ConsumerStatefulWidget {
 }
 
 class _WorkScheduleScreenState extends ConsumerState<WorkScheduleScreen> {
-  // Mutable copy of the schedule being edited
   late Map<int, DaySchedule> _days;
   bool _initialized = false;
   bool _saving = false;
 
-  // Quick-apply state
   String _quickStart = '09:00';
   String _quickEnd = '18:00';
   String? _quickBreakStart;
   String? _quickBreakEnd;
   bool _quickHasBreak = false;
-  final Set<int> _quickSelected = {1, 2, 3, 4, 5}; // Mon-Fri by default
+  final Set<int> _quickSelected = {1, 2, 3, 4, 5};
 
-  static const _dayNames = {
-    1: 'Pazartesi',
-    2: 'Salı',
-    3: 'Çarşamba',
-    4: 'Perşembe',
-    5: 'Cuma',
-    6: 'Cumartesi',
-    7: 'Pazar',
-  };
+  Map<int, String> _dayNames(BuildContext context) {
+    final l = context.l10n;
+    return {
+      1: l.dayMon, 2: l.dayTue, 3: l.dayWed,
+      4: l.dayThu, 5: l.dayFri, 6: l.daySat, 7: l.daySun,
+    };
+  }
+
+  Map<int, String> _dayNamesShort(BuildContext context) {
+    final l = context.l10n;
+    return {
+      1: l.dayMonShort, 2: l.dayTueShort, 3: l.dayWedShort,
+      4: l.dayThuShort, 5: l.dayFriShort, 6: l.daySatShort, 7: l.daySunShort,
+    };
+  }
 
   void _initDays(WorkSchedule? loaded) {
     if (_initialized) return;
@@ -49,20 +54,21 @@ class _WorkScheduleScreenState extends ConsumerState<WorkScheduleScreen> {
   }
 
   Future<void> _save(String ptId) async {
+    final l10n = context.l10n;
     setState(() => _saving = true);
     try {
       final schedule = WorkSchedule(days: Map.from(_days));
       await ref.read(workScheduleRepositoryProvider).save(ptId, schedule);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Çalışma takvimi kaydedildi'),
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(l10n.workScheduleSaved),
           behavior: SnackBarBehavior.floating,
         ));
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Hata: $e'),
+          content: Text('Error: $e'),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
         ));
@@ -104,12 +110,12 @@ class _WorkScheduleScreenState extends ConsumerState<WorkScheduleScreen> {
     return '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
   }
 
-  void _editDay(int weekday) {
+  void _editDay(BuildContext context, int weekday) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       builder: (_) => _DayEditSheet(
-        dayName: _dayNames[weekday]!,
+        dayName: _dayNames(context)[weekday]!,
         schedule: _days[weekday]!,
         onSave: (updated) => setState(() => _days[weekday] = updated),
       ),
@@ -140,31 +146,33 @@ class _WorkScheduleScreenState extends ConsumerState<WorkScheduleScreen> {
 
   Widget _buildBody(BuildContext context, String ptId) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
+    final dayNames = _dayNames(context);
+    final dayNamesShort = _dayNamesShort(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Çalışma Saatleri'),
+        title: Text(l10n.workingHours),
         actions: [
           if (_saving)
             const Padding(
               padding: EdgeInsets.all(16),
               child: SizedBox(
-                width: 20,
-                height: 20,
+                width: 20, height: 20,
                 child: CircularProgressIndicator(strokeWidth: 2),
               ),
             )
           else
             TextButton(
               onPressed: () => _save(ptId),
-              child: const Text('Kaydet'),
+              child: Text(l10n.save),
             ),
         ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // ── Hızlı Uygula ─────────────────────────────────────────────
+          // ── Quick Apply ───────────────────────────────────────────────
           Card(
             margin: EdgeInsets.zero,
             child: Padding(
@@ -174,11 +182,10 @@ class _WorkScheduleScreenState extends ConsumerState<WorkScheduleScreen> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.flash_on,
-                          size: 18, color: theme.colorScheme.primary),
+                      Icon(Icons.flash_on, size: 18, color: theme.colorScheme.primary),
                       const SizedBox(width: 6),
                       Text(
-                        'Hızlı Uygula',
+                        l10n.quickApply,
                         style: theme.textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.w700,
                         ),
@@ -186,7 +193,6 @@ class _WorkScheduleScreenState extends ConsumerState<WorkScheduleScreen> {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  // Day checkboxes
                   Wrap(
                     spacing: 6,
                     runSpacing: 4,
@@ -194,7 +200,7 @@ class _WorkScheduleScreenState extends ConsumerState<WorkScheduleScreen> {
                       final wd = i + 1;
                       final selected = _quickSelected.contains(wd);
                       return FilterChip(
-                        label: Text(_dayNames[wd]!.substring(0, 3)),
+                        label: Text(dayNamesShort[wd]!),
                         selected: selected,
                         onSelected: (v) => setState(() {
                           if (v) {
@@ -208,16 +214,14 @@ class _WorkScheduleScreenState extends ConsumerState<WorkScheduleScreen> {
                     }),
                   ),
                   const SizedBox(height: 12),
-                  // Time row
                   Row(
                     children: [
                       Expanded(
                         child: _TimeTile(
-                          label: 'Başlangıç',
+                          label: l10n.startTime,
                           time: _quickStart,
                           onTap: () async {
-                            final t =
-                                await _pickTime(context, _quickStart);
+                            final t = await _pickTime(context, _quickStart);
                             if (t != null) setState(() => _quickStart = t);
                           },
                         ),
@@ -225,7 +229,7 @@ class _WorkScheduleScreenState extends ConsumerState<WorkScheduleScreen> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: _TimeTile(
-                          label: 'Bitiş',
+                          label: l10n.endTime,
                           time: _quickEnd,
                           onTap: () async {
                             final t = await _pickTime(context, _quickEnd);
@@ -236,7 +240,6 @@ class _WorkScheduleScreenState extends ConsumerState<WorkScheduleScreen> {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  // Break toggle
                   Row(
                     children: [
                       Switch(
@@ -250,35 +253,29 @@ class _WorkScheduleScreenState extends ConsumerState<WorkScheduleScreen> {
                         }),
                       ),
                       const SizedBox(width: 4),
-                      const Text('Mola'),
+                      Text(l10n.breakLabel),
                       if (_quickHasBreak) ...[
                         const SizedBox(width: 8),
                         Expanded(
                           child: _TimeTile(
-                            label: 'Mola başlangıcı',
+                            label: l10n.breakStart,
                             time: _quickBreakStart ?? '12:00',
                             compact: true,
                             onTap: () async {
-                              final t = await _pickTime(
-                                  context, _quickBreakStart ?? '12:00');
-                              if (t != null) {
-                                setState(() => _quickBreakStart = t);
-                              }
+                              final t = await _pickTime(context, _quickBreakStart ?? '12:00');
+                              if (t != null) setState(() => _quickBreakStart = t);
                             },
                           ),
                         ),
                         const SizedBox(width: 4),
                         Expanded(
                           child: _TimeTile(
-                            label: 'Bitiş',
+                            label: l10n.breakEnd,
                             time: _quickBreakEnd ?? '13:00',
                             compact: true,
                             onTap: () async {
-                              final t = await _pickTime(
-                                  context, _quickBreakEnd ?? '13:00');
-                              if (t != null) {
-                                setState(() => _quickBreakEnd = t);
-                              }
+                              final t = await _pickTime(context, _quickBreakEnd ?? '13:00');
+                              if (t != null) setState(() => _quickBreakEnd = t);
                             },
                           ),
                         ),
@@ -289,12 +286,9 @@ class _WorkScheduleScreenState extends ConsumerState<WorkScheduleScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
-                      onPressed:
-                          _quickSelected.isEmpty ? null : _applyQuick,
+                      onPressed: _quickSelected.isEmpty ? null : _applyQuick,
                       icon: const Icon(Icons.check, size: 16),
-                      label: Text(
-                        'Seçili ${_quickSelected.length} güne uygula',
-                      ),
+                      label: Text(l10n.applyToNDays(_quickSelected.length)),
                     ),
                   ),
                 ],
@@ -303,9 +297,9 @@ class _WorkScheduleScreenState extends ConsumerState<WorkScheduleScreen> {
           ),
           const SizedBox(height: 20),
 
-          // ── Günler ───────────────────────────────────────────────────
+          // ── Daily Settings ────────────────────────────────────────────
           Text(
-            'Günlük Ayarlar',
+            l10n.dailySettings,
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w700,
               color: theme.colorScheme.onSurfaceVariant,
@@ -316,19 +310,19 @@ class _WorkScheduleScreenState extends ConsumerState<WorkScheduleScreen> {
             final wd = i + 1;
             final day = _days[wd]!;
             return _DayRow(
-              dayName: _dayNames[wd]!,
+              dayName: dayNames[wd]!,
               schedule: day,
               onToggle: (v) => setState(() {
                 _days[wd] = day.copyWith(isActive: v);
               }),
-              onEdit: () => _editDay(wd),
+              onEdit: () => _editDay(context, wd),
             );
           }),
 
           const SizedBox(height: 24),
           ElevatedButton(
             onPressed: _saving ? null : () => _save(ptId),
-            child: const Text('Kaydet'),
+            child: Text(l10n.save),
           ),
           const SizedBox(height: 32),
         ],
@@ -355,15 +349,12 @@ class _DayRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        leading: Switch(
-          value: schedule.isActive,
-          onChanged: onToggle,
-        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        leading: Switch(value: schedule.isActive, onChanged: onToggle),
         title: Text(
           dayName,
           style: TextStyle(
@@ -374,14 +365,14 @@ class _DayRow extends StatelessWidget {
         subtitle: schedule.isActive
             ? Text(
                 schedule.hasBreak
-                    ? '${schedule.startTime} – ${schedule.endTime}  •  Mola: ${schedule.breakStart}–${schedule.breakEnd}'
+                    ? '${schedule.startTime} – ${schedule.endTime}  •  ${l10n.breakLabel}: ${schedule.breakStart}–${schedule.breakEnd}'
                     : '${schedule.startTime} – ${schedule.endTime}',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.primary,
                 ),
               )
             : Text(
-                'Kapalı',
+                l10n.closed,
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -450,11 +441,10 @@ class _DayEditSheetState extends State<_DayEditSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Padding(
       padding: EdgeInsets.only(
-        left: 24,
-        right: 24,
-        top: 24,
+        left: 24, right: 24, top: 24,
         bottom: MediaQuery.of(context).viewInsets.bottom + 32,
       ),
       child: Column(
@@ -482,7 +472,7 @@ class _DayEditSheetState extends State<_DayEditSheet> {
             children: [
               Expanded(
                 child: _TimeTile(
-                  label: 'Başlangıç',
+                  label: l10n.startTime,
                   time: _start,
                   onTap: () async {
                     final t = await _pickTime(_start);
@@ -493,7 +483,7 @@ class _DayEditSheetState extends State<_DayEditSheet> {
               const SizedBox(width: 12),
               Expanded(
                 child: _TimeTile(
-                  label: 'Bitiş',
+                  label: l10n.endTime,
                   time: _end,
                   onTap: () async {
                     final t = await _pickTime(_end);
@@ -504,11 +494,10 @@ class _DayEditSheetState extends State<_DayEditSheet> {
             ],
           ),
           const SizedBox(height: 16),
-          // Break section
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Mola saati'),
-            subtitle: const Text('Randevu alınamayacak ara mola'),
+            title: Text(l10n.breakTimeTitle),
+            subtitle: Text(l10n.breakTimeSubtitle),
             value: _hasBreak,
             onChanged: (v) => setState(() => _hasBreak = v),
           ),
@@ -518,7 +507,7 @@ class _DayEditSheetState extends State<_DayEditSheet> {
               children: [
                 Expanded(
                   child: _TimeTile(
-                    label: 'Mola başlangıcı',
+                    label: l10n.breakStart,
                     time: _breakStart,
                     onTap: () async {
                       final t = await _pickTime(_breakStart);
@@ -529,7 +518,7 @@ class _DayEditSheetState extends State<_DayEditSheet> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _TimeTile(
-                    label: 'Mola bitişi',
+                    label: l10n.breakEnd,
                     time: _breakEnd,
                     onTap: () async {
                       final t = await _pickTime(_breakEnd);
@@ -554,7 +543,7 @@ class _DayEditSheetState extends State<_DayEditSheet> {
                 ));
                 Navigator.pop(context);
               },
-              child: const Text('Tamam'),
+              child: Text(l10n.done),
             ),
           ),
         ],
@@ -563,7 +552,7 @@ class _DayEditSheetState extends State<_DayEditSheet> {
   }
 }
 
-// ── Shared time tile widget ──────────────────────────────────────────────────
+// ── Time tile widget ─────────────────────────────────────────────────────────
 
 class _TimeTile extends StatelessWidget {
   final String label;
@@ -606,8 +595,7 @@ class _TimeTile extends StatelessWidget {
             const SizedBox(height: 2),
             Row(
               children: [
-                Icon(Icons.access_time,
-                    size: 14, color: theme.colorScheme.primary),
+                Icon(Icons.access_time, size: 14, color: theme.colorScheme.primary),
                 const SizedBox(width: 4),
                 Text(
                   time,

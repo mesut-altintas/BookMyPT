@@ -685,6 +685,89 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workingHours => 'Çalışma Saatleri';
 
   @override
+  String get quickApply => 'Hızlı Uygula';
+
+  @override
+  String get startTime => 'Başlangıç';
+
+  @override
+  String get endTime => 'Bitiş';
+
+  @override
+  String get breakLabel => 'Mola';
+
+  @override
+  String get breakStart => 'Mola başlangıcı';
+
+  @override
+  String get breakEnd => 'Mola bitişi';
+
+  @override
+  String applyToNDays(int count) {
+    return 'Seçili $count güne uygula';
+  }
+
+  @override
+  String get dailySettings => 'Günlük Ayarlar';
+
+  @override
+  String get closed => 'Kapalı';
+
+  @override
+  String get breakTimeTitle => 'Mola saati';
+
+  @override
+  String get breakTimeSubtitle => 'Randevu alınamayacak ara mola';
+
+  @override
+  String get workScheduleSaved => 'Çalışma takvimi kaydedildi';
+
+  @override
+  String get done => 'Tamam';
+
+  @override
+  String get dayMon => 'Pazartesi';
+
+  @override
+  String get dayTue => 'Salı';
+
+  @override
+  String get dayWed => 'Çarşamba';
+
+  @override
+  String get dayThu => 'Perşembe';
+
+  @override
+  String get dayFri => 'Cuma';
+
+  @override
+  String get daySat => 'Cumartesi';
+
+  @override
+  String get daySun => 'Pazar';
+
+  @override
+  String get dayMonShort => 'Pzt';
+
+  @override
+  String get dayTueShort => 'Sal';
+
+  @override
+  String get dayWedShort => 'Çar';
+
+  @override
+  String get dayThuShort => 'Per';
+
+  @override
+  String get dayFriShort => 'Cum';
+
+  @override
+  String get daySatShort => 'Cmt';
+
+  @override
+  String get daySunShort => 'Paz';
+
+  @override
   String get settingsSection => 'Ayarlar';
 
   @override

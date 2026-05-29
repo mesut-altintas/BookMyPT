@@ -1394,6 +1394,168 @@ abstract class AppLocalizations {
   /// **'Çalışma Saatleri'**
   String get workingHours;
 
+  /// Quick apply section title on work schedule screen
+  ///
+  /// In tr, this message translates to:
+  /// **'Hızlı Uygula'**
+  String get quickApply;
+
+  /// Start time label
+  ///
+  /// In tr, this message translates to:
+  /// **'Başlangıç'**
+  String get startTime;
+
+  /// End time label
+  ///
+  /// In tr, this message translates to:
+  /// **'Bitiş'**
+  String get endTime;
+
+  /// Break toggle label
+  ///
+  /// In tr, this message translates to:
+  /// **'Mola'**
+  String get breakLabel;
+
+  /// Break start time label
+  ///
+  /// In tr, this message translates to:
+  /// **'Mola başlangıcı'**
+  String get breakStart;
+
+  /// Break end time label
+  ///
+  /// In tr, this message translates to:
+  /// **'Mola bitişi'**
+  String get breakEnd;
+
+  /// Apply to N selected days button
+  ///
+  /// In tr, this message translates to:
+  /// **'Seçili {count} güne uygula'**
+  String applyToNDays(int count);
+
+  /// Daily settings section title on work schedule screen
+  ///
+  /// In tr, this message translates to:
+  /// **'Günlük Ayarlar'**
+  String get dailySettings;
+
+  /// Closed day label
+  ///
+  /// In tr, this message translates to:
+  /// **'Kapalı'**
+  String get closed;
+
+  /// Break time switch title
+  ///
+  /// In tr, this message translates to:
+  /// **'Mola saati'**
+  String get breakTimeTitle;
+
+  /// Break time switch subtitle
+  ///
+  /// In tr, this message translates to:
+  /// **'Randevu alınamayacak ara mola'**
+  String get breakTimeSubtitle;
+
+  /// Snackbar when work schedule is saved
+  ///
+  /// In tr, this message translates to:
+  /// **'Çalışma takvimi kaydedildi'**
+  String get workScheduleSaved;
+
+  /// Done / OK button
+  ///
+  /// In tr, this message translates to:
+  /// **'Tamam'**
+  String get done;
+
+  /// Monday
+  ///
+  /// In tr, this message translates to:
+  /// **'Pazartesi'**
+  String get dayMon;
+
+  /// Tuesday
+  ///
+  /// In tr, this message translates to:
+  /// **'Salı'**
+  String get dayTue;
+
+  /// Wednesday
+  ///
+  /// In tr, this message translates to:
+  /// **'Çarşamba'**
+  String get dayWed;
+
+  /// Thursday
+  ///
+  /// In tr, this message translates to:
+  /// **'Perşembe'**
+  String get dayThu;
+
+  /// Friday
+  ///
+  /// In tr, this message translates to:
+  /// **'Cuma'**
+  String get dayFri;
+
+  /// Saturday
+  ///
+  /// In tr, this message translates to:
+  /// **'Cumartesi'**
+  String get daySat;
+
+  /// Sunday
+  ///
+  /// In tr, this message translates to:
+  /// **'Pazar'**
+  String get daySun;
+
+  /// Monday abbreviation
+  ///
+  /// In tr, this message translates to:
+  /// **'Pzt'**
+  String get dayMonShort;
+
+  /// Tuesday abbreviation
+  ///
+  /// In tr, this message translates to:
+  /// **'Sal'**
+  String get dayTueShort;
+
+  /// Wednesday abbreviation
+  ///
+  /// In tr, this message translates to:
+  /// **'Çar'**
+  String get dayWedShort;
+
+  /// Thursday abbreviation
+  ///
+  /// In tr, this message translates to:
+  /// **'Per'**
+  String get dayThuShort;
+
+  /// Friday abbreviation
+  ///
+  /// In tr, this message translates to:
+  /// **'Cum'**
+  String get dayFriShort;
+
+  /// Saturday abbreviation
+  ///
+  /// In tr, this message translates to:
+  /// **'Cmt'**
+  String get daySatShort;
+
+  /// Sunday abbreviation
+  ///
+  /// In tr, this message translates to:
+  /// **'Paz'**
+  String get daySunShort;
+
   /// Settings section header on profile screen
   ///
   /// In tr, this message translates to:
