@@ -411,7 +411,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   void _showAboutSheet() {
-    final theme = Theme.of(context);
     final l10n  = context.l10n;
 
     showModalBottomSheet(
@@ -736,11 +735,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 // ── Hesap (sadece PT) ────────────────────────────────────
                 if (user.isPt) ...[
                   _section(context,
-                    title: 'Hesap',
+                    title: l10n.accountSection,
                     tiles: [
                       ListTile(
                         leading: const Icon(Icons.schedule_outlined),
-                        title: const Text('Çalışma Saatleri'),
+                        title: Text(l10n.workingHours),
                         trailing: const Icon(Icons.chevron_right, size: 18),
                         onTap: () => context.push(AppRoutes.workSchedule),
                       ),

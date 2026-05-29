@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -148,7 +148,7 @@ class _RoleCard extends StatelessWidget {
             color: isSelected ? color : Theme.of(context).dividerColor,
             width: isSelected ? 2.5 : 1,
           ),
-          color: isSelected ? color.withOpacity(0.08) : null,
+          color: isSelected ? color.withValues(alpha: 0.08) : null,
         ),
         child: Row(
           children: [
@@ -156,7 +156,7 @@ class _RoleCard extends StatelessWidget {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.15),
+                color: color.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Icon(icon, color: color, size: 28),

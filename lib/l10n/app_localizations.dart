@@ -1388,6 +1388,18 @@ abstract class AppLocalizations {
   /// **'Kullanım Kılavuzu'**
   String get helpGuide;
 
+  /// Account section header on profile screen (PT only)
+  ///
+  /// In tr, this message translates to:
+  /// **'Hesap'**
+  String get accountSection;
+
+  /// Working hours tile on profile screen
+  ///
+  /// In tr, this message translates to:
+  /// **'Çalışma Saatleri'**
+  String get workingHours;
+
   /// Settings section header on profile screen
   ///
   /// In tr, this message translates to:

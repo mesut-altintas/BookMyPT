@@ -682,6 +682,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get helpGuide => 'Kullanım Kılavuzu';
 
   @override
+  String get accountSection => 'Hesap';
+
+  @override
+  String get workingHours => 'Çalışma Saatleri';
+
+  @override
   String get settingsSection => 'Ayarlar';
 
   @override

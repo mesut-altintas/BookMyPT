@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/l10n/extensions.dart';
@@ -189,10 +189,10 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
             Wrap(
               spacing: 12,
               children: _colors.map((c) {
-                final selected = c.value == _selectedColorValue;
+                final selected = c.toARGB32() == _selectedColorValue;
                 return GestureDetector(
                   onTap: () =>
-                      setState(() => _selectedColorValue = c.value),
+                      setState(() => _selectedColorValue = c.toARGB32()),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     width: 36,
@@ -208,7 +208,7 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
                       boxShadow: selected
                           ? [
                               BoxShadow(
-                                  color: c.withOpacity(0.5),
+                                  color: c.withValues(alpha: 0.5),
                                   blurRadius: 8,
                                   spreadRadius: 2)
                             ]

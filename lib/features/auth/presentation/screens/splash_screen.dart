@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -118,7 +118,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
                     fontStyle: FontStyle.italic,
-                    color: Colors.white.withOpacity(0.75),
+                    color: Colors.white.withValues(alpha: 0.75),
                     letterSpacing: 0.5,
                   ),
                 ),
@@ -135,7 +135,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                 Text(
                   context.l10n.appSubtitle,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Colors.white.withOpacity(0.8),
+                        color: Colors.white.withValues(alpha: 0.8),
                       ),
                 ),
                 const SizedBox(height: 48),
@@ -145,7 +145,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                   child: CircularProgressIndicator(
                     strokeWidth: 2.5,
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      Colors.white.withOpacity(0.7),
+                      Colors.white.withValues(alpha: 0.7),
                     ),
                   ),
                 ),

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/l10n/extensions.dart';
@@ -237,7 +237,7 @@ class _GroupSessionScreenState extends ConsumerState<GroupSessionScreen> {
                 borderRadius: BorderRadius.circular(10),
                 side: BorderSide(
                   color: attended
-                      ? Colors.green.withOpacity(0.6)
+                      ? Colors.green.withValues(alpha: 0.6)
                       : theme.dividerColor,
                 ),
               ),

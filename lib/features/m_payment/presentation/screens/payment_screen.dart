@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -625,8 +625,8 @@ class _GroupPackageCard extends ConsumerWidget {
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
           color: alreadyPurchased
-              ? Colors.green.withOpacity(0.4)
-              : groupColor.withOpacity(0.3),
+              ? Colors.green.withValues(alpha: 0.4)
+              : groupColor.withValues(alpha: 0.3),
         ),
       ),
       child: Padding(
@@ -639,7 +639,7 @@ class _GroupPackageCard extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: groupColor.withOpacity(0.12),
+                    color: groupColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(Icons.groups, color: groupColor, size: 22),

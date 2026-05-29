@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/l10n/extensions.dart';
@@ -510,7 +510,7 @@ class _MessageBubble extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 10,
                           color: isMe
-                              ? theme.colorScheme.onPrimary.withOpacity(0.7)
+                              ? theme.colorScheme.onPrimary.withValues(alpha: 0.7)
                               : theme.colorScheme.onSurfaceVariant,
                         ),
                       ),
@@ -520,7 +520,7 @@ class _MessageBubble extends StatelessWidget {
                           message.read ? Icons.done_all : Icons.done,
                           size: 12,
                           color:
-                              theme.colorScheme.onPrimary.withOpacity(0.7),
+                              theme.colorScheme.onPrimary.withValues(alpha: 0.7),
                         ),
                       ],
                     ],
@@ -555,7 +555,7 @@ class _DeletedBubble extends StatelessWidget {
               color: theme.colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                  color: theme.colorScheme.outline.withOpacity(0.3)),
+                  color: theme.colorScheme.outline.withValues(alpha: 0.3)),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,

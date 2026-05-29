@@ -1,4 +1,4 @@
-import 'package:badges/badges.dart' as badges;
+﻿import 'package:badges/badges.dart' as badges;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -251,7 +251,7 @@ class _PtInfoCard extends ConsumerWidget {
                             style: TextStyle(
                                 fontSize: 11,
                                 color: theme.colorScheme.onPrimaryContainer
-                                    .withOpacity(0.7))),
+                                    .withValues(alpha: 0.7))),
                         Text(pt.name,
                             style: TextStyle(
                                 fontWeight: FontWeight.w700,
@@ -260,7 +260,7 @@ class _PtInfoCard extends ConsumerWidget {
                             style: TextStyle(
                                 fontSize: 11,
                                 color: theme.colorScheme.onPrimaryContainer
-                                    .withOpacity(0.7))),
+                                    .withValues(alpha: 0.7))),
                       ],
                     ),
                   ),
@@ -274,12 +274,12 @@ class _PtInfoCard extends ConsumerWidget {
                       context, ref, pt.name, remainingSessions),
                   icon: Icon(Icons.logout,
                       size: 15,
-                      color: theme.colorScheme.error.withOpacity(0.85)),
+                      color: theme.colorScheme.error.withValues(alpha: 0.85)),
                   label: Text(
                     context.l10n.leaveTrainer,
                     style: TextStyle(
                         fontSize: 12,
-                        color: theme.colorScheme.error.withOpacity(0.85)),
+                        color: theme.colorScheme.error.withValues(alpha: 0.85)),
                   ),
                   style: TextButton.styleFrom(
                     padding: const EdgeInsets.symmetric(

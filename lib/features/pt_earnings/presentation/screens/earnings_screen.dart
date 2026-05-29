@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -99,7 +99,7 @@ class _EarningsContent extends ConsumerWidget {
                               context.l10n.totalEarnings,
                               style: theme.textTheme.bodyMedium?.copyWith(
                                 color: theme.colorScheme.onPrimary
-                                    .withOpacity(0.8),
+                                    .withValues(alpha: 0.8),
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -237,7 +237,7 @@ class _StatChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.2),
+        color: Colors.white.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -319,7 +319,7 @@ class _MonthlyChart extends StatelessWidget {
                 color: Theme.of(context)
                     .colorScheme
                     .primary
-                    .withOpacity(0.1),
+                    .withValues(alpha: 0.1),
               ),
               dotData: const FlDotData(show: false),
             ),
@@ -517,7 +517,7 @@ class _PaymentTile extends ConsumerWidget {
           height: 44,
           decoration: BoxDecoration(
             color: payment.status == PaymentStatus.completed
-                ? Colors.green.withOpacity(0.1)
+                ? Colors.green.withValues(alpha: 0.1)
                 : Theme.of(context).colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(12),
           ),

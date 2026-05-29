@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -309,7 +309,7 @@ class _PackagesTab extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(12),
                 side: BorderSide(
                     color: pkg.isActive
-                        ? groupColor.withOpacity(0.5)
+                        ? groupColor.withValues(alpha: 0.5)
                         : theme.dividerColor),
               ),
               child: ListTile(
@@ -395,7 +395,7 @@ class _SessionsTab extends ConsumerWidget {
                       GroupSessionScreen(group: group, session: s),
                 )),
                 leading: CircleAvatar(
-                  backgroundColor: statusColor.withOpacity(0.15),
+                  backgroundColor: statusColor.withValues(alpha: 0.15),
                   child: Icon(Icons.fitness_center, color: statusColor),
                 ),
                 title: Text(s.dateTime.formattedDate,

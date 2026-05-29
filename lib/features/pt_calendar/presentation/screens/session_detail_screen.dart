@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -282,7 +282,7 @@ class _SessionDetailContent extends ConsumerWidget {
                         Icons.calendar_today,
                         size: 16,
                         color: theme.colorScheme.onPrimaryContainer
-                            .withOpacity(0.7),
+                            .withValues(alpha: 0.7),
                       ),
                       const SizedBox(width: 6),
                       Text(
@@ -300,7 +300,7 @@ class _SessionDetailContent extends ConsumerWidget {
                         Icons.timer_outlined,
                         size: 16,
                         color: theme.colorScheme.onPrimaryContainer
-                            .withOpacity(0.7),
+                            .withValues(alpha: 0.7),
                       ),
                       const SizedBox(width: 6),
                       Text(
