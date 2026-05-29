@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/l10n/extensions.dart';
+import '../../../../core/router/app_router.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../../features/auth/providers/auth_provider.dart';
 import '../../../../features/m_chat/providers/chat_provider.dart';
@@ -217,7 +218,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen>
               controller: _tabController,
               children: [
                 _OverviewTab(member: member, ptId: ptId),
-                _ProgramsTab(memberId: widget.memberId, ptId: ptId),
+                _ProgramsTab(memberId: widget.memberId, ptId: ptId, memberName: member.name),
                 _SessionsTab(memberId: widget.memberId, ptId: ptId),
               ],
             ),
@@ -257,25 +258,54 @@ class _MemberHeader extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 4),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.circle,
-                size: 8,
-                color: member.remainingSessions > 0
-                    ? Colors.green
-                    : Colors.red,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                context.l10n.sessionsLeft(member.remainingSessions),
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+          if (member.remainingSessionsByDuration.isNotEmpty) ...[
+            // Per-duration breakdown chips
+            Builder(builder: (_) {
+              final entries = member.remainingSessionsByDuration.entries
+                  .where((e) => e.value > 0)
+                  .toList()
+                ..sort((a, b) => a.key.compareTo(b.key));
+              return Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 8,
+                runSpacing: 4,
+                children: entries.map((e) => Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '${e.key} dk: ${e.value}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onPrimaryContainer,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                )).toList(),
+              );
+            }),
+          ] else ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.circle,
+                  size: 8,
+                  color: member.remainingSessions > 0
+                      ? Colors.green
+                      : Colors.red,
                 ),
-              ),
-            ],
-          ),
+                const SizedBox(width: 6),
+                Text(
+                  context.l10n.sessionsLeft(member.remainingSessions),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -394,13 +424,25 @@ class _InfoCard extends StatelessWidget {
 class _ProgramsTab extends ConsumerWidget {
   final String memberId;
   final String ptId;
+  final String memberName;
 
-  const _ProgramsTab({required this.memberId, required this.ptId});
+  const _ProgramsTab({
+    required this.memberId,
+    required this.ptId,
+    required this.memberName,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final programsAsync = ref.watch(
         ptMemberProgramsProvider((ptId: ptId, memberId: memberId)));
+
+    void createProgram() {
+      context.push(
+        AppRoutes.createProgram,
+        extra: {'memberId': memberId, 'memberName': memberName},
+      );
+    }
 
     return programsAsync.when(
       loading: () => const AppLoading(),
@@ -410,28 +452,47 @@ class _ProgramsTab extends ConsumerWidget {
           return AppEmpty(
             message: context.l10n.noMemberPrograms,
             icon: Icons.fitness_center_outlined,
+            action: ElevatedButton.icon(
+              onPressed: createProgram,
+              icon: const Icon(Icons.add),
+              label: Text(context.l10n.createProgram),
+            ),
           );
         }
-        return ListView.separated(
-          padding: const EdgeInsets.all(16),
-          itemCount: programs.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 8),
-          itemBuilder: (_, i) {
-            final p = programs[i];
-            return ListTile(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-                side: BorderSide(
-                  color: Theme.of(context).dividerColor,
-                ),
+        return Stack(
+          children: [
+            ListView.separated(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+              itemCount: programs.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 8),
+              itemBuilder: (_, i) {
+                final p = programs[i];
+                return ListTile(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: BorderSide(
+                      color: Theme.of(context).dividerColor,
+                    ),
+                  ),
+                  leading: const Icon(Icons.fitness_center),
+                  title: Text(p.title),
+                  subtitle: Text('${p.weeks.length} Hafta'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.push('/pt/programs/${p.id}'),
+                );
+              },
+            ),
+            Positioned(
+              right: 16,
+              bottom: 16,
+              child: FloatingActionButton.extended(
+                heroTag: 'create_program_fab',
+                onPressed: createProgram,
+                icon: const Icon(Icons.add),
+                label: Text(context.l10n.createProgram),
               ),
-              leading: const Icon(Icons.fitness_center),
-              title: Text(p.title),
-              subtitle: Text('${p.weeks.length} Hafta'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => context.push('/pt/programs/${p.id}'),
-            );
-          },
+            ),
+          ],
         );
       },
     );

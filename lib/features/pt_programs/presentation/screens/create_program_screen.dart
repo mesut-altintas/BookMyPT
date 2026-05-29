@@ -12,8 +12,15 @@ import '../../../pt_programs/providers/pt_programs_provider.dart';
 
 class CreateProgramScreen extends ConsumerStatefulWidget {
   final ProgramModel? initialProgram;
+  final String? initialMemberId;
+  final String? initialMemberName;
 
-  const CreateProgramScreen({super.key, this.initialProgram});
+  const CreateProgramScreen({
+    super.key,
+    this.initialProgram,
+    this.initialMemberId,
+    this.initialMemberName,
+  });
 
   @override
   ConsumerState<CreateProgramScreen> createState() =>
@@ -44,6 +51,11 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
       _weeksCount = p.weeks.length;
       _weeks = List.from(p.weeks);
     } else {
+      // Pre-select member if navigated from member detail
+      if (widget.initialMemberId != null) {
+        _selectedMemberId = widget.initialMemberId;
+        _selectedMemberName = widget.initialMemberName;
+      }
       _initWeeks();
     }
   }

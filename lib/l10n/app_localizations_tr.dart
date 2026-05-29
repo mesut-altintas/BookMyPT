@@ -583,6 +583,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get startMessaging => 'PT\'niz veya üyeniz ile mesajlaşmaya başlayın';
 
   @override
+  String get messageMyPt => 'PT\'me Mesaj At';
+
+  @override
   String get typeMessage => 'Mesaj yaz...';
 
   @override

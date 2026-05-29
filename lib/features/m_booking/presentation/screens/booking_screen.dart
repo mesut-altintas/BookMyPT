@@ -8,6 +8,8 @@ import '../../../../core/l10n/extensions.dart';
 import '../../../../core/utils/duration_utils.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../../features/auth/providers/auth_provider.dart';
+import '../../../../features/m_payment/providers/payment_provider.dart';
+import '../../../../shared/models/payment_model.dart';
 import '../../../../features/m_calendar/providers/invitation_provider.dart';
 import '../../../../features/m_calendar/providers/personal_event_provider.dart';
 import '../../../../features/pt_calendar/providers/pt_calendar_provider.dart';
@@ -76,6 +78,21 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
     final sessionDurationMinutes = memberDetail?.sessionDurationMinutes;
     final remainingByDuration = memberDetail?.remainingSessionsByDuration ?? {};
 
+    // Fallback: derive available durations from completed payments when
+    // remainingByDuration is empty (e.g. old data before per-duration tracking)
+    final paymentsAsync = ref.watch(memberPaymentsProvider(memberId));
+    final fallbackDurations = remainingByDuration.isEmpty
+        ? (paymentsAsync.valueOrNull
+                ?.where((p) =>
+                    p.status == PaymentStatus.completed &&
+                    p.sessionDurationMinutes != null)
+                .map((p) => p.sessionDurationMinutes!)
+                .toSet()
+                .toList()
+              ?..sort()) ??
+            []
+        : <int>[];
+
     return Scaffold(
       appBar: AppBar(
         title: Text(context.l10n.myAppointments),
@@ -89,7 +106,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
                   ref.read(memberSessionsProvider(memberId)).valueOrNull ?? [];
               _openSheet(context, ref, memberId, user?.name ?? '',
                   user?.ptId ?? '', sessions, sessionDurationMinutes,
-                  remainingByDuration);
+                  remainingByDuration, fallbackDurations);
             },
           ),
         ],
@@ -264,7 +281,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
                         action: TextButton.icon(
                           onPressed: () => _openSheet(context, ref, memberId,
                               memberName, ptId, sessions, sessionDurationMinutes,
-                              remainingByDuration),
+                              remainingByDuration, fallbackDurations),
                           icon: const Icon(Icons.add),
                           label: Text(context.l10n.requestAppointment),
                         ),
@@ -299,6 +316,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
                                         ptPersonalEvents,
                                         sessionDurationMinutes,
                                         remainingByDuration,
+                                        fallbackDurations,
                                       )
                                   : null,
                             );
@@ -327,6 +345,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
     List<SessionModel> existingSessions,
     int? sessionDurationMinutes,
     Map<int, int> remainingByDuration,
+    List<int> fallbackDurations,
   ) async {
     // Check active status if member has a PT
     if (ptId.isNotEmpty) {
@@ -347,6 +366,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       builder: (_) => _RequestSessionSheet(
         memberId: memberId,
         memberName: memberName,
@@ -357,6 +377,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
         sessionDurationMinutes: sessionDurationMinutes,
         workSchedule: workSchedule,
         remainingByDuration: remainingByDuration,
+        fallbackDurations: fallbackDurations,
       ),
     );
   }
@@ -370,6 +391,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
     List<PersonalEventModel> ptPersonalEvents,
     int? sessionDurationMinutes,
     Map<int, int> remainingByDuration,
+    List<int> fallbackDurations,
   ) {
     final repo = ref.read(sessionRepositoryProvider);
     final memberOther = memberSessions
@@ -378,6 +400,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       builder: (_) => _EditSessionSheet(
         session: session,
         repo: repo,
@@ -386,6 +409,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
         ptPersonalEvents: ptPersonalEvents,
         sessionDurationMinutes: sessionDurationMinutes,
         remainingByDuration: remainingByDuration,
+        fallbackDurations: fallbackDurations,
       ),
     );
   }
@@ -664,6 +688,7 @@ class _RequestSessionSheet extends StatefulWidget {
   final int? sessionDurationMinutes;
   final WorkSchedule? workSchedule;
   final Map<int, int> remainingByDuration;
+  final List<int> fallbackDurations;
 
   const _RequestSessionSheet({
     required this.memberId,
@@ -675,6 +700,7 @@ class _RequestSessionSheet extends StatefulWidget {
     this.sessionDurationMinutes,
     this.workSchedule,
     this.remainingByDuration = const {},
+    this.fallbackDurations = const [],
   });
 
   @override
@@ -714,7 +740,8 @@ class _RequestSessionSheetState extends State<_RequestSessionSheet> {
     );
     final earliest = DateTime.now().add(const Duration(minutes: 30));
     _selectedDateTime = base.isAfter(earliest) ? base : earliest;
-    // Prefer first available package duration, else fixed, else default 60
+    // Prefer first available package duration, else fallback from payments,
+    // else fixed from profile, else default 60
     final availDurations = widget.remainingByDuration.entries
         .where((e) => e.value > 0)
         .map((e) => e.key)
@@ -722,7 +749,9 @@ class _RequestSessionSheetState extends State<_RequestSessionSheet> {
       ..sort();
     _duration = availDurations.isNotEmpty
         ? availDurations.first
-        : (widget.sessionDurationMinutes ?? 60);
+        : widget.fallbackDurations.isNotEmpty
+            ? widget.fallbackDurations.first
+            : (widget.sessionDurationMinutes ?? 60);
     _findPt();
   }
 
@@ -894,7 +923,39 @@ class _RequestSessionSheetState extends State<_RequestSessionSheet> {
       );
     }
 
-    // Case 2: Fixed duration from member profile (legacy)
+    // Case 2: Fallback durations derived from completed payment history
+    if (widget.fallbackDurations.isNotEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(context.l10n.durationLabel,
+              style: const TextStyle(fontWeight: FontWeight.w500)),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: widget.fallbackDurations.map((d) {
+              final isSelected = _duration == d;
+              return ChoiceChip(
+                label: Text(_durationLabel(d),
+                    style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: isSelected
+                            ? theme.colorScheme.onPrimary
+                            : theme.colorScheme.onSurface)),
+                selected: isSelected,
+                onSelected: (_) => setState(() => _duration = d),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                visualDensity: VisualDensity.compact,
+              );
+            }).toList(),
+          ),
+        ],
+      );
+    }
+
+    // Case 3: Fixed duration from member profile (legacy)
     if (widget.sessionDurationMinutes != null) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -920,7 +981,7 @@ class _RequestSessionSheetState extends State<_RequestSessionSheet> {
       );
     }
 
-    // Case 3: No packages, free choice
+    // Case 4: No packages, no history — free choice
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1188,6 +1249,7 @@ class _EditSessionSheet extends StatefulWidget {
   final List<PersonalEventModel> ptPersonalEvents;
   final int? sessionDurationMinutes;
   final Map<int, int> remainingByDuration;
+  final List<int> fallbackDurations;
 
   const _EditSessionSheet({
     required this.session,
@@ -1197,6 +1259,7 @@ class _EditSessionSheet extends StatefulWidget {
     required this.ptPersonalEvents,
     this.sessionDurationMinutes,
     this.remainingByDuration = const {},
+    this.fallbackDurations = const [],
   });
 
   @override
@@ -1322,6 +1385,39 @@ class _EditSessionSheetState extends State<_EditSessionSheet> {
       );
     }
 
+    // Case 2: Fallback durations derived from completed payment history
+    if (widget.fallbackDurations.isNotEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(context.l10n.durationLabel,
+              style: const TextStyle(fontWeight: FontWeight.w500)),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: widget.fallbackDurations.map((d) {
+              final isSelected = _duration == d;
+              return ChoiceChip(
+                label: Text(_durationLabel(d),
+                    style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: isSelected
+                            ? theme.colorScheme.onPrimary
+                            : theme.colorScheme.onSurface)),
+                selected: isSelected,
+                onSelected: (_) => setState(() => _duration = d),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                visualDensity: VisualDensity.compact,
+              );
+            }).toList(),
+          ),
+        ],
+      );
+    }
+
+    // Case 3: Fixed duration from member profile (legacy)
     if (widget.sessionDurationMinutes != null) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -1345,6 +1441,7 @@ class _EditSessionSheetState extends State<_EditSessionSheet> {
       );
     }
 
+    // Case 4: No packages, no history — free choice
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

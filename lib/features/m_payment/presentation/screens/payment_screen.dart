@@ -5,7 +5,9 @@ import 'package:intl/intl.dart';
 import '../../../../core/l10n/extensions.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../../features/auth/providers/auth_provider.dart';
+import '../../../../features/pt_calendar/providers/pt_calendar_provider.dart';
 import '../../../../features/pt_groups/providers/pt_groups_provider.dart';
+import '../../../../shared/models/session_model.dart';
 import '../../../../features/pt_members/providers/pt_members_provider.dart';
 import '../../../../shared/models/group_model.dart';
 import '../../../../shared/models/payment_model.dart';
@@ -103,7 +105,44 @@ class _IndividualTab extends ConsumerWidget {
 
     final remainingSessions =
         (memberDetailAsync.valueOrNull?.remainingSessions as int?) ?? 0;
+    var remainingByDuration =
+        memberDetailAsync.valueOrNull?.remainingSessionsByDuration ?? {};
     final payments = paymentsAsync.valueOrNull ?? [];
+
+    // Computed fallback: derive per-duration remaining from payment + session history.
+    // Works with ANY existing data — no dependency on remainingSessionsByDuration field.
+    if (remainingByDuration.isEmpty && remainingSessions > 0) {
+      final completedSessions = ref
+          .watch(memberSessionsProvider(memberId))
+          .valueOrNull
+          ?.where((s) => s.status == SessionStatus.completed)
+          .toList() ?? [];
+
+      // Sessions purchased per duration (from approved payments)
+      final purchasedByDuration = <int, int>{};
+      for (final p in payments.where((p) =>
+          p.status == PaymentStatus.completed &&
+          p.sessionDurationMinutes != null)) {
+        final d = p.sessionDurationMinutes!;
+        purchasedByDuration[d] = (purchasedByDuration[d] ?? 0) + p.sessionCount;
+      }
+
+      if (purchasedByDuration.isNotEmpty) {
+        // Sessions already used per duration (from completed sessions)
+        final usedByDuration = <int, int>{};
+        for (final s in completedSessions) {
+          usedByDuration[s.durationMinutes] =
+              (usedByDuration[s.durationMinutes] ?? 0) + 1;
+        }
+        // Remaining = purchased − used (floor at 0)
+        final computed = <int, int>{};
+        for (final entry in purchasedByDuration.entries) {
+          final rem = entry.value - (usedByDuration[entry.key] ?? 0);
+          if (rem > 0) computed[entry.key] = rem;
+        }
+        if (computed.isNotEmpty) remainingByDuration = computed;
+      }
+    }
     final packages = packagesAsync.valueOrNull ?? [];
 
     final pendingPayments =
@@ -121,6 +160,7 @@ class _IndividualTab extends ConsumerWidget {
               SliverToBoxAdapter(
                 child: _SessionStatusCard(
                   remainingSessions: remainingSessions,
+                  remainingByDuration: remainingByDuration,
                   hasPt: hasPt,
                 ),
               ),
@@ -869,10 +909,14 @@ void _showGroupMembersSheet(
 
 class _SessionStatusCard extends StatelessWidget {
   final int remainingSessions;
+  final Map<int, int> remainingByDuration;
   final bool hasPt;
 
-  const _SessionStatusCard(
-      {required this.remainingSessions, required this.hasPt});
+  const _SessionStatusCard({
+    required this.remainingSessions,
+    required this.remainingByDuration,
+    required this.hasPt,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -880,6 +924,10 @@ class _SessionStatusCard extends StatelessWidget {
     final color = remainingSessions > 0
         ? theme.colorScheme.primary
         : theme.colorScheme.error;
+
+    // Sort durations ascending for display
+    final sortedDurations = remainingByDuration.entries.toList()
+      ..sort((a, b) => a.key.compareTo(b.key));
 
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -893,6 +941,7 @@ class _SessionStatusCard extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
                 width: 64,
@@ -904,33 +953,70 @@ class _SessionStatusCard extends StatelessWidget {
                 child: Icon(Icons.fitness_center, color: color, size: 28),
               ),
               const SizedBox(width: 16),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '$remainingSessions',
-                    style: TextStyle(
-                      fontSize: 40,
-                      fontWeight: FontWeight.w800,
-                      color: color,
-                      height: 1,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    context.l10n.remainingSessionRights,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  if (!hasPt)
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      context.l10n.noPtAssigned,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.error,
+                      '$remainingSessions',
+                      style: TextStyle(
+                        fontSize: 40,
+                        fontWeight: FontWeight.w800,
+                        color: color,
+                        height: 1,
                       ),
                     ),
-                ],
+                    const SizedBox(height: 2),
+                    Text(
+                      context.l10n.remainingSessionRights,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    if (!hasPt)
+                      Text(
+                        context.l10n.noPtAssigned,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.error,
+                        ),
+                      ),
+                    // ── Per-duration breakdown ──────────────────────────
+                    if (sortedDurations.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        children: sortedDurations.map((e) {
+                          final mins = e.key;
+                          final count = e.value;
+                          final label = mins < 60
+                              ? '$mins dk'
+                              : mins % 60 == 0
+                                  ? '${mins ~/ 60} sa'
+                                  : '${mins ~/ 60} sa ${mins % 60} dk';
+                          return Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: color.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                  color: color.withValues(alpha: 0.3)),
+                            ),
+                            child: Text(
+                              '$label  ×$count',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: color,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ],
+                ),
               ),
             ],
           ),

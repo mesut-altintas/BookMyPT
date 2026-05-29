@@ -17,10 +17,8 @@ class MemberShell extends ConsumerWidget {
   int _getSelectedIndex(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
     if (location.startsWith('/member/calendar')) return 1;
-    if (location.startsWith('/member/programs')) return 2;
-    if (location.startsWith('/member/progress')) return 3;
-    if (location.startsWith('/member/payment')) return 4;
-    if (location.startsWith('/member/chat')) return 5;
+    if (location.startsWith('/member/payment')) return 2;
+    if (location.startsWith('/member/chat')) return 3;
     return 0;
   }
 
@@ -77,10 +75,8 @@ class MemberShell extends ConsumerWidget {
             switch (index) {
               case 0: go(AppRoutes.memberDashboard); break;
               case 1: go(AppRoutes.memberCalendar, NotificationSource.calendar); break;
-              case 2: go(AppRoutes.memberPrograms); break;
-              case 3: go(AppRoutes.progress); break;
-              case 4: go(AppRoutes.payment, NotificationSource.payment); break;
-              case 5: go(AppRoutes.chatList, NotificationSource.chat); break;
+              case 2: go(AppRoutes.payment, NotificationSource.payment); break;
+              case 3: go(AppRoutes.chatList, NotificationSource.chat); break;
             }
           },
           destinations: [
@@ -93,16 +89,6 @@ class MemberShell extends ConsumerWidget {
               icon: const Icon(Icons.calendar_month_outlined),
               selectedIcon: const Icon(Icons.calendar_month),
               label: l10n.navCalendar,
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.fitness_center_outlined),
-              selectedIcon: const Icon(Icons.fitness_center),
-              label: l10n.navPrograms,
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.trending_up_outlined),
-              selectedIcon: const Icon(Icons.trending_up),
-              label: l10n.navProgress,
             ),
             NavigationDestination(
               icon: _badgedIcon(const Icon(Icons.inventory_2_outlined),

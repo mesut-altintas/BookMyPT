@@ -15,10 +15,9 @@ class PtShell extends ConsumerWidget {
   int _getSelectedIndex(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
     if (location.startsWith('/pt/members')) return 1;
-    if (location.startsWith('/pt/programs')) return 2;
-    if (location.startsWith('/pt/calendar')) return 3;
-    if (location.startsWith('/pt/earnings')) return 4;
-    if (location.startsWith('/pt/chat')) return 5;
+    if (location.startsWith('/pt/calendar')) return 2;
+    if (location.startsWith('/pt/earnings')) return 3;
+    if (location.startsWith('/pt/chat')) return 4;
     return 0;
   }
 
@@ -61,28 +60,22 @@ class PtShell extends ConsumerWidget {
           switch (index) {
             case 0: go(0, AppRoutes.ptDashboard); break;
             case 1: go(1, AppRoutes.ptMembers, NotificationSource.members); break;
-            case 2: go(2, AppRoutes.ptPrograms); break;
-            case 3: go(3, AppRoutes.ptCalendar, NotificationSource.calendar); break;
-            case 4: go(4, AppRoutes.ptEarnings, NotificationSource.earnings); break;
-            case 5: go(5, AppRoutes.ptChatList, NotificationSource.chat); break;
+            case 2: go(2, AppRoutes.ptCalendar, NotificationSource.calendar); break;
+            case 3: go(3, AppRoutes.ptEarnings, NotificationSource.earnings); break;
+            case 4: go(4, AppRoutes.ptChatList, NotificationSource.chat); break;
           }
         },
         destinations: [
           NavigationDestination(
-            icon: const Icon(Icons.dashboard_outlined, size: 20),
-            selectedIcon: const Icon(Icons.dashboard, size: 20),
-            label: l10n.navDashboard,
+            icon: const Icon(Icons.home_outlined, size: 20),
+            selectedIcon: const Icon(Icons.home, size: 20),
+            label: l10n.navHome,
           ),
           NavigationDestination(
             icon: _badgedIcon(const Icon(Icons.people_outline, size: 20),
                 badgeMap[NotificationSource.members] ?? 0),
             selectedIcon: const Icon(Icons.people, size: 20),
             label: l10n.navMembers,
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.fitness_center_outlined, size: 20),
-            selectedIcon: const Icon(Icons.fitness_center, size: 20),
-            label: l10n.navPrograms,
           ),
           NavigationDestination(
             icon: _badgedIcon(const Icon(Icons.calendar_today_outlined, size: 20),

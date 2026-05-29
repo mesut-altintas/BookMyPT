@@ -581,6 +581,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get startMessaging => 'Start messaging with your PT or members';
 
   @override
+  String get messageMyPt => 'Message My PT';
+
+  @override
   String get typeMessage => 'Type a message...';
 
   @override

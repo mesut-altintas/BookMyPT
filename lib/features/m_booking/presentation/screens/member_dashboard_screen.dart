@@ -427,32 +427,35 @@ class _QuickActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        _QuickActionButton(
-          icon: Icons.calendar_month,
-          label: context.l10n.bookAppointment,
-          onTap: () => context.push(AppRoutes.booking),
-        ),
-        const SizedBox(width: 12),
-        _QuickActionButton(
-          icon: Icons.fitness_center,
-          label: context.l10n.myPrograms,
-          onTap: () => context.go(AppRoutes.memberPrograms),
-        ),
-        const SizedBox(width: 12),
-        _QuickActionButton(
-          icon: Icons.trending_up,
-          label: context.l10n.navProgress,
-          onTap: () => context.go(AppRoutes.progress),
-        ),
-        const SizedBox(width: 12),
-        _QuickActionButton(
-          icon: Icons.chat_outlined,
-          label: context.l10n.navChat,
-          onTap: () => context.go(AppRoutes.chatList),
-        ),
-      ],
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _QuickActionButton(
+            icon: Icons.calendar_month,
+            label: context.l10n.bookAppointment,
+            onTap: () => context.push(AppRoutes.booking),
+          ),
+          const SizedBox(width: 12),
+          _QuickActionButton(
+            icon: Icons.fitness_center,
+            label: context.l10n.myPrograms,
+            onTap: () => context.go(AppRoutes.memberPrograms),
+          ),
+          const SizedBox(width: 12),
+          _QuickActionButton(
+            icon: Icons.trending_up,
+            label: context.l10n.navProgress,
+            onTap: () => context.go(AppRoutes.progress),
+          ),
+          const SizedBox(width: 12),
+          _QuickActionButton(
+            icon: Icons.chat_outlined,
+            label: context.l10n.navChat,
+            onTap: () => context.go(AppRoutes.chatList),
+          ),
+        ],
+      ),
     );
   }
 }

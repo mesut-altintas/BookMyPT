@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +8,7 @@ import '../../../../core/l10n/extensions.dart';
 import '../../../../features/auth/providers/auth_provider.dart';
 import '../../../../features/m_chat/providers/chat_provider.dart';
 import '../../../../shared/models/chat_model.dart';
+import '../../../../shared/models/user_model.dart';
 import '../../../../shared/widgets/app_loading.dart';
 import '../../../../shared/widgets/app_empty.dart';
 import '../../../../shared/widgets/user_avatar.dart';
@@ -29,7 +31,7 @@ class ChatListScreen extends ConsumerWidget {
       data: (user) {
         if (user == null) return const Scaffold(body: AppLoading());
         return _ChatListContent(
-          userId: user.uid,
+          user: user,
           chatDetailBasePath: chatDetailBasePath,
         );
       },
@@ -37,21 +39,85 @@ class ChatListScreen extends ConsumerWidget {
   }
 }
 
-class _ChatListContent extends ConsumerWidget {
-  final String userId;
+class _ChatListContent extends ConsumerStatefulWidget {
+  final UserModel user;
   final String chatDetailBasePath;
 
   const _ChatListContent({
-    required this.userId,
+    required this.user,
     required this.chatDetailBasePath,
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final chatsAsync = ref.watch(chatRoomsProvider(userId));
+  ConsumerState<_ChatListContent> createState() => _ChatListContentState();
+}
+
+class _ChatListContentState extends ConsumerState<_ChatListContent> {
+  bool _startingChat = false;
+
+  bool get _isMemberWithPt =>
+      widget.user.role == 'member' &&
+      (widget.user.ptId?.isNotEmpty ?? false);
+
+  Future<void> _startPtChat() async {
+    if (_startingChat) return;
+    setState(() => _startingChat = true);
+    try {
+      final ptId = widget.user.ptId!;
+      // Fetch PT info from Firestore
+      final ptDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(ptId)
+          .get();
+      final ptData = ptDoc.data() ?? {};
+      final ptName = ptData['name'] as String? ?? 'PT';
+      final ptPhoto = ptData['photoUrl'] as String?;
+
+      final chatId =
+          await ref.read(chatRepositoryProvider).createOrGetChatRoom(
+                ptId: ptId,
+                memberId: widget.user.uid,
+                ptName: ptName,
+                memberName: widget.user.name,
+                ptPhotoUrl: ptPhoto,
+                memberPhotoUrl: widget.user.photoUrl,
+              );
+
+      if (mounted) {
+        context.push('${widget.chatDetailBasePath}/$chatId');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Hata: $e'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ));
+      }
+    } finally {
+      if (mounted) setState(() => _startingChat = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final chatsAsync = ref.watch(chatRoomsProvider(widget.user.uid));
 
     return Scaffold(
       appBar: AppBar(title: Text(context.l10n.messagesTitle)),
+      floatingActionButton: _isMemberWithPt
+          ? FloatingActionButton.extended(
+              onPressed: _startingChat ? null : _startPtChat,
+              icon: _startingChat
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.edit_outlined),
+              label: Text(context.l10n.messageMyPt),
+            )
+          : null,
       body: chatsAsync.when(
         loading: () => const AppLoading(),
         error: (e, _) => Center(child: Text(e.toString())),
@@ -61,6 +127,13 @@ class _ChatListContent extends ConsumerWidget {
               message: context.l10n.noMessagesYet,
               subMessage: context.l10n.startMessaging,
               icon: Icons.chat_bubble_outline,
+              action: _isMemberWithPt
+                  ? TextButton.icon(
+                      onPressed: _startingChat ? null : _startPtChat,
+                      icon: const Icon(Icons.chat_outlined),
+                      label: Text(context.l10n.messageMyPt),
+                    )
+                  : null,
             );
           }
 
@@ -71,8 +144,8 @@ class _ChatListContent extends ConsumerWidget {
               final room = rooms[i];
               return _ChatRoomTile(
                 room: room,
-                userId: userId,
-                chatDetailBasePath: chatDetailBasePath,
+                userId: widget.user.uid,
+                chatDetailBasePath: widget.chatDetailBasePath,
               );
             },
           );

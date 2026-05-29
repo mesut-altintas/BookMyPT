@@ -243,7 +243,13 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: 'create',
-                builder: (_, __) => const CreateProgramScreen(),
+                builder: (_, state) {
+                  final extra = state.extra as Map<String, dynamic>?;
+                  return CreateProgramScreen(
+                    initialMemberId: extra?['memberId'] as String?,
+                    initialMemberName: extra?['memberName'] as String?,
+                  );
+                },
               ),
               GoRoute(
                 path: ':programId',

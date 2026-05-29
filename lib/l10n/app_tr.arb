@@ -579,6 +579,9 @@
   "startMessaging": "PT'niz veya üyeniz ile mesajlaşmaya başlayın",
   "@startMessaging": { "description": "Start messaging subtitle" },
 
+  "messageMyPt": "PT'me Mesaj At",
+  "@messageMyPt": { "description": "Start chat with PT button" },
+
   "typeMessage": "Mesaj yaz...",
   "@typeMessage": { "description": "Type message hint" },
 

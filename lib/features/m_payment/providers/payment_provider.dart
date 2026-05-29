@@ -44,6 +44,7 @@ class PaymentRepository {
       sessionCount: payment.sessionCount,
       createdAt: payment.createdAt,
       transactionId: payment.transactionId,
+      sessionDurationMinutes: payment.sessionDurationMinutes,
     );
     await doc.set(newPayment.toFirestore());
     return doc.id;

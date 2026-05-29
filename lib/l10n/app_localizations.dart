@@ -1190,6 +1190,12 @@ abstract class AppLocalizations {
   /// **'PT\'niz veya üyeniz ile mesajlaşmaya başlayın'**
   String get startMessaging;
 
+  /// Start chat with PT button
+  ///
+  /// In tr, this message translates to:
+  /// **'PT\'me Mesaj At'**
+  String get messageMyPt;
+
   /// Type message hint
   ///
   /// In tr, this message translates to:
