@@ -678,11 +678,8 @@
   "helpGuide": "Kullanım Kılavuzu",
   "@helpGuide": { "description": "Help guide menu item" },
 
-  "accountSection": "Hesap",
-  "@accountSection": { "description": "Account section header on profile screen (PT only)" },
-
   "workingHours": "Çalışma Saatleri",
-  "@workingHours": { "description": "Working hours tile on profile screen" },
+  "@workingHours": { "description": "Working hours tile inside Settings on profile screen" },
 
   "settingsSection": "Ayarlar",
   "@settingsSection": { "description": "Settings section header on profile screen" },

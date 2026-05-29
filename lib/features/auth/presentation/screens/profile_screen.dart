@@ -732,26 +732,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
                 const SizedBox(height: 28),
 
-                // ── Hesap (sadece PT) ────────────────────────────────────
-                if (user.isPt) ...[
-                  _section(context,
-                    title: l10n.accountSection,
-                    tiles: [
+                // ── Ayarlar ──────────────────────────────────────────────
+                _section(context,
+                  title: l10n.settingsSection,
+                  tiles: [
+                    if (user.isPt)
                       ListTile(
                         leading: const Icon(Icons.schedule_outlined),
                         title: Text(l10n.workingHours),
                         trailing: const Icon(Icons.chevron_right, size: 18),
                         onTap: () => context.push(AppRoutes.workSchedule),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                ],
-
-                // ── Ayarlar ──────────────────────────────────────────────
-                _section(context,
-                  title: l10n.settingsSection,
-                  tiles: [
                     ListTile(
                       leading: const Icon(Icons.notifications_outlined),
                       title: Text(l10n.notifications),
