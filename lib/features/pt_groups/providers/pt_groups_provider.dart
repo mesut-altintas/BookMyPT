@@ -185,6 +185,30 @@ final ptAllGroupPackagesProvider =
       .handleError((_, __) {});
 });
 
+/// PT view: all completed group payments for a specific member with sessions remaining.
+final ptMemberGroupPaymentsProvider =
+    StreamProvider.family<List<GroupPayment>, ({String ptId, String memberId})>(
+        (ref, args) {
+  if (ref.watch(currentUserProvider).valueOrNull == null) {
+    return Stream.value(const <GroupPayment>[]);
+  }
+  return FirebaseFirestore.instance
+      .collection(AppConstants.paymentsCollection)
+      .where('ptId', isEqualTo: args.ptId)
+      .where('isGroup', isEqualTo: true)
+      .snapshots()
+      .map((snap) {
+        return snap.docs
+            .map((d) => GroupPayment.fromFirestore(d))
+            .where((p) =>
+                p.memberId == args.memberId &&
+                p.status == 'completed' &&
+                p.remainingSessions > 0)
+            .toList();
+      })
+      .handleError((_, __) {});
+});
+
 /// PT's pending group payment approvals.
 final ptPendingGroupPaymentsProvider =
     StreamProvider.family<List<GroupPayment>, String>((ref, ptId) {
@@ -372,7 +396,9 @@ class GroupRepository {
 
   // ── Group Session ──────────────────────────────────────────────────────────
 
-  Future<String> createGroupSession({
+  /// Creates one or more group sessions.
+  /// [repeatWeeks] = 0 → single session; N → creates N sessions, one per week.
+  Future<List<String>> createGroupSession({
     required String groupId,
     required String groupName,
     required String ptId,
@@ -380,25 +406,36 @@ class GroupRepository {
     required int durationMinutes,
     required List<String> memberIds,
     String? notes,
+    int repeatWeeks = 0,
   }) async {
-    final ref =
-        _firestore.collection(AppConstants.groupSessionsCollection).doc();
-    final attendance = {for (final id in memberIds) id: false};
-    final session = GroupSession(
-      id: ref.id,
-      groupId: groupId,
-      groupName: groupName,
-      ptId: ptId,
-      dateTime: dateTime,
-      durationMinutes: durationMinutes,
-      status: 'scheduled',
-      attendance: attendance,
-      notes: notes,
-      memberIds: memberIds,
-      createdAt: DateTime.now(),
-    );
-    await ref.set(session.toFirestore());
-    return ref.id;
+    final count = repeatWeeks < 1 ? 1 : repeatWeeks;
+    final sessionIds = <String>[];
+    final batch = _firestore.batch();
+
+    for (int i = 0; i < count; i++) {
+      final ref =
+          _firestore.collection(AppConstants.groupSessionsCollection).doc();
+      final dt = dateTime.add(Duration(days: 7 * i));
+      final attendance = {for (final id in memberIds) id: false};
+      final session = GroupSession(
+        id: ref.id,
+        groupId: groupId,
+        groupName: groupName,
+        ptId: ptId,
+        dateTime: dt,
+        durationMinutes: durationMinutes,
+        status: 'scheduled',
+        attendance: attendance,
+        notes: notes,
+        memberIds: memberIds,
+        createdAt: DateTime.now(),
+      );
+      batch.set(ref, session.toFirestore());
+      sessionIds.add(ref.id);
+    }
+
+    await batch.commit();
+    return sessionIds;
   }
 
   Future<void> updateAttendance(

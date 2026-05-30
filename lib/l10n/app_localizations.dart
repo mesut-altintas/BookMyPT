@@ -3374,6 +3374,24 @@ abstract class AppLocalizations {
   /// **'Seans Detayı'**
   String get sessionDetail;
 
+  /// Repeat session weekly toggle label
+  ///
+  /// In tr, this message translates to:
+  /// **'Haftalık Tekrar'**
+  String get repeatWeekly;
+
+  /// No repeat option
+  ///
+  /// In tr, this message translates to:
+  /// **'Tekrarlama'**
+  String get noRepeat;
+
+  /// Repeat N weeks
+  ///
+  /// In tr, this message translates to:
+  /// **'{count} Hafta'**
+  String repeatCount(int count);
+
   /// Date and time field label
   ///
   /// In tr, this message translates to:

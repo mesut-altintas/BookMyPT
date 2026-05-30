@@ -1772,6 +1772,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sessionDetail => 'Session Detail';
 
   @override
+  String get repeatWeekly => 'Weekly Repeat';
+
+  @override
+  String get noRepeat => 'No Repeat';
+
+  @override
+  String repeatCount(int count) {
+    return '$count Weeks';
+  }
+
+  @override
   String get dateTime => 'Date & Time';
 
   @override

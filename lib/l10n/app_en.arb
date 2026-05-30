@@ -581,6 +581,12 @@
 
   "newSession": "New Session",
   "sessionDetail": "Session Detail",
+  "repeatWeekly": "Weekly Repeat",
+  "noRepeat": "No Repeat",
+  "repeatCount": "{count} Weeks",
+  "@repeatCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
   "dateTime": "Date & Time",
   "attendance": "Attendance",
   "attended": "attended",

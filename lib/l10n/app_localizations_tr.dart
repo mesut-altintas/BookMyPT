@@ -1773,6 +1773,17 @@ class AppLocalizationsTr extends AppLocalizations {
   String get sessionDetail => 'Seans Detayı';
 
   @override
+  String get repeatWeekly => 'Haftalık Tekrar';
+
+  @override
+  String get noRepeat => 'Tekrarlama';
+
+  @override
+  String repeatCount(int count) {
+    return '$count Hafta';
+  }
+
+  @override
   String get dateTime => 'Tarih & Saat';
 
   @override

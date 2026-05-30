@@ -14,6 +14,7 @@ import '../../../../shared/widgets/app_loading.dart';
 import '../../../../shared/widgets/app_error.dart';
 import '../../../../shared/widgets/user_avatar.dart';
 import '../../../pt_members/providers/pt_members_provider.dart';
+import '../../../pt_groups/providers/pt_groups_provider.dart';
 import '../../../pt_programs/providers/pt_programs_provider.dart';
 import '../../../pt_calendar/providers/pt_calendar_provider.dart';
 
@@ -75,7 +76,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen>
                 floating: false,
                 pinned: true,
                 flexibleSpace: FlexibleSpaceBar(
-                  background: _MemberHeader(member: member),
+                  background: _MemberHeader(member: member, ptId: ptId),
                 ),
                 actions: [
                   IconButton(
@@ -231,8 +232,9 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen>
 
 class _MemberHeader extends ConsumerWidget {
   final MemberProfile member;
+  final String ptId;
 
-  const _MemberHeader({required this.member});
+  const _MemberHeader({required this.member, required this.ptId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -306,6 +308,44 @@ class _MemberHeader extends ConsumerWidget {
               ],
             ),
           ],
+          // Group package chips
+          Builder(builder: (_) {
+            final groupPayments = ref
+                .watch(ptMemberGroupPaymentsProvider(
+                    (ptId: ptId, memberId: member.memberId)))
+                .valueOrNull ?? [];
+            if (groupPayments.isEmpty) return const SizedBox.shrink();
+            return Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 6,
+                runSpacing: 4,
+                children: groupPayments.map((p) => Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.secondaryContainer,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.group, size: 12,
+                          color: theme.colorScheme.onSecondaryContainer),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${p.groupName}: ${p.remainingSessions}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSecondaryContainer,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                )).toList(),
+              ),
+            );
+          }),
         ],
       ),
     );

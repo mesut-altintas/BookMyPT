@@ -1727,6 +1727,18 @@
   "sessionDetail": "Seans Detayı",
   "@sessionDetail": { "description": "Session detail screen title" },
 
+  "repeatWeekly": "Haftalık Tekrar",
+  "@repeatWeekly": { "description": "Repeat session weekly toggle label" },
+
+  "noRepeat": "Tekrarlama",
+  "@noRepeat": { "description": "No repeat option" },
+
+  "repeatCount": "{count} Hafta",
+  "@repeatCount": {
+    "description": "Repeat N weeks",
+    "placeholders": { "count": { "type": "int" } }
+  },
+
   "dateTime": "Tarih & Saat",
   "@dateTime": { "description": "Date and time field label" },
 

@@ -22,7 +22,9 @@ class _GroupSessionScreenState extends ConsumerState<GroupSessionScreen> {
   DateTime _dateTime = DateTime.now().add(const Duration(hours: 1));
   int _duration = 60;
   final _notesCtrl = TextEditingController();
+  final _repeatCtrl = TextEditingController(text: '1');
   bool _saving = false;
+  int _repeatWeeks = 1; // 1 = no repeat (single session)
 
   // attendance: {memberId: attended}
   late Map<String, bool> _attendance;
@@ -47,9 +49,17 @@ class _GroupSessionScreenState extends ConsumerState<GroupSessionScreen> {
     }
   }
 
+  void _setRepeat(int value) {
+    final clamped = value.clamp(1, 52);
+    setState(() => _repeatWeeks = clamped);
+    _repeatCtrl.text = '$clamped';
+    _repeatCtrl.selection = TextSelection.collapsed(offset: _repeatCtrl.text.length);
+  }
+
   @override
   void dispose() {
     _notesCtrl.dispose();
+    _repeatCtrl.dispose();
     super.dispose();
   }
 
@@ -85,6 +95,7 @@ class _GroupSessionScreenState extends ConsumerState<GroupSessionScreen> {
             notes: _notesCtrl.text.trim().isEmpty
                 ? null
                 : _notesCtrl.text.trim(),
+            repeatWeeks: _repeatWeeks,
           );
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
@@ -177,7 +188,8 @@ class _GroupSessionScreenState extends ConsumerState<GroupSessionScreen> {
         ],
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.fromLTRB(
+            16, 16, 16, MediaQuery.of(context).padding.bottom + 24),
         children: [
           // ── Date / time / duration ──────────────────────────────────────
           if (isNew || !isCompleted) ...[
@@ -216,6 +228,58 @@ class _GroupSessionScreenState extends ConsumerState<GroupSessionScreen> {
                           )
                         : null,
                   ),
+                  if (isNew) ...[
+                    const Divider(height: 1),
+                    ListTile(
+                      leading: const Icon(Icons.repeat),
+                      title: Text(l10n.repeatWeekly),
+                      subtitle: Text(_repeatWeeks == 1
+                          ? l10n.noRepeat
+                          : l10n.repeatCount(_repeatWeeks)),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.remove_circle_outline),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            onPressed: _repeatWeeks > 1
+                                ? () => _setRepeat(_repeatWeeks - 1)
+                                : null,
+                          ),
+                          SizedBox(
+                            width: 44,
+                            child: TextField(
+                              controller: _repeatCtrl,
+                              textAlign: TextAlign.center,
+                              keyboardType: TextInputType.number,
+                              decoration: const InputDecoration(
+                                isDense: true,
+                                contentPadding: EdgeInsets.symmetric(
+                                    vertical: 6, horizontal: 4),
+                                border: OutlineInputBorder(),
+                              ),
+                              onChanged: (v) {
+                                final parsed = int.tryParse(v);
+                                if (parsed != null && parsed >= 1) {
+                                  setState(() =>
+                                      _repeatWeeks = parsed.clamp(1, 52));
+                                }
+                              },
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.add_circle_outline),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            onPressed: _repeatWeeks < 52
+                                ? () => _setRepeat(_repeatWeeks + 1)
+                                : null,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

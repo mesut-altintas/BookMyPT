@@ -195,17 +195,91 @@ exports.paymentUpdated = functions.firestore
     const before = change.before.data();
     const after = change.after.data();
     if (!before || !after) return;
-    if (before.status === after.status) return;
 
     const { memberId, packageName, sessionCount } = after;
 
-    if (after.status === 'completed' && before.status === 'pending') {
+    // ── Status change: pending → completed ──
+    if (before.status !== after.status &&
+        after.status === 'completed' && before.status === 'pending') {
       await sendToUser(
         memberId,
         'Paketiniz Onaylandı',
         `"${packageName}" paketi (${sessionCount} seans) onaylandı ve hesabınıza eklendi`,
         { route: '/member/payment', type: 'payment' }
       );
+    }
+
+    // ── Group payment: remaining sessions notifications ──
+    if (after.isGroup) {
+      const prevRemaining = typeof before.remainingSessions === 'number' ? before.remainingSessions : -1;
+      const nowRemaining  = typeof after.remainingSessions  === 'number' ? after.remainingSessions  : -1;
+      const groupName  = after.groupName || '';
+      const pkgName    = after.groupPackageName || packageName || '';
+      const ptId       = after.ptId || '';
+      const memberName = after.memberName || 'Bir üyeniz';
+
+      if (prevRemaining > 1 && nowRemaining === 1) {
+        await Promise.all([
+          sendToUser(memberId, 'Son Grup Seansınız',
+            `"${groupName}" – "${pkgName}" paketinde yalnızca 1 seansınız kaldı`,
+            { route: '/member/payment', type: 'payment' }),
+          sendToUser(ptId, `${memberName} – Son Grup Seansı`,
+            `"${groupName}" grubunda ${memberName} son seansına yaklaşıyor. Yeni paket önermeyi düşünün.`,
+            { route: '/pt/earnings', type: 'earnings' }),
+        ]);
+      } else if (prevRemaining > 0 && nowRemaining === 0) {
+        await Promise.all([
+          sendToUser(memberId, 'Grup Paketiniz Tükendi',
+            `"${groupName}" – "${pkgName}" paketinizdeki tüm seansları kullandınız`,
+            { route: '/member/payment', type: 'payment' }),
+          sendToUser(ptId, `${memberName} – Grup Paketi Bitti`,
+            `${memberName}, "${groupName}" grubundaki paketini tamamladı. Yeni paket satışı için uygun zaman!`,
+            { route: '/pt/earnings', type: 'earnings' }),
+        ]);
+      }
+    }
+  });
+
+// ─── Member profile (individual sessions) — package exhausted ───────────────
+
+exports.memberProfileUpdated = functions.firestore
+  .document('pts/{ptId}/members/{memberId}')
+  .onUpdate(async (change, context) => {
+    const before = change.before.data();
+    const after  = change.after.data();
+    if (!before || !after) return;
+
+    const { memberId } = context.params;
+
+    const prevRemaining = typeof before.remainingSessions === 'number' ? before.remainingSessions : -1;
+    const nowRemaining  = typeof after.remainingSessions  === 'number' ? after.remainingSessions  : -1;
+
+    if (prevRemaining === nowRemaining) return;
+
+    const memberDisplayName = after.name || after.displayName || 'Bir üyeniz';
+
+    if (prevRemaining > 1 && nowRemaining === 1) {
+      await Promise.all([
+        sendToUser(memberId,
+          'Son Bireysel Seansınız',
+          'Eğitmeninizle yalnızca 1 bireysel seansınız kaldı. Yeni paket almayı unutmayın!',
+          { route: '/member/payment', type: 'payment' }),
+        sendToUser(ptId,
+          `${memberDisplayName} – Son Bireysel Seans`,
+          `${memberDisplayName} son bireysel seansına yaklaşıyor. Yeni paket önermeyi düşünün.`,
+          { route: '/pt/members', type: 'members' }),
+      ]);
+    } else if (prevRemaining > 0 && nowRemaining === 0) {
+      await Promise.all([
+        sendToUser(memberId,
+          'Bireysel Seanslarınız Tükendi',
+          'Eğitmeninizle tüm bireysel seanslarınızı tamamladınız. Yeni paket satın almak için uygulamayı ziyaret edin.',
+          { route: '/member/payment', type: 'payment' }),
+        sendToUser(ptId,
+          `${memberDisplayName} – Bireysel Paket Bitti`,
+          `${memberDisplayName} tüm bireysel seanslarını tamamladı. Yeni paket satışı için uygun zaman!`,
+          { route: '/pt/members', type: 'members' }),
+      ]);
     }
   });
 
