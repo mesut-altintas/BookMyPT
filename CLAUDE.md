@@ -48,6 +48,7 @@ lib/
     pt_members/   # üye listesi, detay
     pt_earnings/  # gelir takibi, paket yönetimi
     pt_programs/  # program yönetimi
+    pt_groups/    # grup dersleri (GroupSession, GroupPayment)
     m_booking/    # üye randevu ekranı
     m_calendar/   # üye takvim + kişisel etkinlikler
     m_payment/    # üye ödeme geçmişi
@@ -60,6 +61,48 @@ lib/
 **State management:** Riverpod 2.x  
 **Router:** GoRouter (ShellRoute)  
 **Backend:** Firestore (realtime streams)
+
+## PT Navigation
+
+PT shell: **5 sekme** — Home / Members / Calendar / Earnings / Chat  
+Programs sekmesi kaldırıldı; `CreateProgramScreen` üye detay Programs tab'ından açılır.
+
+## Grup Dersler
+
+- **Koleksiyon:** `sessions` (normal seanslarla aynı, `isGroup: true` ile ayrışır)
+- **Grup ödemeler:** `payments` koleksiyonu, `isGroup: true` alanı olan belgeler
+- **`ptMemberGroupPaymentsProvider`** — `pt_groups_provider.dart` içinde; `(ptId, memberId)` record key ile sorgu, `status == 'completed' && remainingSessions > 0` filtresi
+- **`createGroupSession`** — `repeatWeeks` parametresi alır, `WriteBatch` ile N seans oluşturur
+
+## Haftalık Tekrar Seans
+
+Tüm seans oluşturma akışlarında (`GroupSessionScreen`, `_AddSessionSheet`, `_RequestSessionSheet`) tutarlı `[−][TextField][+]` stepper var, 1–52 arası, `WriteBatch` ile toplu yazma:
+```dart
+// SessionRepository.createSessionsBatch — pt_calendar_provider.dart
+Future<void> createSessionsBatch(List<SessionModel> sessions) async {
+  final batch = _firestore.batch();
+  for (final session in sessions) {
+    final doc = _firestore.collection(AppConstants.sessionsCollection).doc();
+    batch.set(doc, session.copyWith(id: doc.id).toFirestore());
+  }
+  await batch.commit();
+}
+```
+
+## Paket Bitti Bildirimleri (Cloud Functions)
+
+İki tetikleyici — her ikisi de üye **ve** PT'ye eş zamanlı bildirim gönderir:
+
+| Tetikleyici | Koşul |
+|---|---|
+| `paymentUpdated` (`payments/{id}`) | `isGroup: true` ödemelerde `remainingSessions` 1 veya 0'a düşünce |
+| `memberProfileUpdated` (`pts/{ptId}/members/{memberId}`) | Bireysel paket `remainingSessions` 1 veya 0'a düşünce |
+
+## Üye Detay Başlığı
+
+`_MemberHeader` iki chip grubu gösterir:
+1. Süre başına dağılım: `45dk: 5  60dk: 3` (mavi chip)
+2. Aktif grup paketleri: `👥 Yoga: 8` (secondary container chip) — `ptMemberGroupPaymentsProvider` ile
 
 ## Kritik Kurallar
 
