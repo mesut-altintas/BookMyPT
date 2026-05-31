@@ -187,9 +187,9 @@ class _GroupSessionScreenState extends ConsumerState<GroupSessionScreen> {
             ),
         ],
       ),
-      body: ListView(
-        padding: EdgeInsets.fromLTRB(
-            16, 16, 16, MediaQuery.of(context).padding.bottom + 24),
+      body: SafeArea(
+        child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
         children: [
           // ── Date / time / duration ──────────────────────────────────────
           if (isNew || !isCompleted) ...[
@@ -377,6 +377,7 @@ class _GroupSessionScreenState extends ConsumerState<GroupSessionScreen> {
               avatar: const Icon(Icons.cancel, color: Colors.white, size: 16),
             ),
         ],
+        ),
       ),
     );
   }
