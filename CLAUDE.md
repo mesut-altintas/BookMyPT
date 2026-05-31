@@ -149,7 +149,7 @@ ref.listen(itemProvider(id), (prev, next) {
 - **Cloud Functions** seans ve ödeme olaylarında bildirim gönderir
 - **iOS:** `Runner.entitlements` dosyasında `aps-environment: production` var
 - **Android:** sorunsuz çalışıyor
-- **iOS sorun:** `messaging/third-party-auth-error` — APNs key Firebase Console'da `com.bookmypt` app'ine yüklendi ama hâlâ sorun var
+- **iOS:** Bildirimler çalışıyor ✅
 
 ## iOS Deploy (TestFlight)
 
