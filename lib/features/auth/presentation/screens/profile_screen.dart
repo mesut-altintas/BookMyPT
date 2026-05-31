@@ -20,6 +20,7 @@ import '../../../../shared/services/theme_service.dart';
 import '../../../../shared/services/color_scheme_service.dart';
 import '../../../../shared/services/locale_service.dart';
 import 'help_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -793,6 +794,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         MaterialPageRoute(
                           builder: (_) => HelpScreen(isPt: user.isPt),
                         ),
+                      ),
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.headset_mic_outlined),
+                      title: Text(l10n.contactSupport),
+                      trailing: const Icon(Icons.open_in_new, size: 18),
+                      onTap: () => launchUrl(
+                        Uri.parse('https://bookmypt.com.tr/support'),
+                        mode: LaunchMode.externalApplication,
                       ),
                     ),
                     ListTile(

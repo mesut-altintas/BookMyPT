@@ -747,6 +747,8 @@
 
   "supportSection": "Destek",
   "@supportSection": { "description": "Support section header on profile screen" },
+  "contactSupport": "Destek Merkezi",
+  "@contactSupport": { "description": "Contact support menu item - opens bookmypt.com.tr/support" },
 
   "signOut": "Çıkış Yap",
   "@signOut": { "description": "Sign out menu item" },
