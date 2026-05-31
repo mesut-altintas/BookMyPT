@@ -17,20 +17,20 @@
 
 ## 🟡 Orta Vadeli İyileştirmeler
 
-- [ ] Seans hatırlatma bildirimi — 24 saat ve 1 saat öncesinde push (şu an sadece durum değişikliğinde bildirim gidiyor)
-- [ ] PT dashboard: aylık gelir grafiği, üye sayısı trendi, popüler seans saatleri
+- [ ] **Seans hatırlatma bildirimi** — 24 saat ve 1 saat öncesinde push; Cloud Tasks ile scheduled notification (minimal Blaze maliyeti, ~$0.01–0.10/ay); şu an sadece durum değişikliğinde bildirim gidiyor
+- [ ] **Seans sonrası değerlendirme** — seans tamamlandıktan sonra üyeye "PT'yi değerlendir" prompt'u (1–5 yıldız + not); `sessions` koleksiyonuna `rating` + `ratingNote` alanı; PT profilinde ortalama göster; maliyet yok
+- [ ] PT dashboard: aylık gelir grafiği, üye sayısı trendi, popüler seans saatleri; maliyet yok
 - [ ] Üye: grup seans geçmişi görüntüleme (tamamlanan grup seansları listesi)
 - [ ] Ödeme makbuzu: üye tamamlanan ödeme için PDF/detay ekranı görebilsin
-- [ ] Onboarding: ilk giriş ekranı (PT ve üye için kısa walkthrough)
+- [ ] **Onboarding ekranı** — ilk giriş ekranı (PT ve üye için kısa walkthrough, ne yapabileceğini anlatan); maliyet yok
 - [ ] PT çalışma takvimi görsel iyileştirme: üye haftalık müsait slotları görebilsin
 
 ---
 
 ## 🟢 Fikirler / Backlog
 
-- [ ] Seans sonrası değerlendirme: üye PT'yi puanlayabilsin (1-5 yıldız + not)
+- [ ] **Grup seansı RSVP** — üye "katılacağım / katılmayacağım" önceden bildirebilsin, PT kontenjan yönetsin; maliyet yok
 - [ ] Program şablonları: PT hazır şablon kaydedip farklı üyelere atayabilsin
-- [ ] Grup seansı RSVP: üye "katılacağım / katılmayacağım" önceden bildirebilsin
 - [ ] Multi-PT: üye birden fazla PT ile çalışabilsin
 - [ ] Takvim bölümünde yapılması gereken değişiklikler tekrar değerlendirilecek
 
