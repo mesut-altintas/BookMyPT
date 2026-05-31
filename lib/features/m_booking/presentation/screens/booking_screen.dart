@@ -367,6 +367,10 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
+      constraints: BoxConstraints(
+        minHeight: MediaQuery.of(context).size.height * 0.72,
+        maxHeight: MediaQuery.of(context).size.height * 0.92,
+      ),
       builder: (_) => _RequestSessionSheet(
         memberId: memberId,
         memberName: memberName,
@@ -710,6 +714,8 @@ class _RequestSessionSheet extends StatefulWidget {
 class _RequestSessionSheetState extends State<_RequestSessionSheet> {
   late DateTime _selectedDateTime;
   int _duration = 60;
+  int _repeatWeeks = 1;
+  final _repeatCtrl = TextEditingController(text: '1');
   bool _isLoading = false;
   bool _loadingPt = true;
   bool _needsPtLink = false;
@@ -720,9 +726,18 @@ class _RequestSessionSheetState extends State<_RequestSessionSheet> {
   WorkSchedule? _ptWorkSchedule;
   final _ptEmailCtrl = TextEditingController();
 
+  void _setRepeat(int value) {
+    final clamped = value.clamp(1, 52);
+    setState(() => _repeatWeeks = clamped);
+    _repeatCtrl.text = '$clamped';
+    _repeatCtrl.selection =
+        TextSelection.collapsed(offset: _repeatCtrl.text.length);
+  }
+
   @override
   void dispose() {
     _ptEmailCtrl.dispose();
+    _repeatCtrl.dispose();
     super.dispose();
   }
 
@@ -1086,7 +1101,7 @@ class _RequestSessionSheetState extends State<_RequestSessionSheet> {
   Future<void> _submit() async {
     if (_ptId.isEmpty || _isConflict || _isPast) return;
     setState(() => _isLoading = true);
-    final session = SessionModel(
+    final baseSession = SessionModel(
       id: '',
       ptId: _ptId,
       memberId: widget.memberId,
@@ -1096,9 +1111,23 @@ class _RequestSessionSheetState extends State<_RequestSessionSheet> {
       durationMinutes: _duration,
     );
     try {
-      await FirebaseFirestore.instance.collection('sessions').add(
-            session.toFirestore(),
+      if (_repeatWeeks <= 1) {
+        await FirebaseFirestore.instance
+            .collection('sessions')
+            .add(baseSession.toFirestore());
+      } else {
+        final batch = FirebaseFirestore.instance.batch();
+        for (int i = 0; i < _repeatWeeks; i++) {
+          final doc =
+              FirebaseFirestore.instance.collection('sessions').doc();
+          final s = baseSession.copyWith(
+            id: doc.id,
+            dateTime: _selectedDateTime.add(Duration(days: 7 * i)),
           );
+          batch.set(doc, s.toFirestore());
+        }
+        await batch.commit();
+      }
       if (mounted) Navigator.pop(context);
     } catch (e) {
       if (mounted) {
@@ -1122,10 +1151,9 @@ class _RequestSessionSheetState extends State<_RequestSessionSheet> {
         left: 24,
         right: 24,
         top: 24,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 32,
       ),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
@@ -1219,7 +1247,64 @@ class _RequestSessionSheetState extends State<_RequestSessionSheet> {
             ),
             const SizedBox(height: 12),
             _buildDurationPicker(context),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
+            // ── Weekly Repeat stepper ────────────────────────────────────
+            Row(
+              children: [
+                const Icon(Icons.repeat, size: 18),
+                const SizedBox(width: 8),
+                Text(context.l10n.repeatWeekly,
+                    style: const TextStyle(fontWeight: FontWeight.w500)),
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.remove_circle_outline),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  onPressed: _repeatWeeks > 1
+                      ? () => _setRepeat(_repeatWeeks - 1)
+                      : null,
+                ),
+                SizedBox(
+                  width: 44,
+                  child: TextField(
+                    controller: _repeatCtrl,
+                    textAlign: TextAlign.center,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      isDense: true,
+                      contentPadding:
+                          EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                      border: OutlineInputBorder(),
+                    ),
+                    onChanged: (v) {
+                      final parsed = int.tryParse(v);
+                      if (parsed != null && parsed >= 1) {
+                        setState(() => _repeatWeeks = parsed.clamp(1, 52));
+                      }
+                    },
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.add_circle_outline),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  onPressed: _repeatWeeks < 52
+                      ? () => _setRepeat(_repeatWeeks + 1)
+                      : null,
+                ),
+              ],
+            ),
+            if (_repeatWeeks > 1)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  context.l10n.repeatCount(_repeatWeeks),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                ),
+              ),
+            const SizedBox(height: 20),
             ElevatedButton(
               onPressed: _isConflict || _isPast || _isLoading ? null : _submit,
               child: _isLoading
@@ -1228,7 +1313,9 @@ class _RequestSessionSheetState extends State<_RequestSessionSheet> {
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : Text(context.l10n.requestAppointment),
+                  : Text(_repeatWeeks > 1
+                      ? '${context.l10n.requestAppointment} (${context.l10n.repeatCount(_repeatWeeks)})'
+                      : context.l10n.requestAppointment),
             ),
           ],
         ],
