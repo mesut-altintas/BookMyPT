@@ -8,7 +8,7 @@
 
 - ~~Android keystore ayarla — Play Store'a yüklemek için zorunlu~~ ✅
 - [ ] iOS Info.plist: kamera, bildirim, fotoğraf izni açıklamaları ekle
-- [ ] Gizlilik politikası URL'si belirle / sayfa oluştur (App Store & Play Store zorunlu kılar)
+- ~~Gizlilik politikası URL'si belirle / sayfa oluştur~~ ✅ → https://bookmypt.com.tr/privacy
 - [ ] App Store & Google Play metadata: açıklama, ekran görüntüleri, kategori
 - [ ] pubspec.yaml version numarasını yönet (her release'de artır)
 - ~~iOS APNs sorunu çöz — `messaging/third-party-auth-error`~~ ✅ (bildirimler çalışıyor)
