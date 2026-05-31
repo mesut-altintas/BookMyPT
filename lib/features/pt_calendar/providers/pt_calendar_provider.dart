@@ -141,6 +141,16 @@ class SessionRepository {
     return doc.id;
   }
 
+  /// Creates multiple sessions at once (weekly repeat).
+  Future<void> createSessionsBatch(List<SessionModel> sessions) async {
+    final batch = _firestore.batch();
+    for (final session in sessions) {
+      final doc = _firestore.collection(AppConstants.sessionsCollection).doc();
+      batch.set(doc, session.copyWith(id: doc.id).toFirestore());
+    }
+    await batch.commit();
+  }
+
   Future<void> updateStatus(String sessionId, SessionStatus status) =>
       _firestore
           .collection(AppConstants.sessionsCollection)

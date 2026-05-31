@@ -554,6 +554,8 @@ class _AddSessionSheetState extends State<_AddSessionSheet> {
   String? _selectedMemberId;
   String? _selectedMemberName;
   int _duration = 60;
+  int _repeatWeeks = 1;
+  final _repeatCtrl = TextEditingController(text: '1');
   bool _isLoading = false;
 
   @override
@@ -566,6 +568,20 @@ class _AddSessionSheetState extends State<_AddSessionSheet> {
       9,
       0,
     );
+  }
+
+  @override
+  void dispose() {
+    _repeatCtrl.dispose();
+    super.dispose();
+  }
+
+  void _setRepeat(int value) {
+    final clamped = value.clamp(1, 52);
+    setState(() => _repeatWeeks = clamped);
+    _repeatCtrl.text = '$clamped';
+    _repeatCtrl.selection =
+        TextSelection.collapsed(offset: _repeatCtrl.text.length);
   }
 
   bool _overlapsSession(SessionModel s) {
@@ -588,7 +604,7 @@ class _AddSessionSheetState extends State<_AddSessionSheet> {
   Future<void> _save() async {
     if (_selectedMemberId == null) return;
     setState(() => _isLoading = true);
-    final session = SessionModel(
+    final baseSession = SessionModel(
       id: '',
       ptId: widget.ptId,
       memberId: _selectedMemberId!,
@@ -598,7 +614,17 @@ class _AddSessionSheetState extends State<_AddSessionSheet> {
       durationMinutes: _duration,
     );
     try {
-      await widget.repo.createSession(session);
+      if (_repeatWeeks <= 1) {
+        await widget.repo.createSession(baseSession);
+      } else {
+        final sessions = List.generate(
+          _repeatWeeks,
+          (i) => baseSession.copyWith(
+            dateTime: _selectedDateTime.add(Duration(days: 7 * i)),
+          ),
+        );
+        await widget.repo.createSessionsBatch(sessions);
+      }
       if (mounted) Navigator.pop(context);
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -702,7 +728,61 @@ class _AddSessionSheetState extends State<_AddSessionSheet> {
                 )
                 .toList(),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              const Icon(Icons.repeat, size: 18),
+              const SizedBox(width: 8),
+              Text(context.l10n.repeatWeekly,
+                  style: const TextStyle(fontWeight: FontWeight.w500)),
+              const Spacer(),
+              IconButton(
+                icon: const Icon(Icons.remove_circle_outline),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                onPressed:
+                    _repeatWeeks > 1 ? () => _setRepeat(_repeatWeeks - 1) : null,
+              ),
+              SizedBox(
+                width: 44,
+                child: TextField(
+                  controller: _repeatCtrl,
+                  textAlign: TextAlign.center,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    isDense: true,
+                    contentPadding:
+                        EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                    border: OutlineInputBorder(),
+                  ),
+                  onChanged: (v) {
+                    final parsed = int.tryParse(v);
+                    if (parsed != null && parsed >= 1) {
+                      setState(() => _repeatWeeks = parsed.clamp(1, 52));
+                    }
+                  },
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.add_circle_outline),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                onPressed:
+                    _repeatWeeks < 52 ? () => _setRepeat(_repeatWeeks + 1) : null,
+              ),
+            ],
+          ),
+          if (_repeatWeeks > 1)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                context.l10n.repeatCount(_repeatWeeks),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+              ),
+            ),
+          const SizedBox(height: 20),
           ElevatedButton(
             onPressed: _selectedMemberId == null || _isLoading || _hasConflict
                 ? null
@@ -713,7 +793,9 @@ class _AddSessionSheetState extends State<_AddSessionSheet> {
                     width: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : Text(context.l10n.createSession),
+                : Text(_repeatWeeks > 1
+                    ? '${context.l10n.createSession} (${context.l10n.repeatCount(_repeatWeeks)})'
+                    : context.l10n.createSession),
           ),
         ],
       ),
