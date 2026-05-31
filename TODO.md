@@ -6,7 +6,7 @@
 
 ## 🔴 Store'a Çıkmadan Yapılması Gerekenler
 
-- [ ] Android keystore ayarla — Play Store'a yüklemek için zorunlu
+- ~~Android keystore ayarla — Play Store'a yüklemek için zorunlu~~ ✅
 - [ ] iOS Info.plist: kamera, bildirim, fotoğraf izni açıklamaları ekle
 - [ ] Gizlilik politikası URL'si belirle / sayfa oluştur (App Store & Play Store zorunlu kılar)
 - [ ] App Store & Google Play metadata: açıklama, ekran görüntüleri, kategori
