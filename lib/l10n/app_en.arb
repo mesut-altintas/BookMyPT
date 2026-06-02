@@ -1,4 +1,4 @@
-{
+﻿{
   "@@locale": "en",
 
   "appName": "BookMyPT",
@@ -680,5 +680,14 @@
   "helpPtMessagesItem2Title": "Group Chats",
   "helpPtMessagesItem2Body": "A chat room is automatically created for every group you create. The chat room is removed when the group is deleted.",
   "helpPtMessagesItem3Title": "Delete Conversation",
-  "helpPtMessagesItem3Body": "Long press any conversation in the chat list to delete it. When deleted, the conversation disappears for both parties."
+  "helpPtMessagesItem3Body": "Long press any conversation in the chat list to delete it. When deleted, the conversation disappears for both parties.",
+
+  "deleteAccountTitle": "Delete Account",
+  "deleteAccountConfirm": "Your account and all your data will be permanently deleted. This action cannot be undone.",
+  "deleteAccountButton": "Permanently Delete Account",
+  "deleteAccountSuccess": "Your account has been deleted.",
+  "deleteAccountError": "Failed to delete account",
+  "deleteAccountReauthError": "For security reasons, please sign out and sign in again before deleting your account.",
+  "dangerZoneSection": "Danger Zone",
+  "signInWithApple": "Sign in with Apple"
 }

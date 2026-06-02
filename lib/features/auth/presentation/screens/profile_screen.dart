@@ -565,6 +565,59 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     if (mounted) context.go(AppRoutes.login);
   }
 
+  Future<void> _deleteAccount() async {
+    final l10n = context.l10n;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      useRootNavigator: false,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.deleteAccountTitle),
+        content: Text(l10n.deleteAccountConfirm),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.error),
+            child: Text(l10n.deleteAccountButton),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    await ref.read(authNotifierProvider.notifier).deleteAccount();
+    if (!mounted) return;
+
+    final state = ref.read(authNotifierProvider);
+    if (state.hasError) {
+      final errMsg = state.error.toString();
+      final msg = errMsg.contains('requires-recent-login')
+          ? l10n.deleteAccountReauthError
+          : '${l10n.deleteAccountError}: $errMsg';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(msg),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(l10n.deleteAccountSuccess),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+    context.go(AppRoutes.login);
+  }
+
   Widget _sheetHandle(ThemeData theme) => Container(
         width: 36,
         height: 4,
@@ -830,6 +883,26 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ),
                     onTap: _signOut,
                   ),
+                ),
+                const SizedBox(height: 20),
+
+                // ── Tehlikeli Alan ────────────────────────────────────────
+                _section(context,
+                  title: l10n.dangerZoneSection,
+                  tiles: [
+                    ListTile(
+                      leading: Icon(Icons.delete_forever_outlined,
+                          color: AppColors.error),
+                      title: Text(
+                        l10n.deleteAccountTitle,
+                        style: TextStyle(
+                          color: AppColors.error,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      onTap: _deleteAccount,
+                    ),
+                  ],
                 ),
               ],
             ),

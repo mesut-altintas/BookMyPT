@@ -11,6 +11,8 @@ import '../../providers/auth_provider.dart';
 import '../../../../features/pt_members/providers/pt_members_provider.dart';
 import '../../../../features/pt_calendar/providers/pt_calendar_provider.dart';
 import '../../../../features/m_chat/providers/chat_provider.dart';
+import 'dart:io';
+
 import '../widgets/auth_text_field.dart';
 import '../widgets/google_sign_in_button.dart';
 
@@ -57,6 +59,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final state = ref.read(authNotifierProvider);
     if (state.hasError) {
       _showError(context.l10n.errorGoogleSignIn);
+      return;
+    }
+    await _navigateBasedOnRole();
+  }
+
+  Future<void> _loginWithApple() async {
+    final notifier = ref.read(authNotifierProvider.notifier);
+    await notifier.signInWithApple();
+    if (!mounted) return;
+    final state = ref.read(authNotifierProvider);
+    if (state.hasError) {
+      _showError('Apple ile giriş başarısız');
       return;
     }
     await _navigateBasedOnRole();
@@ -228,6 +242,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
                 const SizedBox(height: 16),
                 GoogleSignInButton(onPressed: isLoading ? null : _loginWithGoogle),
+                if (Platform.isIOS) ...[
+                  const SizedBox(height: 12),
+                  _AppleSignInButton(
+                      onPressed: isLoading ? null : _loginWithApple),
+                ],
                 const SizedBox(height: 32),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -246,6 +265,44 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _AppleSignInButton extends StatelessWidget {
+  final VoidCallback? onPressed;
+  const _AppleSignInButton({this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return OutlinedButton(
+      onPressed: onPressed,
+      style: OutlinedButton.styleFrom(
+        minimumSize: const Size(double.infinity, 52),
+        backgroundColor: isDark ? Colors.white : Colors.black,
+        foregroundColor: isDark ? Colors.black : Colors.white,
+        side: BorderSide(color: isDark ? Colors.white : Colors.black),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.apple, size: 22,
+              color: isDark ? Colors.black : Colors.white),
+          const SizedBox(width: 10),
+          Text(
+            context.l10n.signInWithApple,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: isDark ? Colors.black : Colors.white,
+            ),
+          ),
+        ],
       ),
     );
   }

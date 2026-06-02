@@ -1,4 +1,4 @@
-{
+﻿{
   "@@locale": "tr",
 
   "@@last_modified": "2026-05-12",
@@ -1960,5 +1960,22 @@
   "@helpPtMessagesItem3Title": { "description": "Help: PT messages item 3 title" },
 
   "helpPtMessagesItem3Body": "Sohbet listesinde herhangi bir sohbete uzun basarak silebilirsiniz. Sohbet silindiğinde her iki taraf için de listeden kaybolur.",
-  "@helpPtMessagesItem3Body": { "description": "Help: PT messages item 3 body" }
+  "@helpPtMessagesItem3Body": { "description": "Help: PT messages item 3 body" },
+
+  "deleteAccountTitle": "Hesabı Sil",
+  "@deleteAccountTitle": { "description": "Delete account title" },
+  "deleteAccountConfirm": "Hesabınız ve tüm verileriniz kalıcı olarak silinecek. Bu işlem geri alınamaz.",
+  "@deleteAccountConfirm": { "description": "Delete account confirmation message" },
+  "deleteAccountButton": "Hesabı Kalıcı Olarak Sil",
+  "@deleteAccountButton": { "description": "Delete account confirm button" },
+  "deleteAccountSuccess": "Hesabınız silindi.",
+  "@deleteAccountSuccess": { "description": "Delete account success message" },
+  "deleteAccountError": "Hesap silinemedi",
+  "@deleteAccountError": { "description": "Delete account error message" },
+  "deleteAccountReauthError": "Güvenlik gereği tekrar giriş yapmanız gerekiyor. Çıkış yapıp tekrar giriş yapın.",
+  "@deleteAccountReauthError": { "description": "Delete account requires recent login" },
+  "dangerZoneSection": "Tehlikeli Alan",
+  "@dangerZoneSection": { "description": "Danger zone section title" },
+  "signInWithApple": "Apple ile Giriş Yap",
+  "@signInWithApple": { "description": "Sign in with Apple button" }
 }

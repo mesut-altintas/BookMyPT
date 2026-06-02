@@ -19,6 +19,8 @@ dependencies:
   firebase_storage: ^12.0.0
   firebase_messaging: ^15.0.0
   google_sign_in: ^6.2.1
+  sign_in_with_apple: ^6.1.0
+  crypto: ^3.0.3
 
   # State Management
   flutter_riverpod: ^2.4.10
