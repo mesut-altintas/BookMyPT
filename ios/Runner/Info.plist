@@ -35,22 +35,15 @@
 			<string>UIInterfaceOrientationPortrait</string>
 			<string>UIInterfaceOrientationPortraitUpsideDown</string>
 		</array>
-		<key>UISupportedInterfaceOrientations~ipad</key>
-		<array>
-			<string>UIInterfaceOrientationPortrait</string>
-			<string>UIInterfaceOrientationPortraitUpsideDown</string>
-			<string>UIInterfaceOrientationLandscapeLeft</string>
-			<string>UIInterfaceOrientationLandscapeRight</string>
-		</array>
-		<key>UIViewControllerBasedStatusBarAppearance</key>
+<key>UIViewControllerBasedStatusBarAppearance</key>
 		<false/>
 		<!-- Permissions -->
 		<key>NSPhotoLibraryUsageDescription</key>
-		<string>Used to select progress photos and profile pictures from your library.</string>
+		<string>Profil fotoğrafı ve ilerleme fotoğraflarınızı seçmek için fotoğraf kütüphanenize erişim gereklidir.</string>
 		<key>NSCameraUsageDescription</key>
-		<string>Used to take photos for your profile or progress tracking.</string>
+		<string>Profil veya ilerleme fotoğrafı çekmek için kamera erişimi gereklidir.</string>
 		<key>NSPhotoLibraryAddUsageDescription</key>
-		<string>Used to save photos to your library.</string>
+		<string>Fotoğrafları kütüphanenize kaydetmek için erişim gereklidir.</string>
 		<!-- Push Notifications -->
 		<key>UIBackgroundModes</key>
 		<array>
