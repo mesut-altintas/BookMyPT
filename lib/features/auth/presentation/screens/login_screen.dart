@@ -70,7 +70,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (!mounted) return;
     final state = ref.read(authNotifierProvider);
     if (state.hasError) {
-      _showError('Apple ile giriş başarısız');
+      final err = state.error.toString();
+      // User cancelled — no need to show error
+      if (err.contains('canceled') || err.contains('cancelled')) return;
+      _showError('Apple ile giriş başarısız: $err');
       return;
     }
     await _navigateBasedOnRole();
